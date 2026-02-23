@@ -61,6 +61,10 @@ def register_tools(mcp: FastMCP) -> None:
         python_version: Annotated[
             str | None, Field(description="Python version override (e.g. '3.12')")
         ] = None,
+        docker: Annotated[bool, Field(description="Generate Dockerfile and .dockerignore")] = False,
+        devcontainer: Annotated[
+            bool, Field(description="Generate .devcontainer/ configuration")
+        ] = False,
     ) -> str:
         from pypreset.generator import generate_project
         from pypreset.preset_loader import build_project_config
@@ -76,6 +80,8 @@ def register_tools(mcp: FastMCP) -> None:
             package_manager=CreationPackageManager(package_manager) if package_manager else None,
             typing_level=TypingLevel(typing_level) if typing_level else None,
             python_version=python_version,
+            docker_enabled=docker if docker else None,
+            devcontainer_enabled=devcontainer if devcontainer else None,
         )
 
         config = build_project_config(
@@ -98,6 +104,8 @@ def register_tools(mcp: FastMCP) -> None:
                 "preset": preset,
                 "layout": config.layout.value,
                 "package_manager": config.package_manager.value,
+                "docker_enabled": config.docker.enabled,
+                "devcontainer_enabled": config.docker.devcontainer,
             }
         )
 
@@ -230,6 +238,12 @@ def register_tools(mcp: FastMCP) -> None:
         generate_dependabot: Annotated[bool, Field(description="Generate dependabot.yml")] = True,
         generate_tests_dir: Annotated[bool, Field(description="Generate tests directory")] = True,
         generate_gitignore: Annotated[bool, Field(description="Generate .gitignore")] = True,
+        generate_dockerfile: Annotated[
+            bool, Field(description="Generate Dockerfile and .dockerignore")
+        ] = False,
+        generate_devcontainer: Annotated[
+            bool, Field(description="Generate .devcontainer/ configuration")
+        ] = False,
     ) -> str:
         from pypreset.augment_generator import augment_project as _augment
         from pypreset.interactive_prompts import InteractivePrompter
@@ -248,6 +262,8 @@ def register_tools(mcp: FastMCP) -> None:
         config.generate_dependabot = generate_dependabot
         config.generate_tests_dir = generate_tests_dir
         config.generate_gitignore = generate_gitignore
+        config.generate_dockerfile = generate_dockerfile
+        config.generate_devcontainer = generate_devcontainer
 
         result = _augment(project_dir=path, config=config, force=force)
 

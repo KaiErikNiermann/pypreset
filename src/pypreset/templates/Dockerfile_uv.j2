@@ -1,0 +1,40 @@
+# --- Builder stage ---
+FROM {{ docker.base_image }} AS builder
+
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock* ./
+
+RUN uv sync --no-dev --frozen --no-install-project
+
+{% if layout == "src" %}
+COPY src/ src/
+{% else %}
+COPY {{ project.package_name }}/ {{ project.package_name }}/
+{% endif %}
+
+RUN uv sync --no-dev --frozen
+
+# --- Runtime stage ---
+FROM {{ docker.base_image }}
+
+COPY --from=builder /app/.venv /app/.venv
+{% if layout == "src" %}
+COPY --from=builder /app/src/ /app/src/
+{% else %}
+COPY --from=builder /app/{{ project.package_name }}/ /app/{{ project.package_name }}/
+{% endif %}
+
+WORKDIR /app
+ENV PATH="/app/.venv/bin:$PATH"
+
+RUN useradd --create-home appuser
+USER appuser
+
+{% if entry_points %}
+ENTRYPOINT ["{{ entry_points[0].name }}"]
+{% else %}
+CMD ["python", "-m", "{{ project.package_name }}"]
+{% endif %}

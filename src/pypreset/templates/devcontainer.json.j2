@@ -1,0 +1,31 @@
+{
+  "name": "{{ project.name }}",
+  "image": "mcr.microsoft.com/devcontainers/python:{{ project.python_version }}",
+{% if package_manager == "uv" %}
+  "features": {
+    "ghcr.io/astral-sh/uv-devcontainer-features/uv:latest": {}
+  },
+{% endif %}
+  "postCreateCommand": "{% if package_manager == 'uv' %}uv sync{% else %}pip install poetry && poetry install{% endif %}",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+{% if formatting.tool == "ruff" %}
+        "charliermarsh.ruff",
+{% endif %}
+{% if formatting.type_checker == "pyright" %}
+        "ms-python.vscode-pylance",
+{% endif %}
+{% if formatting.type_checker == "mypy" %}
+        "ms-python.mypy-type-checker",
+{% endif %}
+        "ms-python.debugpy"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "{% if package_manager == 'uv' %}.venv/bin/python{% else %}python{% endif %}"
+      }
+    }
+  },
+  "remoteUser": "vscode"
+}

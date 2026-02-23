@@ -83,10 +83,10 @@ Tools are actions the AI assistant can invoke:
      - Description
    * - ``create_project``
      - Create a new project from a preset with optional overrides (layout, type checker,
-       package manager, typing level, Python version)
+       package manager, typing level, Python version, Docker, devcontainer)
    * - ``augment_project``
-     - Add CI workflows, tests, gitignore, and dependabot to an existing project.
-       Auto-detects tooling from ``pyproject.toml``
+     - Add CI workflows, tests, gitignore, dependabot, Dockerfile, and devcontainer
+       to an existing project. Auto-detects tooling from ``pyproject.toml``
    * - ``validate_project``
      - Check structural correctness of a generated project directory
    * - ``list_presets``

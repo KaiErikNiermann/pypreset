@@ -203,3 +203,126 @@ class TestAugmentProject:
         assert any("gitignore" in p for p in created_paths) or any(
             "test" in p for p in created_paths
         )
+
+    async def test_create_project_with_docker(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Test creating a project with Docker enabled."""
+        result = await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "docker-proj",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+                "docker": True,
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["docker_enabled"] is True
+        project_dir = Path(data["project_dir"])
+        assert (project_dir / "Dockerfile").exists()
+        assert (project_dir / ".dockerignore").exists()
+
+    async def test_create_project_with_devcontainer(
+        self, mcp_client: Client, tmp_path: Path
+    ) -> None:
+        """Test creating a project with devcontainer enabled."""
+        result = await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "devcontainer-proj",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+                "devcontainer": True,
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["devcontainer_enabled"] is True
+        project_dir = Path(data["project_dir"])
+        assert (project_dir / ".devcontainer" / "devcontainer.json").exists()
+
+    async def test_create_project_default_no_docker(
+        self, mcp_client: Client, tmp_path: Path
+    ) -> None:
+        """Test that default project has no Docker files."""
+        result = await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "no-docker",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["docker_enabled"] is False
+        project_dir = Path(data["project_dir"])
+        assert not (project_dir / "Dockerfile").exists()
+
+    async def test_augment_with_dockerfile(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Test augmenting a project with Dockerfile generation."""
+        project_dir = tmp_path / "aug-docker"
+        project_dir.mkdir()
+        (project_dir / "pyproject.toml").write_text(
+            '[tool.poetry]\nname = "aug-docker"\nversion = "0.1.0"\n'
+            "[tool.poetry.dependencies]\n"
+            'python = "^3.12"\n'
+        )
+        (project_dir / "src").mkdir()
+        pkg = project_dir / "src" / "aug_docker"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text('"""Package."""\n')
+
+        result = await mcp_client.call_tool(
+            "augment_project",
+            {
+                "project_dir": str(project_dir),
+                "generate_test_workflow": False,
+                "generate_lint_workflow": False,
+                "generate_dependabot": False,
+                "generate_tests_dir": False,
+                "generate_gitignore": False,
+                "generate_dockerfile": True,
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["success"] is True
+        created_paths = [f["path"] for f in data["files_created"]]
+        assert "Dockerfile" in created_paths
+        assert ".dockerignore" in created_paths
+
+    async def test_augment_with_devcontainer(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Test augmenting a project with devcontainer generation."""
+        project_dir = tmp_path / "aug-devcontainer"
+        project_dir.mkdir()
+        (project_dir / "pyproject.toml").write_text(
+            '[tool.poetry]\nname = "aug-devcontainer"\nversion = "0.1.0"\n'
+            "[tool.poetry.dependencies]\n"
+            'python = "^3.12"\n'
+        )
+        (project_dir / "src").mkdir()
+        pkg = project_dir / "src" / "aug_devcontainer"
+        pkg.mkdir()
+        (pkg / "__init__.py").write_text('"""Package."""\n')
+
+        result = await mcp_client.call_tool(
+            "augment_project",
+            {
+                "project_dir": str(project_dir),
+                "generate_test_workflow": False,
+                "generate_lint_workflow": False,
+                "generate_dependabot": False,
+                "generate_tests_dir": False,
+                "generate_gitignore": False,
+                "generate_devcontainer": True,
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["success"] is True
+        created_paths = [f["path"] for f in data["files_created"]]
+        assert ".devcontainer/devcontainer.json" in created_paths

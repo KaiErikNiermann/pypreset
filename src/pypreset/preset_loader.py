@@ -11,6 +11,7 @@ from pypreset.models import (
     DependabotConfig,
     Dependencies,
     DirectoryStructure,
+    DockerConfig,
     EntryPoint,
     FileTemplate,
     FormattingConfig,
@@ -160,6 +161,8 @@ def apply_overrides(config: dict[str, Any], overrides: OverrideOptions) -> dict[
         (overrides.pre_commit_enabled, "formatting", "pre_commit"),
         (overrides.version_bumping_enabled, "formatting", "version_bumping"),
         (overrides.python_version, "metadata", "python_version"),
+        (overrides.docker_enabled, "docker", "enabled"),
+        (overrides.devcontainer_enabled, "docker", "devcontainer"),
     ]
     for value, section, key in _nested_overrides:
         if value is not None:
@@ -289,6 +292,10 @@ def _dict_to_project_config(data: dict[str, Any]) -> ProjectConfig:
     dependabot_data = data.get("dependabot", {})
     dependabot = DependabotConfig(**dependabot_data) if dependabot_data else DependabotConfig()  # type: ignore[call-arg]
 
+    # Build docker config
+    docker_data = data.get("docker", {})
+    docker = DockerConfig(**docker_data) if docker_data else DockerConfig()  # type: ignore[call-arg]
+
     # Build entry points
     entry_points = [EntryPoint(**ep) for ep in data.get("entry_points", [])]
 
@@ -311,6 +318,7 @@ def _dict_to_project_config(data: dict[str, Any]) -> ProjectConfig:
         testing=testing,
         formatting=formatting,
         dependabot=dependabot,
+        docker=docker,
         typing_level=typing_level,
         layout=layout,
         package_manager=package_manager,

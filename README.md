@@ -12,6 +12,7 @@ A meta-tool for scaffolding Python projects with configurable YAML presets. Supp
 - **Two layout styles**: `src/` layout and flat layout
 - **Type checking**: mypy, pyright, ty, or none
 - **Code quality**: ruff linting/formatting, radon complexity checks, pre-commit hooks
+- **Docker & devcontainer**: generate multi-stage Dockerfiles, `.dockerignore`, and VS Code devcontainer configs
 - **Version management**: bump-my-version integration, GitHub release automation via `gh` CLI
 - **User defaults**: persistent config at `~/.config/pypreset/config.yaml`
 - **MCP server**: expose all functionality to AI coding assistants via Model Context Protocol
@@ -39,6 +40,9 @@ pypreset create my-package --preset empty-package
 
 # Create a Discord bot
 pypreset create my-bot --preset discord-bot
+
+# Create a project with Docker support
+pypreset create my-service --preset cli-tool --docker --devcontainer
 ```
 
 ## Commands
@@ -66,6 +70,8 @@ pypreset create <name> [OPTIONS]
 | `--bump-my-version` / `--no-bump-my-version` | Include bump-my-version config |
 | `--extra-package`, `-e` | Additional packages (repeatable) |
 | `--extra-dev-package`, `-d` | Additional dev packages (repeatable) |
+| `--docker` / `--no-docker` | Generate Dockerfile and `.dockerignore` |
+| `--devcontainer` / `--no-devcontainer` | Generate `.devcontainer/` configuration |
 | `--git` / `--no-git` | Initialize git repository |
 | `--install` / `--no-install` | Run dependency install after creation |
 
@@ -82,6 +88,9 @@ pypreset augment --auto
 
 # Generate only specific components
 pypreset augment --test-workflow --lint-workflow --gitignore
+
+# Add Dockerfile and devcontainer config
+pypreset augment --dockerfile --devcontainer
 
 # Overwrite existing files
 pypreset augment --force

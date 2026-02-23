@@ -172,3 +172,51 @@ class TestOverrideOptions:
         )
         assert overrides.testing_enabled is False
         assert len(overrides.extra_packages) == 2
+
+
+class TestDockerConfig:
+    """Tests for DockerConfig model."""
+
+    def test_default_disabled(self) -> None:
+        """Test default docker config is disabled."""
+        from pypreset.models import DockerConfig
+
+        config = DockerConfig()
+        assert config.enabled is False
+        assert config.base_image is None
+        assert config.devcontainer is False
+
+    def test_enabled_with_custom_image(self) -> None:
+        """Test docker config with custom base image."""
+        from pypreset.models import DockerConfig
+
+        config = DockerConfig(enabled=True, base_image="ubuntu:22.04")
+        assert config.enabled is True
+        assert config.base_image == "ubuntu:22.04"
+
+    def test_docker_on_project_config(self) -> None:
+        """Test docker config as part of ProjectConfig."""
+        from pypreset.models import DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="docker-test"),
+            docker=DockerConfig(enabled=True),
+        )
+        assert config.docker.enabled is True
+        assert config.docker.base_image is None
+
+    def test_partial_docker_config(self) -> None:
+        """Test partial docker config for presets."""
+        from pypreset.models import PartialDockerConfig
+
+        partial = PartialDockerConfig()
+        assert partial.enabled is None
+        assert partial.base_image is None
+        assert partial.devcontainer is None
+
+    def test_devcontainer_enabled(self) -> None:
+        """Test docker config with devcontainer enabled."""
+        from pypreset.models import DockerConfig
+
+        config = DockerConfig(enabled=True, devcontainer=True)
+        assert config.devcontainer is True

@@ -126,6 +126,16 @@ class DependabotConfig(BaseModel):
     )
 
 
+class DockerConfig(BaseModel):
+    """Docker configuration for generating Dockerfile and .dockerignore."""
+
+    enabled: bool = Field(False, description="Whether to generate Dockerfile and .dockerignore")
+    base_image: str | None = Field(
+        None, description="Base image override (auto-resolved from python_version if None)"
+    )
+    devcontainer: bool = Field(False, description="Whether to generate .devcontainer/ config")
+
+
 class Metadata(BaseModel):
     """Project metadata (mirrors pyproject.toml)."""
 
@@ -211,6 +221,16 @@ class PartialDependabotConfig(BaseModel):
     )
 
 
+class PartialDockerConfig(BaseModel):
+    """Partial docker config for preset configs."""
+
+    enabled: bool | None = Field(
+        None, description="Whether to generate Dockerfile and .dockerignore"
+    )
+    base_image: str | None = Field(None, description="Base image override")
+    devcontainer: bool | None = Field(None, description="Whether to generate .devcontainer/ config")
+
+
 class ProjectConfig(BaseModel):
     """Complete project configuration."""
 
@@ -220,6 +240,7 @@ class ProjectConfig(BaseModel):
     testing: TestingConfig = Field(default_factory=TestingConfig)  # type: ignore[arg-type]
     formatting: FormattingConfig = Field(default_factory=FormattingConfig)  # type: ignore[arg-type]
     dependabot: DependabotConfig = Field(default_factory=DependabotConfig)  # type: ignore[arg-type]
+    docker: DockerConfig = Field(default_factory=DockerConfig)  # type: ignore[arg-type]
     typing_level: TypingLevel = Field(TypingLevel.STRICT, description="Typing strictness")
     layout: LayoutStyle = Field(LayoutStyle.SRC, description="Project layout style (src or flat)")
     package_manager: CreationPackageManager = Field(
@@ -243,6 +264,7 @@ class PresetConfig(BaseModel):
     testing: PartialTestingConfig = Field(default_factory=PartialTestingConfig)  # type: ignore[arg-type]
     formatting: PartialFormattingConfig = Field(default_factory=PartialFormattingConfig)  # type: ignore[arg-type]
     dependabot: PartialDependabotConfig = Field(default_factory=PartialDependabotConfig)  # type: ignore[arg-type]
+    docker: PartialDockerConfig = Field(default_factory=PartialDockerConfig)  # type: ignore[arg-type]
     typing_level: TypingLevel | None = None
     layout: LayoutStyle | None = None
     package_manager: CreationPackageManager | None = None
@@ -271,3 +293,5 @@ class OverrideOptions(BaseModel):
     package_manager: CreationPackageManager | None = Field(
         None, description="Override package manager"
     )
+    docker_enabled: bool | None = Field(None, description="Override Docker generation")
+    devcontainer_enabled: bool | None = Field(None, description="Override devcontainer generation")

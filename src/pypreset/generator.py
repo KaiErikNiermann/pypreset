@@ -71,6 +71,14 @@ class ProjectGenerator:
         if self.config.formatting.pre_commit:
             self._create_pre_commit_config()
 
+        # Create Docker files if enabled
+        if self.config.docker.enabled:
+            self._create_docker_files()
+
+        # Create devcontainer if enabled
+        if self.config.docker.devcontainer:
+            self._create_devcontainer()
+
         logger.info(f"Project '{self.config.metadata.name}' generated successfully")
         return self.project_dir
 
@@ -197,6 +205,29 @@ class ProjectGenerator:
         config_path = self.project_dir / ".pre-commit-config.yaml"
         config_path.write_text(content)
         logger.debug(f"Created .pre-commit-config.yaml: {config_path}")
+
+    def _create_docker_files(self) -> None:
+        """Create Dockerfile and .dockerignore."""
+        template = "Dockerfile_uv.j2" if self._is_uv else "Dockerfile.j2"
+        content = render_template(self.env, template, self.context)
+        dockerfile_path = self.project_dir / "Dockerfile"
+        dockerfile_path.write_text(content)
+        logger.debug(f"Created Dockerfile: {dockerfile_path}")
+
+        ignore_content = render_template(self.env, "dockerignore.j2", self.context)
+        ignore_path = self.project_dir / ".dockerignore"
+        ignore_path.write_text(ignore_content)
+        logger.debug(f"Created .dockerignore: {ignore_path}")
+
+    def _create_devcontainer(self) -> None:
+        """Create .devcontainer/devcontainer.json configuration."""
+        devcontainer_dir = self.project_dir / ".devcontainer"
+        devcontainer_dir.mkdir(parents=True, exist_ok=True)
+
+        content = render_template(self.env, "devcontainer.json.j2", self.context)
+        devcontainer_path = devcontainer_dir / "devcontainer.json"
+        devcontainer_path.write_text(content)
+        logger.debug(f"Created devcontainer.json: {devcontainer_path}")
 
     def _render_test_file(self) -> str:
         """Render a basic test file."""

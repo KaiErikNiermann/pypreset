@@ -57,6 +57,23 @@ Available Templates
    * - ``notebook_exploration.ipynb.j2``
      - ``data-science`` preset — Jupyter notebook
 
+**Docker & devcontainer templates:**
+
+.. list-table::
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Template
+     - Output
+   * - ``Dockerfile.j2``
+     - Multi-stage Dockerfile for Poetry projects
+   * - ``Dockerfile_uv.j2``
+     - Multi-stage Dockerfile for uv projects
+   * - ``dockerignore.j2``
+     - ``.dockerignore``
+   * - ``devcontainer.json.j2``
+     - ``.devcontainer/devcontainer.json`` (VS Code Dev Container)
+
 **Configuration templates:**
 
 .. list-table::
@@ -106,6 +123,12 @@ serialized to a dict:
    {% for ep in project.entry_points %}
    {{ ep.name }} = {{ ep.module }}
    {% endfor %}
+
+   {# Docker #}
+   {% if docker.enabled %}
+   {{ docker.base_image }}      {# "python:3.11-slim" (auto-resolved) #}
+   {{ docker.devcontainer }}    {# true or false #}
+   {% endif %}
 
    {# Extras dict (preset-specific data) #}
    {{ project.extras.cli_framework }}  {# "typer" for cli-tool preset #}

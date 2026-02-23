@@ -9,6 +9,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader
 
+from pypreset.docker_utils import resolve_docker_base_image as _resolve_base_image
 from pypreset.interactive_prompts import AugmentConfig
 from pypreset.project_analyzer import (
     DetectedLinter,
@@ -30,6 +31,8 @@ class AugmentComponent(StrEnum):
     CONFTEST = "conftest"
     PRE_COMMIT = "pre_commit"
     PYPI_PUBLISH = "pypi_publish"
+    DOCKERFILE = "dockerfile"
+    DEVCONTAINER = "devcontainer"
 
 
 @dataclass
@@ -103,7 +106,11 @@ def get_augment_context(config: AugmentConfig) -> dict[str, Any]:
         },
         "source_dirs": config.source_dirs,
         "has_src_layout": config.has_src_layout,
+        "layout": "src" if config.has_src_layout else "flat",
         "package_manager": config.package_manager.value,
+        "docker": {
+            "base_image": _resolve_base_image(config.python_version),
+        },
     }
 
 
@@ -323,6 +330,59 @@ class PypiPublishWorkflowGenerator(ComponentGenerator):
         return files
 
 
+class DockerfileGenerator(ComponentGenerator):
+    """Generates Dockerfile and .dockerignore."""
+
+    @property
+    def component_name(self) -> str:
+        return "dockerfile"
+
+    def should_generate(self) -> bool:
+        return self.config.generate_dockerfile
+
+    def generate(self, force: bool = False) -> list[GeneratedFile]:
+        files: list[GeneratedFile] = []
+
+        # Select template based on package manager
+        if self.config.package_manager.value == "uv":
+            template_name = "Dockerfile_uv.j2"
+        else:
+            template_name = "Dockerfile.j2"
+
+        content = self._render_template(template_name)
+        result = self._write_file(Path("Dockerfile"), content, force)
+        if result:
+            files.append(result)
+
+        ignore_content = self._render_template("dockerignore.j2")
+        result = self._write_file(Path(".dockerignore"), ignore_content, force)
+        if result:
+            files.append(result)
+
+        return files
+
+
+class DevcontainerGenerator(ComponentGenerator):
+    """Generates .devcontainer/devcontainer.json."""
+
+    @property
+    def component_name(self) -> str:
+        return "devcontainer"
+
+    def should_generate(self) -> bool:
+        return self.config.generate_devcontainer
+
+    def generate(self, force: bool = False) -> list[GeneratedFile]:
+        files: list[GeneratedFile] = []
+
+        content = self._render_template("devcontainer.json.j2")
+        result = self._write_file(Path(".devcontainer/devcontainer.json"), content, force)
+        if result:
+            files.append(result)
+
+        return files
+
+
 class AugmentOrchestrator:
     """Orchestrates the augment operation across components."""
 
@@ -338,6 +398,8 @@ class AugmentOrchestrator:
             TestsDirectoryGenerator(self.project_dir, config),
             GitignoreGenerator(self.project_dir, config),
             PypiPublishWorkflowGenerator(self.project_dir, config),
+            DockerfileGenerator(self.project_dir, config),
+            DevcontainerGenerator(self.project_dir, config),
         ]
 
     def run(

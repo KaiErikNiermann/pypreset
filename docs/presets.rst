@@ -78,6 +78,11 @@ A complete preset file has this structure:
      schedule: weekly
      open_pull_requests_limit: 5
 
+   docker:
+     enabled: false           # Generate Dockerfile + .dockerignore
+     base_image: null          # Override (auto-resolved from python_version if null)
+     devcontainer: false       # Generate .devcontainer/ config
+
    typing_level: strict     # none | basic | strict
    layout: src              # src | flat
 

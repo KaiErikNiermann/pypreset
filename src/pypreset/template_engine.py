@@ -6,6 +6,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from pypreset.docker_utils import resolve_docker_base_image as _resolve_base_image
 from pypreset.models import ProjectConfig
 
 logger = logging.getLogger(__name__)
@@ -69,6 +70,13 @@ def get_template_context(config: ProjectConfig) -> dict[str, Any]:
             "enabled": config.dependabot.enabled,
             "schedule": config.dependabot.schedule,
             "open_pull_requests_limit": config.dependabot.open_pull_requests_limit,
+        },
+        "docker": {
+            "enabled": config.docker.enabled,
+            "base_image": _resolve_base_image(
+                config.metadata.python_version, config.docker.base_image
+            ),
+            "devcontainer": config.docker.devcontainer,
         },
         "typing_level": config.typing_level.value,
         "layout": config.layout.value,

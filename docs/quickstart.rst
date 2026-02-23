@@ -101,6 +101,9 @@ Override preset defaults with CLI flags:
    # Enable radon complexity checking and pre-commit hooks
    pypreset create my-project --preset cli-tool --radon --pre-commit
 
+   # Generate Dockerfile, .dockerignore, and VS Code devcontainer config
+   pypreset create my-service --preset cli-tool --docker --devcontainer
+
 Augmenting Existing Projects
 -----------------------------
 
@@ -120,6 +123,9 @@ Add CI workflows, tests, and configuration to an existing project:
 
    # Add a PyPI publish workflow
    pypreset augment --pypi-publish
+
+   # Add Dockerfile and devcontainer
+   pypreset augment --dockerfile --devcontainer
 
 The augment command reads your ``pyproject.toml`` to detect your package manager,
 test framework, linter, and type checker, then generates appropriate configurations.

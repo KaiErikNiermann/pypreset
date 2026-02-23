@@ -55,6 +55,8 @@ class AugmentConfig:
     generate_tests_dir: bool = True
     generate_gitignore: bool = True
     generate_pypi_publish: bool = False
+    generate_dockerfile: bool = False
+    generate_devcontainer: bool = False
 
     # Dependabot settings
     dependabot_schedule: str = "weekly"
@@ -398,6 +400,8 @@ class InteractivePrompter:
             generate_tests_dir=components.get("generate_tests_dir", True),
             generate_gitignore=components.get("generate_gitignore", True),
             generate_pypi_publish=components.get("generate_pypi_publish", False),
+            generate_dockerfile=components.get("generate_dockerfile", False),
+            generate_devcontainer=components.get("generate_devcontainer", False),
             dependabot_schedule=dependabot_config.get("dependabot_schedule", "weekly"),
             dependabot_pr_limit=dependabot_config.get("dependabot_pr_limit", 5),
         )

@@ -10,6 +10,7 @@ Auto-generated documentation from source code docstrings.
    preset_loader
    generator
    augment_generator
+   docker_utils
    template_engine
    validator
    project_analyzer

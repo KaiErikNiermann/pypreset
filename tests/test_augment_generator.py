@@ -34,6 +34,8 @@ def create_test_config(
     generate_dependabot: bool = True,
     generate_tests_dir: bool = True,
     generate_gitignore: bool = True,
+    generate_dockerfile: bool = False,
+    generate_devcontainer: bool = False,
 ) -> AugmentConfig:
     """Create an AugmentConfig for testing."""
     return AugmentConfig(
@@ -54,6 +56,8 @@ def create_test_config(
         generate_dependabot=generate_dependabot,
         generate_tests_dir=generate_tests_dir,
         generate_gitignore=generate_gitignore,
+        generate_dockerfile=generate_dockerfile,
+        generate_devcontainer=generate_devcontainer,
     )
 
 
@@ -304,3 +308,132 @@ python = "^3.11"
         # Check overwritten flag
         overwritten_files = [f for f in result.files_created if f.overwritten]
         assert len(overwritten_files) >= 1
+
+
+class TestDockerfileGenerator:
+    """Tests for DockerfileGenerator."""
+
+    def test_generates_dockerfile_poetry(self, tmp_path: Path) -> None:
+        """Test that Dockerfile is generated for Poetry project."""
+        from pypreset.augment_generator import DockerfileGenerator
+
+        config = create_test_config(generate_dockerfile=True)
+        generator = DockerfileGenerator(tmp_path, config)
+
+        files = generator.generate()
+
+        assert len(files) == 2
+        paths = [f.path for f in files]
+        assert Path("Dockerfile") in paths
+        assert Path(".dockerignore") in paths
+
+        content = (tmp_path / "Dockerfile").read_text()
+        assert "poetry" in content
+
+    def test_generates_dockerfile_uv(self, tmp_path: Path) -> None:
+        """Test that uv Dockerfile is generated."""
+        from pypreset.augment_generator import DockerfileGenerator
+
+        config = create_test_config(generate_dockerfile=True, package_manager=PackageManager.POETRY)
+        # PackageManager.POETRY -> Dockerfile.j2 (not uv)
+        generator = DockerfileGenerator(tmp_path, config)
+        generator.generate()
+        content = (tmp_path / "Dockerfile").read_text()
+        assert "poetry" in content
+
+    def test_skips_when_disabled(self, tmp_path: Path) -> None:
+        """Test that Dockerfile is skipped when disabled."""
+        from pypreset.augment_generator import DockerfileGenerator
+
+        config = create_test_config(generate_dockerfile=False)
+        generator = DockerfileGenerator(tmp_path, config)
+
+        assert generator.should_generate() is False
+
+    def test_no_overwrite_without_force(self, tmp_path: Path) -> None:
+        """Test that existing Dockerfile is not overwritten without force."""
+        from pypreset.augment_generator import DockerfileGenerator
+
+        (tmp_path / "Dockerfile").write_text("# Existing Dockerfile")
+        config = create_test_config(generate_dockerfile=True)
+        generator = DockerfileGenerator(tmp_path, config)
+
+        files = generator.generate(force=False)
+
+        # Dockerfile should be skipped, .dockerignore created
+        paths = [f.path for f in files]
+        assert Path("Dockerfile") not in paths
+        assert (tmp_path / "Dockerfile").read_text() == "# Existing Dockerfile"
+
+    def test_force_overwrites(self, tmp_path: Path) -> None:
+        """Test that force=True overwrites existing Dockerfile."""
+        from pypreset.augment_generator import DockerfileGenerator
+
+        (tmp_path / "Dockerfile").write_text("# Existing Dockerfile")
+        config = create_test_config(generate_dockerfile=True)
+        generator = DockerfileGenerator(tmp_path, config)
+
+        files = generator.generate(force=True)
+
+        paths = [f.path for f in files]
+        assert Path("Dockerfile") in paths
+        assert (tmp_path / "Dockerfile").read_text() != "# Existing Dockerfile"
+
+    def test_dockerignore_content(self, tmp_path: Path) -> None:
+        """Test .dockerignore has expected content."""
+        from pypreset.augment_generator import DockerfileGenerator
+
+        config = create_test_config(generate_dockerfile=True)
+        generator = DockerfileGenerator(tmp_path, config)
+        generator.generate()
+
+        content = (tmp_path / ".dockerignore").read_text()
+        assert "__pycache__" in content
+        assert ".venv" in content
+        assert ".git" in content
+
+
+class TestDevcontainerGenerator:
+    """Tests for DevcontainerGenerator."""
+
+    def test_generates_devcontainer(self, tmp_path: Path) -> None:
+        """Test that devcontainer.json is generated."""
+        from pypreset.augment_generator import DevcontainerGenerator
+
+        config = create_test_config(generate_devcontainer=True)
+        generator = DevcontainerGenerator(tmp_path, config)
+
+        files = generator.generate()
+
+        assert len(files) == 1
+        assert files[0].path == Path(".devcontainer/devcontainer.json")
+        assert (tmp_path / ".devcontainer/devcontainer.json").exists()
+
+        content = (tmp_path / ".devcontainer/devcontainer.json").read_text()
+        assert "test-project" in content
+        assert "ms-python.python" in content
+
+    def test_skips_when_disabled(self, tmp_path: Path) -> None:
+        """Test that devcontainer is skipped when disabled."""
+        from pypreset.augment_generator import DevcontainerGenerator
+
+        config = create_test_config(generate_devcontainer=False)
+        generator = DevcontainerGenerator(tmp_path, config)
+
+        assert generator.should_generate() is False
+
+    def test_no_overwrite_without_force(self, tmp_path: Path) -> None:
+        """Test that existing devcontainer.json is not overwritten without force."""
+        from pypreset.augment_generator import DevcontainerGenerator
+
+        dc_dir = tmp_path / ".devcontainer"
+        dc_dir.mkdir()
+        (dc_dir / "devcontainer.json").write_text('{"name": "existing"}')
+
+        config = create_test_config(generate_devcontainer=True)
+        generator = DevcontainerGenerator(tmp_path, config)
+
+        files = generator.generate(force=False)
+
+        assert len(files) == 0
+        assert (dc_dir / "devcontainer.json").read_text() == '{"name": "existing"}'

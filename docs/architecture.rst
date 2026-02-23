@@ -27,6 +27,8 @@ Create Command Flow
    generator.ProjectGenerator
        ├── Creates directories
        ├── Renders Jinja2 templates → pyproject.toml, workflows, etc.
+       ├── Optionally generates Dockerfile + .dockerignore
+       ├── Optionally generates .devcontainer/devcontainer.json
        ├── Optionally runs git init
        └── Optionally runs poetry install / uv sync
        ↓
@@ -52,7 +54,9 @@ Augment Command Flow
        ├── DependabotGenerator
        ├── TestsDirectoryGenerator
        ├── GitignoreGenerator
-       └── PypiPublishWorkflowGenerator
+       ├── PypiPublishWorkflowGenerator
+       ├── DockerfileGenerator
+       └── DevcontainerGenerator
        ↓
    AugmentResult (files created / skipped / errors)
 
@@ -89,6 +93,8 @@ Key Modules
      - Component generators for augmenting existing projects
    * - ``project_analyzer.py``
      - Heuristic detection of tooling from ``pyproject.toml``
+   * - ``docker_utils.py``
+     - Helper to resolve Docker base images from ``python_version``
    * - ``user_config.py``
      - User-level defaults from ``~/.config/pypreset/config.yaml``
    * - ``validator.py``

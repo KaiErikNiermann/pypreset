@@ -130,6 +130,16 @@ def create_project(
         CreationPackageManager | None,
         typer.Option("--package-manager", help="Package manager (poetry or uv)"),
     ] = None,
+    docker: Annotated[
+        bool | None,
+        typer.Option("--docker/--no-docker", help="Generate Dockerfile and .dockerignore"),
+    ] = None,
+    devcontainer: Annotated[
+        bool | None,
+        typer.Option(
+            "--devcontainer/--no-devcontainer", help="Generate .devcontainer/ configuration"
+        ),
+    ] = None,
     extra_package: Annotated[
         list[str] | None,
         typer.Option("--extra-package", "-e", help="Additional packages to install"),
@@ -166,6 +176,8 @@ def create_project(
         typing_level=typing_level,
         layout=layout,
         package_manager=package_manager,
+        docker_enabled=docker,
+        devcontainer_enabled=devcontainer,
         extra_packages=extra_package or [],
         extra_dev_packages=extra_dev_package or [],
     )
@@ -283,6 +295,8 @@ def _display_dry_run(
         ("bump-my-version", config.formatting.version_bumping),
         ("Dependabot", config.dependabot.enabled),
         ("Coverage", config.testing.coverage),
+        ("Docker", config.docker.enabled),
+        ("Devcontainer", config.docker.devcontainer),
     ]
     active = [name for name, enabled in flags if enabled]
     if active:
@@ -326,6 +340,14 @@ def _display_dry_run(
 
     if config.formatting.pre_commit:
         tree_lines.append("  .pre-commit-config.yaml")
+
+    if config.docker.enabled:
+        tree_lines.append("  Dockerfile")
+        tree_lines.append("  .dockerignore")
+
+    if config.docker.devcontainer:
+        tree_lines.append("  .devcontainer/")
+        tree_lines.append("    devcontainer.json")
 
     rprint(Panel("\n".join(tree_lines), title="Project Structure", border_style="green"))
 
@@ -476,6 +498,8 @@ def _apply_component_overrides(
     tests_dir: bool | None,
     gitignore: bool | None,
     pypi_publish: bool | None,
+    dockerfile_flag: bool | None = None,
+    devcontainer_flag: bool | None = None,
 ) -> None:
     """Apply CLI component overrides to an AugmentConfig in place."""
     overrides: list[tuple[str, bool | None]] = [
@@ -485,6 +509,8 @@ def _apply_component_overrides(
         ("generate_tests_dir", tests_dir),
         ("generate_gitignore", gitignore),
         ("generate_pypi_publish", pypi_publish),
+        ("generate_dockerfile", dockerfile_flag),
+        ("generate_devcontainer", devcontainer_flag),
     ]
     for attr, value in overrides:
         if value is not None:
@@ -561,6 +587,16 @@ def augment_cmd(
         bool | None,
         typer.Option("--pypi-publish/--no-pypi-publish", help="Generate PyPI publish workflow"),
     ] = None,
+    dockerfile: Annotated[
+        bool | None,
+        typer.Option("--dockerfile/--no-dockerfile", help="Generate Dockerfile and .dockerignore"),
+    ] = None,
+    devcontainer_flag: Annotated[
+        bool | None,
+        typer.Option(
+            "--devcontainer/--no-devcontainer", help="Generate .devcontainer/ configuration"
+        ),
+    ] = None,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose output")] = False,
 ) -> None:
     """Augment an existing project with workflows, tests, and configuration.
@@ -625,6 +661,8 @@ def augment_cmd(
             tests_dir=tests_dir,
             gitignore=gitignore,
             pypi_publish=pypi_publish,
+            dockerfile_flag=dockerfile,
+            devcontainer_flag=devcontainer_flag,
         )
 
         if not any(
@@ -635,6 +673,8 @@ def augment_cmd(
                 config.generate_tests_dir,
                 config.generate_gitignore,
                 config.generate_pypi_publish,
+                config.generate_dockerfile,
+                config.generate_devcontainer,
             ]
         ):
             rprint("[yellow]No components selected for generation.[/yellow]")

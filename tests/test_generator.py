@@ -389,3 +389,176 @@ class TestGeneratedProjectValidity:
         assert "tool" in data
         assert "poetry" in data["tool"]
         assert "build-system" in data
+
+
+class TestDockerfileGeneration:
+    """Tests for Docker file generation."""
+
+    def test_docker_disabled_no_files(self, temp_output_dir: Path) -> None:
+        """Test that no Docker files are created when disabled."""
+        from pypreset.models import DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="no-docker"),
+            docker=DockerConfig(enabled=False),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert not (project_dir / "Dockerfile").exists()
+        assert not (project_dir / ".dockerignore").exists()
+
+    def test_docker_enabled_creates_files(self, temp_output_dir: Path) -> None:
+        """Test that Docker files are created when enabled."""
+        from pypreset.models import DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="docker-test"),
+            docker=DockerConfig(enabled=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert (project_dir / "Dockerfile").exists()
+        assert (project_dir / ".dockerignore").exists()
+
+    def test_docker_poetry_template(self, temp_output_dir: Path) -> None:
+        """Test that Poetry Dockerfile uses poetry export."""
+        from pypreset.models import DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="poetry-docker"),
+            docker=DockerConfig(enabled=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "Dockerfile").read_text()
+        assert "poetry" in content
+        assert "poetry export" in content
+
+    def test_docker_uv_template(self, temp_output_dir: Path) -> None:
+        """Test that uv Dockerfile uses uv sync."""
+        from pypreset.models import CreationPackageManager, DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="uv-docker"),
+            package_manager=CreationPackageManager.UV,
+            docker=DockerConfig(enabled=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "Dockerfile").read_text()
+        assert "uv sync" in content
+        assert "astral-sh" in content
+
+    def test_docker_src_layout(self, temp_output_dir: Path) -> None:
+        """Test Dockerfile with src layout."""
+        from pypreset.models import DockerConfig, LayoutStyle
+
+        config = ProjectConfig(
+            metadata=Metadata(name="src-docker"),
+            layout=LayoutStyle.SRC,
+            docker=DockerConfig(enabled=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "Dockerfile").read_text()
+        assert "COPY src/" in content
+
+    def test_docker_flat_layout(self, temp_output_dir: Path) -> None:
+        """Test Dockerfile with flat layout."""
+        from pypreset.models import DockerConfig, LayoutStyle
+
+        config = ProjectConfig(
+            metadata=Metadata(name="flat-docker"),
+            layout=LayoutStyle.FLAT,
+            docker=DockerConfig(enabled=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "Dockerfile").read_text()
+        assert "COPY flat_docker/" in content
+
+    def test_docker_with_entry_points(self, temp_output_dir: Path) -> None:
+        """Test Dockerfile with entry points uses ENTRYPOINT."""
+        from pypreset.models import DockerConfig, EntryPoint
+
+        config = ProjectConfig(
+            metadata=Metadata(name="cli-docker"),
+            docker=DockerConfig(enabled=True),
+            entry_points=[EntryPoint(name="mycli", module="cli_docker.cli:app")],
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "Dockerfile").read_text()
+        assert "ENTRYPOINT" in content
+        assert "mycli" in content
+
+    def test_docker_custom_base_image(self, temp_output_dir: Path) -> None:
+        """Test Dockerfile uses custom base image."""
+        from pypreset.models import DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="custom-base"),
+            docker=DockerConfig(enabled=True, base_image="ubuntu:22.04"),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "Dockerfile").read_text()
+        assert "ubuntu:22.04" in content
+
+
+class TestDevcontainerGeneration:
+    """Tests for devcontainer generation."""
+
+    def test_devcontainer_disabled_no_files(self, temp_output_dir: Path) -> None:
+        """Test that no devcontainer files are created when disabled."""
+        from pypreset.models import DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="no-devcontainer"),
+            docker=DockerConfig(devcontainer=False),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert not (project_dir / ".devcontainer").exists()
+
+    def test_devcontainer_enabled_creates_files(self, temp_output_dir: Path) -> None:
+        """Test that devcontainer.json is created when enabled."""
+        from pypreset.models import DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="devcontainer-test"),
+            docker=DockerConfig(devcontainer=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        devcontainer_path = project_dir / ".devcontainer" / "devcontainer.json"
+        assert devcontainer_path.exists()
+
+        content = devcontainer_path.read_text()
+        assert "devcontainer-test" in content
+        assert "ms-python.python" in content
+
+    def test_devcontainer_uv_has_features(self, temp_output_dir: Path) -> None:
+        """Test that uv devcontainer includes uv feature."""
+        from pypreset.models import CreationPackageManager, DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="uv-devcontainer"),
+            package_manager=CreationPackageManager.UV,
+            docker=DockerConfig(devcontainer=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / ".devcontainer" / "devcontainer.json").read_text()
+        assert "uv" in content

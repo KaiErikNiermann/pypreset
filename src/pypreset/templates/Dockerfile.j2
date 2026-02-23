@@ -1,0 +1,39 @@
+# --- Builder stage ---
+FROM {{ docker.base_image }} AS builder
+
+RUN pip install --no-cache-dir poetry \
+    && poetry config virtualenvs.create false
+
+WORKDIR /app
+
+COPY pyproject.toml poetry.lock* ./
+
+RUN poetry export -f requirements.txt --without-hashes -o requirements.txt \
+    && pip install --no-cache-dir --prefix=/runtime-deps -r requirements.txt
+
+{% if layout == "src" %}
+COPY src/ src/
+{% else %}
+COPY {{ project.package_name }}/ {{ project.package_name }}/
+{% endif %}
+
+# --- Runtime stage ---
+FROM {{ docker.base_image }}
+
+COPY --from=builder /runtime-deps /usr/local
+{% if layout == "src" %}
+COPY --from=builder /app/src/ /app/src/
+{% else %}
+COPY --from=builder /app/{{ project.package_name }}/ /app/{{ project.package_name }}/
+{% endif %}
+
+WORKDIR /app
+
+RUN useradd --create-home appuser
+USER appuser
+
+{% if entry_points %}
+ENTRYPOINT ["{{ entry_points[0].name }}"]
+{% else %}
+CMD ["python", "-m", "{{ project.package_name }}"]
+{% endif %}
