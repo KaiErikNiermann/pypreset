@@ -1,11 +1,11 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.OWNER/pypreset",
+  "name": "io.github.KaiErikNiermann/pypreset",
   "title": "pypreset",
-  "description": "MCP server for pypreset — scaffolds Poetry/uv Python projects from YAML presets, augments existing projects with CI/tests/config, validates structure, and manages versions.",
-  "version": "0.1.0",
+  "description": "Scaffold Python projects from YAML presets, augment existing projects with CI/tests.",
+  "version": "0.1.2",
   "repository": {
-    "url": "https://github.com/OWNER/pypreset",
+    "url": "https://github.com/KaiErikNiermann/pypreset",
     "source": "github"
   },
   "packages": [
@@ -13,9 +13,12 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "pypreset",
-      "version": "0.1.0",
+      "version": "0.1.2",
       "runtimeHint": "uvx",
-      "runtimeArguments": ["--extra", "mcp"],
+      "runtimeArguments": [
+        {"type": "positional", "value": "--extra"},
+        {"type": "positional", "value": "mcp"}
+      ],
       "packageArguments": [],
       "transport": {
         "type": "stdio"

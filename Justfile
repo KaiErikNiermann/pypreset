@@ -129,6 +129,7 @@ rerelease version:
 _release version:
     @version="{{version}}"; \
         if [[ "$version" == version=* ]]; then version="${version#version=}"; fi; \
+        poetry lock; \
         git add pyproject.toml; \
         git add -f poetry.lock; \
         git commit -m "chore(release): v$version"; \
