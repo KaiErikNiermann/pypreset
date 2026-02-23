@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+{% if testing.enabled %}
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["{{ project.python_version }}", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python {% raw %}${{ matrix.python-version }}{% endraw %}
+
+        run: uv python install {% raw %}${{ matrix.python-version }}{% endraw %}
+
+      - name: Install dependencies
+        run: uv sync
+
+{% if testing.framework == "pytest" %}
+      - name: Run tests with pytest
+{% if testing.coverage %}
+        run: uv run pytest --cov={{ project.package_name }} --cov-report=xml --cov-report=term-missing
+{% else %}
+        run: uv run pytest
+{% endif %}
+{% elif testing.framework == "unittest" %}
+      - name: Run tests with unittest
+        run: uv run python -m unittest discover -s tests -v
+{% endif %}
+{% if testing.coverage %}
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+{% endif %}
+{% endif %}
+{% if formatting.enabled %}
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python {{ project.python_version }}
+        run: uv python install {{ project.python_version }}
+
+      - name: Install dependencies
+        run: uv sync
+
+{% if formatting.tool == "ruff" %}
+      - name: Lint with ruff
+        run: uv run ruff check src tests
+
+      - name: Check formatting with ruff
+        run: uv run ruff format --check src tests
+{% elif formatting.tool == "black" %}
+      - name: Check formatting with black
+        run: uv run black --check src tests
+{% endif %}
+{% if typing_level in ["basic", "strict"] %}
+{% if formatting.type_checker == "mypy" %}
+      - name: Type check with mypy
+        run: uv run mypy src
+{% elif formatting.type_checker == "ty" %}
+      - name: Type check with ty
+        run: uv run ty check src
+{% endif %}
+{% endif %}
+{% if formatting.radon %}
+      - name: Complexity check with radon
+        run: uv run radon cc src -n B -s
+{% endif %}
+{% endif %}

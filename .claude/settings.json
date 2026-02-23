@@ -1,0 +1,36 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "poetry run ruff check src/ tests/ --ignore=I001 --ignore=TC003 --quiet"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "poetry run ruff format src/ tests/ --quiet && poetry run ruff check src/ tests/ --fix --ignore=I001 --ignore=TC003 --quiet"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "poetry run pytest tests/ --ignore=tests/test_integration.py -q --tb=short 2>&1 | tail -5"
+          }
+        ]
+      }
+    ]
+  }
+}

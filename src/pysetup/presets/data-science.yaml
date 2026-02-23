@@ -1,0 +1,50 @@
+name: data-science
+description: A data science project with notebooks, data directories, and common ML/DS libraries
+
+base: empty-package
+
+metadata:
+  description: "A data science project"
+
+structure:
+  directories:
+    - "data/raw"
+    - "data/processed"
+    - "notebooks"
+    - "models"
+    - "reports/figures"
+  files:
+    - path: "src/{{ project.package_name }}/data_loader.py"
+      template: data_loader.py.j2
+    - path: "notebooks/01_exploration.ipynb"
+      template: notebook_exploration.ipynb.j2
+    - path: "data/raw/.gitkeep"
+      content: ""
+    - path: "data/processed/.gitkeep"
+      content: ""
+    - path: "models/.gitkeep"
+      content: ""
+    - path: "reports/figures/.gitkeep"
+      content: ""
+
+dependencies:
+  main:
+    - "pandas>=2.2.0"
+    - "numpy>=1.26.0"
+    - "matplotlib>=3.8.0"
+    - "seaborn>=0.13.0"
+    - "scikit-learn>=1.5.0"
+  dev:
+    - "jupyter>=1.0.0"
+    - "jupyterlab>=4.2.0"
+    - "ipykernel>=6.29.0"
+
+testing:
+  enabled: true
+  framework: pytest
+  coverage: true
+
+extras:
+  data: true
+  notebooks: true
+  ml_framework: scikit-learn

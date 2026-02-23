@@ -1,0 +1,88 @@
+"""Discord bot using discord.py."""
+
+import logging
+import os
+from typing import Final
+
+import discord
+from discord.ext import commands
+
+# Configure logging
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
+
+# Bot configuration
+DISCORD_TOKEN: Final[str] = os.getenv("DISCORD_TOKEN", "")
+COMMAND_PREFIX: Final[str] = os.getenv("COMMAND_PREFIX", "!")
+
+# Bot intents
+intents = discord.Intents.default()
+intents.message_content = True
+intents.members = True
+
+# Create bot instance
+bot = commands.Bot(command_prefix=COMMAND_PREFIX, intents=intents)
+
+
+@bot.event
+async def on_ready() -> None:
+    """Called when the bot is ready."""
+    if bot.user:
+        logger.info(f"Logged in as {bot.user.name} (ID: {bot.user.id})")
+    logger.info("------")
+
+
+@bot.event
+async def on_command_error(
+    ctx: commands.Context[commands.Bot],
+    error: commands.CommandError,
+) -> None:
+    """Handle command errors."""
+    if isinstance(error, commands.CommandNotFound):
+        await ctx.send("Command not found. Use `!help` to see available commands.")
+    elif isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send(f"Missing required argument: {error.param.name}")
+    elif isinstance(error, commands.MissingPermissions):
+        await ctx.send("You don't have permission to use this command.")
+    else:
+        logger.error(f"Unhandled error: {error}")
+        await ctx.send("An error occurred while processing the command.")
+
+
+@bot.command(name="ping")
+async def ping(ctx: commands.Context[commands.Bot]) -> None:
+    """Check if the bot is responsive."""
+    latency = round(bot.latency * 1000)
+    await ctx.send(f"Pong! Latency: {latency}ms")
+
+
+@bot.command(name="info")
+async def info(ctx: commands.Context[commands.Bot]) -> None:
+    """Show bot information."""
+    from {{ project.package_name }} import __version__
+
+    embed = discord.Embed(
+        title="{{ project.name }}",
+        description="{{ project.description }}",
+        color=discord.Color.blue(),
+    )
+    embed.add_field(name="Version", value=__version__, inline=True)
+    embed.add_field(name="Prefix", value=COMMAND_PREFIX, inline=True)
+
+    await ctx.send(embed=embed)
+
+
+def main() -> None:
+    """Run the bot."""
+    if not DISCORD_TOKEN:
+        logger.error("DISCORD_TOKEN environment variable is not set!")
+        raise SystemExit(1)
+
+    bot.run(DISCORD_TOKEN)
+
+
+if __name__ == "__main__":
+    main()

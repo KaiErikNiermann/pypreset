@@ -1,0 +1,67 @@
+# {{ project.name }}
+
+{{ project.description }}
+
+## Installation
+
+```bash
+poetry install
+```
+
+## Usage
+
+{% if entry_points %}
+{% for ep in entry_points %}
+```bash
+{{ ep.name }} --help
+```
+{% endfor %}
+{% else %}
+```python
+import {{ project.package_name }}
+```
+{% endif %}
+
+## Development
+
+{% if testing.enabled %}
+### Running Tests
+
+```bash
+poetry run pytest
+{% if testing.coverage %}
+# With coverage report
+poetry run pytest --cov
+{% endif %}
+```
+{% endif %}
+
+{% if formatting.enabled %}
+### Code Formatting
+
+{% if formatting.tool == "ruff" %}
+```bash
+# Check linting
+poetry run ruff check .
+
+# Format code
+poetry run ruff format .
+```
+{% elif formatting.tool == "black" %}
+```bash
+poetry run black .
+```
+{% endif %}
+{% endif %}
+
+{% if typing_level in ["basic", "strict"] %}
+### Type Checking
+
+```bash
+poetry run mypy src/
+```
+{% endif %}
+
+## License
+
+MIT

@@ -1,0 +1,549 @@
+{
+  "$defs": {
+    "EntryPoint": {
+      "description": "Script entry point configuration.",
+      "properties": {
+        "name": {
+          "description": "Command name",
+          "title": "Name",
+          "type": "string"
+        },
+        "module": {
+          "description": "Module path (e.g., 'mypackage.cli:app')",
+          "title": "Module",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "module"
+      ],
+      "title": "EntryPoint",
+      "type": "object"
+    },
+    "FileTemplate": {
+      "description": "A file template definition.",
+      "properties": {
+        "path": {
+          "description": "Relative path within the project",
+          "title": "Path",
+          "type": "string"
+        },
+        "template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Jinja2 template name to use",
+          "title": "Template"
+        },
+        "content": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Inline content (if no template)",
+          "title": "Content"
+        },
+        "executable": {
+          "default": false,
+          "description": "Whether the file should be executable",
+          "title": "Executable",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path"
+      ],
+      "title": "FileTemplate",
+      "type": "object"
+    },
+    "FormattingTool": {
+      "description": "Supported formatting/linting tools.",
+      "enum": [
+        "ruff",
+        "black",
+        "none"
+      ],
+      "title": "FormattingTool",
+      "type": "string"
+    },
+    "PartialDependabotConfig": {
+      "description": "Partial dependabot config for preset configs.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether to generate dependabot.yml",
+          "title": "Enabled"
+        },
+        "schedule": {
+          "anyOf": [
+            {
+              "enum": [
+                "daily",
+                "weekly",
+                "monthly"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Update check frequency",
+          "title": "Schedule"
+        },
+        "open_pull_requests_limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum number of open PRs for version updates",
+          "title": "Open Pull Requests Limit"
+        }
+      },
+      "title": "PartialDependabotConfig",
+      "type": "object"
+    },
+    "PartialDependencies": {
+      "description": "Partial dependencies for preset configs.",
+      "properties": {
+        "main": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Main dependencies",
+          "title": "Main"
+        },
+        "dev": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Development dependencies",
+          "title": "Dev"
+        },
+        "optional": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional dependency groups",
+          "title": "Optional"
+        }
+      },
+      "title": "PartialDependencies",
+      "type": "object"
+    },
+    "PartialDirectoryStructure": {
+      "description": "Partial directory structure for preset configs.",
+      "properties": {
+        "directories": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "List of directories to create",
+          "title": "Directories"
+        },
+        "files": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/FileTemplate"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "List of files to create",
+          "title": "Files"
+        }
+      },
+      "title": "PartialDirectoryStructure",
+      "type": "object"
+    },
+    "PartialFormattingConfig": {
+      "description": "Partial formatting config for preset configs.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether formatting is enabled",
+          "title": "Enabled"
+        },
+        "tool": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/FormattingTool"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Formatting tool to use"
+        },
+        "line_length": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Maximum line length",
+          "title": "Line Length"
+        }
+      },
+      "title": "PartialFormattingConfig",
+      "type": "object"
+    },
+    "PartialMetadata": {
+      "description": "Partial metadata for preset configs (all fields optional).",
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project name",
+          "title": "Name"
+        },
+        "version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project version",
+          "title": "Version"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project description",
+          "title": "Description"
+        },
+        "authors": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project authors",
+          "title": "Authors"
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project license",
+          "title": "License"
+        },
+        "readme": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Readme file",
+          "title": "Readme"
+        },
+        "python_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum Python version",
+          "title": "Python Version"
+        },
+        "keywords": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project keywords",
+          "title": "Keywords"
+        },
+        "classifiers": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "PyPI classifiers",
+          "title": "Classifiers"
+        }
+      },
+      "title": "PartialMetadata",
+      "type": "object"
+    },
+    "PartialTestingConfig": {
+      "description": "Partial testing config for preset configs.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether testing is enabled",
+          "title": "Enabled"
+        },
+        "framework": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TestingFramework"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Testing framework to use"
+        },
+        "coverage": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether to include coverage tools",
+          "title": "Coverage"
+        }
+      },
+      "title": "PartialTestingConfig",
+      "type": "object"
+    },
+    "TestingFramework": {
+      "description": "Supported testing frameworks.",
+      "enum": [
+        "pytest",
+        "unittest",
+        "none"
+      ],
+      "title": "TestingFramework",
+      "type": "string"
+    },
+    "TypingLevel": {
+      "description": "Python typing strictness level.",
+      "enum": [
+        "none",
+        "basic",
+        "strict"
+      ],
+      "title": "TypingLevel",
+      "type": "string"
+    }
+  },
+  "description": "Schema for pysetup preset YAML files",
+  "properties": {
+    "name": {
+      "description": "Preset name",
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "description": "Preset description",
+      "title": "Description",
+      "type": "string"
+    },
+    "base": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "description": "Base preset to extend",
+      "title": "Base"
+    },
+    "metadata": {
+      "$ref": "#/$defs/PartialMetadata"
+    },
+    "structure": {
+      "$ref": "#/$defs/PartialDirectoryStructure"
+    },
+    "dependencies": {
+      "$ref": "#/$defs/PartialDependencies"
+    },
+    "testing": {
+      "$ref": "#/$defs/PartialTestingConfig"
+    },
+    "formatting": {
+      "$ref": "#/$defs/PartialFormattingConfig"
+    },
+    "dependabot": {
+      "$ref": "#/$defs/PartialDependabotConfig"
+    },
+    "typing_level": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/TypingLevel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "entry_points": {
+      "description": "Script entry points",
+      "items": {
+        "$ref": "#/$defs/EntryPoint"
+      },
+      "title": "Entry Points",
+      "type": "array"
+    },
+    "extras": {
+      "additionalProperties": true,
+      "description": "Additional configuration",
+      "title": "Extras",
+      "type": "object"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "title": "PySetup CLI Preset Configuration",
+  "type": "object",
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

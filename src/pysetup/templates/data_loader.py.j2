@@ -1,0 +1,98 @@
+"""Data processing utilities for {{ project.name }}."""
+
+from pathlib import Path
+from typing import Any
+
+import pandas as pd
+
+
+class DataLoader:
+    """Handles loading data from various sources."""
+
+    def __init__(self, data_dir: Path | str = "data") -> None:
+        """Initialize the data loader.
+
+        Args:
+            data_dir: Base directory for data files
+        """
+        self.data_dir = Path(data_dir)
+        self.raw_dir = self.data_dir / "raw"
+        self.processed_dir = self.data_dir / "processed"
+
+    def load_csv(self, filename: str, raw: bool = True, **kwargs: Any) -> pd.DataFrame:
+        """Load a CSV file.
+
+        Args:
+            filename: Name of the file to load
+            raw: Whether to load from raw or processed directory
+            **kwargs: Additional arguments to pass to pd.read_csv
+
+        Returns:
+            Loaded DataFrame
+        """
+        directory = self.raw_dir if raw else self.processed_dir
+        filepath = directory / filename
+        return pd.read_csv(filepath, **kwargs)
+
+    def save_csv(
+        self,
+        df: pd.DataFrame,
+        filename: str,
+        processed: bool = True,
+        **kwargs: Any,
+    ) -> Path:
+        """Save a DataFrame to CSV.
+
+        Args:
+            df: DataFrame to save
+            filename: Name of the file to save
+            processed: Whether to save to processed directory
+            **kwargs: Additional arguments to pass to df.to_csv
+
+        Returns:
+            Path to the saved file
+        """
+        directory = self.processed_dir if processed else self.raw_dir
+        directory.mkdir(parents=True, exist_ok=True)
+        filepath = directory / filename
+        df.to_csv(filepath, index=False, **kwargs)
+        return filepath
+
+    def load_parquet(self, filename: str, raw: bool = True, **kwargs: Any) -> pd.DataFrame:
+        """Load a Parquet file.
+
+        Args:
+            filename: Name of the file to load
+            raw: Whether to load from raw or processed directory
+            **kwargs: Additional arguments to pass to pd.read_parquet
+
+        Returns:
+            Loaded DataFrame
+        """
+        directory = self.raw_dir if raw else self.processed_dir
+        filepath = directory / filename
+        return pd.read_parquet(filepath, **kwargs)
+
+    def save_parquet(
+        self,
+        df: pd.DataFrame,
+        filename: str,
+        processed: bool = True,
+        **kwargs: Any,
+    ) -> Path:
+        """Save a DataFrame to Parquet.
+
+        Args:
+            df: DataFrame to save
+            filename: Name of the file to save
+            processed: Whether to save to processed directory
+            **kwargs: Additional arguments to pass to df.to_parquet
+
+        Returns:
+            Path to the saved file
+        """
+        directory = self.processed_dir if processed else self.raw_dir
+        directory.mkdir(parents=True, exist_ok=True)
+        filepath = directory / filename
+        df.to_parquet(filepath, **kwargs)
+        return filepath

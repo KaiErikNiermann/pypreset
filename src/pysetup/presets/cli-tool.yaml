@@ -1,0 +1,25 @@
+name: cli-tool
+description: A command-line tool built with Typer
+
+base: empty-package
+
+metadata:
+  description: "A CLI tool built with Typer"
+
+structure:
+  directories: []
+  files:
+    - path: "src/{{ project.package_name }}/cli.py"
+      template: cli_main.py.j2
+
+dependencies:
+  main:
+    - "typer>=0.15.0"
+
+# Entry points use special placeholders: __PROJECT_NAME__ and __PACKAGE_NAME__
+entry_points:
+  - name: "__PROJECT_NAME__"
+    module: "__PACKAGE_NAME__.cli:app"
+
+extras:
+  cli_framework: typer

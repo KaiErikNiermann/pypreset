@@ -1,0 +1,36 @@
+"""CLI application using Typer."""
+
+import typer
+
+app = typer.Typer(
+    name="{{ project.name }}",
+    help="{{ project.description }}",
+    no_args_is_help=True,
+)
+
+
+@app.command()
+def hello(
+    name: str = typer.Argument("World", help="Name to greet"),
+    count: int = typer.Option(1, "--count", "-c", help="Number of greetings"),
+) -> None:
+    """Say hello."""
+    for _ in range(count):
+        typer.echo(f"Hello, {name}!")
+
+
+@app.command()
+def version() -> None:
+    """Show the version."""
+    from {{ project.package_name }} import __version__
+
+    typer.echo(f"{{ project.name }} version {__version__}")
+
+
+def main() -> None:
+    """Main entry point."""
+    app()
+
+
+if __name__ == "__main__":
+    main()

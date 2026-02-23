@@ -1,0 +1,138 @@
+[tool.poetry]
+name = "{{ project.name }}"
+version = "{{ project.version }}"
+description = "{{ project.description }}"
+{% if project.authors %}
+authors = [{% for author in project.authors %}"{{ author }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+{% else %}
+authors = ["Your Name <you@example.com>"]
+{% endif %}
+readme = "{{ project.readme }}"
+{% if layout == "src" %}
+packages = [{include = "{{ project.package_name }}", from = "src"}]
+{% else %}
+packages = [{include = "{{ project.package_name }}"}]
+{% endif %}
+
+{% if entry_points %}
+[tool.poetry.scripts]
+{% for ep in entry_points %}
+{{ ep.name }} = "{{ ep.module }}"
+{% endfor %}
+{% endif %}
+
+[tool.poetry.dependencies]
+python = "^{{ project.python_version }}"
+{% for pkg in dependencies.main %}
+{% set pkg_clean = pkg.split('>=')[0].split('==')[0].split('^')[0].split('~')[0] %}
+{% if '[' in pkg_clean or ']' in pkg_clean or '.' in pkg_clean %}
+"{{ pkg_clean }}" = "{% if '>=' in pkg or '==' in pkg or '^' in pkg or '~' in pkg %}{{ pkg.replace(pkg_clean, '') }}{% else %}*{% endif %}"
+{% else %}
+{{ pkg_clean }} = "{% if '>=' in pkg or '==' in pkg or '^' in pkg or '~' in pkg %}{{ pkg.replace(pkg_clean, '') }}{% else %}*{% endif %}"
+{% endif %}
+{% endfor %}
+
+{% if testing.enabled or formatting.enabled or dependencies.dev %}
+[tool.poetry.group.dev.dependencies]
+{% if testing.enabled %}
+{% if testing.framework == "pytest" %}
+pytest = "^8.3.0"
+{% if testing.coverage %}
+pytest-cov = "^4.1.0"
+{% endif %}
+{% endif %}
+{% endif %}
+{% if formatting.enabled %}
+{% if formatting.tool == "ruff" %}
+ruff = "^0.8.0"
+{% elif formatting.tool == "black" %}
+black = "^24.0.0"
+{% endif %}
+{% endif %}
+{% if typing_level in ["basic", "strict"] %}
+{% if formatting.type_checker == "mypy" %}
+mypy = "^1.13.0"
+{% elif formatting.type_checker == "ty" %}
+ty = "^0.0.1a7"
+{% endif %}
+{% endif %}
+{% if formatting.radon %}
+radon = "^6.0.0"
+{% endif %}
+{% if formatting.version_bumping %}
+bump-my-version = "^0.31.0"
+{% endif %}
+{% for pkg in dependencies.dev %}
+{{ pkg.split('>=')[0].split('==')[0].split('^')[0].split('~')[0] }} = "*"
+{% endfor %}
+{% endif %}
+
+{% if formatting.enabled and formatting.tool == "ruff" %}
+[tool.ruff]
+line-length = {{ formatting.line_length }}
+target-version = "py{{ project.python_version | replace('.', '') }}"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM"{% if typing_level == "strict" %}, "TCH"{% endif %}]
+{% endif %}
+
+{% if typing_level in ["basic", "strict"] %}
+{% if formatting.type_checker == "mypy" %}
+[tool.mypy]
+python_version = "{{ project.python_version }}"
+{% if typing_level == "strict" %}
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+{% else %}
+check_untyped_defs = true
+{% endif %}
+{% elif formatting.type_checker == "ty" %}
+[tool.ty]
+python-version = "{{ project.python_version }}"
+{% endif %}
+{% endif %}
+
+{% if formatting.radon %}
+[tool.radon]
+cc_min = "B"
+show_complexity = true
+{% endif %}
+
+{% if formatting.version_bumping %}
+[tool.bumpversion]
+current_version = "{{ project.version }}"
+commit = true
+tag = true
+tag_name = "v{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "pyproject.toml"
+search = 'version = "{current_version}"'
+replace = 'version = "{new_version}"'
+
+{% if layout == "src" %}
+[[tool.bumpversion.files]]
+filename = "src/{{ project.package_name }}/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+{% else %}
+[[tool.bumpversion.files]]
+filename = "{{ project.package_name }}/__init__.py"
+search = '__version__ = "{current_version}"'
+replace = '__version__ = "{new_version}"'
+{% endif %}
+{% endif %}
+
+{% if testing.enabled and testing.framework == "pytest" %}
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+{% if testing.coverage %}
+addopts = "--cov={{ project.package_name }} --cov-report=term-missing"
+{% endif %}
+{% endif %}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

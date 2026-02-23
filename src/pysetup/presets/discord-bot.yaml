@@ -1,0 +1,36 @@
+name: discord-bot
+description: A Discord bot using discord.py
+
+base: empty-package
+
+metadata:
+  description: "A Discord bot using discord.py"
+
+structure:
+  directories:
+    - "src/{{ project.package_name }}/cogs"
+  files:
+    - path: "src/{{ project.package_name }}/bot.py"
+      template: discord_bot.py.j2
+    - path: "src/{{ project.package_name }}/cogs/__init__.py"
+      content: '"""Bot cogs package."""'
+    - path: ".env.example"
+      content: |
+        # Discord Bot Configuration
+        DISCORD_TOKEN=your_discord_bot_token_here
+        COMMAND_PREFIX=!
+
+dependencies:
+  main:
+    - "discord.py>=2.4.0"
+    - "python-dotenv>=1.0.0"
+  dev:
+    - "dpytest>=0.7.0"
+
+# Entry points use special placeholders: __PROJECT_NAME__ and __PACKAGE_NAME__
+entry_points:
+  - name: "__PROJECT_NAME__"
+    module: "__PACKAGE_NAME__.bot:main"
+
+extras:
+  discord_framework: "discord.py"

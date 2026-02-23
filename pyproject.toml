@@ -1,0 +1,62 @@
+[tool.poetry]
+name = "pysetup"
+version = "0.1.0"
+description = "A meta-tool for setting up Poetry-based Python projects with configurable presets"
+authors = ["Your Name <you@example.com>"]
+readme = "README.md"
+packages = [{include = "pysetup", from = "src"}]
+
+[tool.poetry.scripts]
+pysetup = "pysetup.cli:app"
+pysetup-mcp = "pysetup.mcp_server:main"
+
+[tool.poetry.dependencies]
+python = ">=3.14"
+typer = {extras = ["all"], version = "^0.15.0"}
+pydantic = "^2.10.0"
+pyyaml = "^6.0.2"
+jinja2 = "^3.1.4"
+pyright = "^1.1.408"
+fastmcp = {version = "^3.0", optional = true, python = ">=3.14,<4.0"}
+
+[tool.poetry.extras]
+mcp = ["fastmcp"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.3.0"
+pytest-tmp-files = {version = "^0.0.2", python = ">=3.14,<4.0"}
+ruff = "^0.8.0"
+mypy = "^1.13.0"
+types-pyyaml = "^6.0.12"
+fastmcp = {version = "^3.0", python = ">=3.14,<4.0"}
+radon = "^6.0.1"
+pytest-asyncio = "^1.3.0"
+sphinx = "^9.1.0"
+sphinx-rtd-theme = "^3.1.0"
+sphinx-autodoc-typehints = "^3.6.3"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "TC"]
+
+[tool.pytest.ini_options]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.14"
+strict = true
+warn_return_any = true
+warn_unused_ignores = true
+
+[tool.radon]
+cc_min = "C"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
