@@ -7,7 +7,7 @@ import pytest
 
 
 @pytest.fixture
-def temp_output_dir(tmp_path: Path) -> Generator[Path, None, None]:
+def temp_output_dir(tmp_path: Path) -> Generator[Path]:
     """Provide a temporary directory for project generation."""
     output_dir = tmp_path / "projects"
     output_dir.mkdir(parents=True, exist_ok=True)
