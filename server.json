@@ -16,8 +16,8 @@
       "version": "0.1.4",
       "runtimeHint": "uvx",
       "runtimeArguments": [
-        {"type": "positional", "value": "--extra"},
-        {"type": "positional", "value": "mcp"}
+        {"type": "positional", "value": "--from"},
+        {"type": "positional", "value": "pypreset[mcp]"}
       ],
       "packageArguments": [],
       "transport": {

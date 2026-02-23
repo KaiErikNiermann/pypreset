@@ -18,7 +18,7 @@ For MCP server support (AI assistant integration):
    pip install pypreset[mcp]
 
    # Or use via uvx (no install needed)
-   uvx --extra mcp pypreset-mcp
+   uvx --from "pypreset[mcp]" pypreset-mcp
 
 The MCP server is also published to the `MCP Registry <https://registry.modelcontextprotocol.io/>`_
 as ``io.github.KaiErikNiermann/pypreset``. See :doc:`mcp-server` for client configuration.

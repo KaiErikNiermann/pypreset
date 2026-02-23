@@ -145,7 +145,7 @@ pypreset is published to the [MCP Registry](https://registry.modelcontextprotoco
 
 ```bash
 # Claude Code
-claude mcp add pypreset -- uvx --extra mcp pypreset-mcp
+claude mcp add pypreset -- uvx --from "pypreset[mcp]" pypreset-mcp
 
 # Or add manually to ~/.claude/settings.json
 ```
@@ -155,7 +155,7 @@ claude mcp add pypreset -- uvx --extra mcp pypreset-mcp
   "mcpServers": {
     "pypreset": {
       "command": "uvx",
-      "args": ["--extra", "mcp", "pypreset-mcp"]
+      "args": ["--from", "pypreset[mcp]", "pypreset-mcp"]
     }
   }
 }

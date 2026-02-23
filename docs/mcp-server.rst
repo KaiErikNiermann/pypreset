@@ -16,7 +16,7 @@ as ``io.github.KaiErikNiermann/pypreset``.
 .. code-block:: bash
 
    # Claude Code — one-liner
-   claude mcp add pypreset -- uvx --extra mcp pypreset-mcp
+   claude mcp add pypreset -- uvx --from "pypreset[mcp]" pypreset-mcp
 
 No local install needed — ``uvx`` fetches the package on demand.
 
@@ -39,7 +39,7 @@ Using ``uvx`` (no local install):
      "mcpServers": {
        "pypreset": {
          "command": "uvx",
-         "args": ["--extra", "mcp", "pypreset-mcp"]
+         "args": ["--from", "pypreset[mcp]", "pypreset-mcp"]
        }
      }
    }
@@ -65,7 +65,7 @@ Using a local install:
      "mcpServers": {
        "pypreset": {
          "command": "uvx",
-         "args": ["--extra", "mcp", "pypreset-mcp"]
+         "args": ["--from", "pypreset[mcp]", "pypreset-mcp"]
        }
      }
    }
