@@ -23,9 +23,9 @@ fastmcp = {version = "^3.0", optional = true, python = ">=3.14,<4.0"}
 mcp = ["fastmcp"]
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.3.0"
+pytest = "^9.0.2"
 pytest-tmp-files = {version = "^0.0.2", python = ">=3.14,<4.0"}
-ruff = "^0.8.0"
+ruff = "^0.15.2"
 mypy = "^1.13.0"
 types-pyyaml = "^6.0.12"
 fastmcp = {version = "^3.0", python = ">=3.14,<4.0"}
