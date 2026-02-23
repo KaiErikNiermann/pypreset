@@ -52,6 +52,8 @@ black = "^24.0.0"
 {% if typing_level in ["basic", "strict"] %}
 {% if formatting.type_checker == "mypy" %}
 mypy = "^1.13.0"
+{% elif formatting.type_checker == "pyright" %}
+pyright = "^1.1.400"
 {% elif formatting.type_checker == "ty" %}
 ty = "^0.0.1a7"
 {% endif %}
@@ -86,6 +88,14 @@ warn_return_any = true
 warn_unused_ignores = true
 {% else %}
 check_untyped_defs = true
+{% endif %}
+{% elif formatting.type_checker == "pyright" %}
+[tool.pyright]
+pythonVersion = "{{ project.python_version }}"
+{% if typing_level == "strict" %}
+typeCheckingMode = "strict"
+{% else %}
+typeCheckingMode = "basic"
 {% endif %}
 {% elif formatting.type_checker == "ty" %}
 [tool.ty]

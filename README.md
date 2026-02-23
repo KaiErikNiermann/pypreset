@@ -8,7 +8,7 @@ A meta-tool for scaffolding Python projects with configurable YAML presets. Supp
 - **Augment existing projects** with GitHub Actions workflows, tests, dependabot, `.gitignore`
 - **Two package managers**: Poetry and uv (PEP 621 + hatchling)
 - **Two layout styles**: `src/` layout and flat layout
-- **Type checking**: mypy, ty, or none
+- **Type checking**: mypy, pyright, ty, or none
 - **Code quality**: ruff linting/formatting, radon complexity checks, pre-commit hooks
 - **Version management**: bump-my-version integration, GitHub release automation via `gh` CLI
 - **User defaults**: persistent config at `~/.config/pypreset/config.yaml`
@@ -55,7 +55,7 @@ pypreset create <name> [OPTIONS]
 | `--config`, `-c` | Custom preset YAML file |
 | `--package-manager` | `poetry` or `uv` |
 | `--layout` | `src` or `flat` |
-| `--type-checker` | `mypy`, `ty`, or `none` |
+| `--type-checker` | `mypy`, `pyright`, `ty`, or `none` |
 | `--typing` | `none`, `basic`, or `strict` |
 | `--python-version` | e.g., `3.12` |
 | `--testing` / `--no-testing` | Enable/disable testing scaffold |

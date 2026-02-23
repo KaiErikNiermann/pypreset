@@ -109,6 +109,9 @@ jobs:
 {% if formatting.type_checker == "mypy" %}
       - name: Type check with mypy
         run: poetry run mypy src
+{% elif formatting.type_checker == "pyright" %}
+      - name: Type check with pyright
+        run: poetry run pyright src
 {% elif formatting.type_checker == "ty" %}
       - name: Type check with ty
         run: poetry run ty check src

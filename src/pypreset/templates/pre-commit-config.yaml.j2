@@ -29,6 +29,11 @@ repos:
     hooks:
       - id: mypy
         additional_dependencies: []
+{% elif formatting.type_checker == "pyright" %}
+  - repo: https://github.com/RobertCraigie/pyright-python
+    rev: v1.1.400
+    hooks:
+      - id: pyright
 {% elif formatting.type_checker == "ty" %}
   - repo: https://github.com/astral-sh/ty
     rev: v0.0.1a7

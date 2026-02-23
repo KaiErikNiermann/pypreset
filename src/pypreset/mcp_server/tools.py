@@ -48,7 +48,8 @@ def register_tools(mcp: FastMCP) -> None:
             str | None, Field(description="Layout style override: 'src' or 'flat'")
         ] = None,
         type_checker: Annotated[
-            str | None, Field(description="Type checker override: 'mypy', 'ty', or 'none'")
+            str | None,
+            Field(description="Type checker override: 'mypy', 'pyright', 'ty', or 'none'"),
         ] = None,
         package_manager: Annotated[
             str | None, Field(description="Package manager override: 'poetry' or 'uv'")

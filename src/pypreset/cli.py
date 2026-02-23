@@ -123,7 +123,7 @@ def create_project(
     ] = None,
     type_checker: Annotated[
         TypeChecker | None,
-        typer.Option("--type-checker", help="Type checker (mypy or ty)"),
+        typer.Option("--type-checker", help="Type checker (mypy, pyright, or ty)"),
     ] = None,
     package_manager: Annotated[
         CreationPackageManager | None,

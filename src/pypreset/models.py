@@ -44,6 +44,7 @@ class TypeChecker(str, Enum):
     """Supported type checking tools."""
 
     MYPY = "mypy"
+    PYRIGHT = "pyright"
     TY = "ty"
     NONE = "none"
 

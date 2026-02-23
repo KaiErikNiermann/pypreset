@@ -298,6 +298,46 @@ class TestCreateWithTypeChecker:
         assert "[tool.mypy]" not in pyproject
         assert 'mypy = "' not in pyproject
 
+    def test_pyright_type_checker(self, tmp_path: Path) -> None:
+        """Test that --type-checker pyright uses pyright instead of mypy."""
+        result = runner.invoke(
+            app,
+            [
+                "create",
+                "pyright-proj",
+                "--type-checker",
+                "pyright",
+                "--output",
+                str(tmp_path),
+                "--no-git",
+            ],
+        )
+
+        assert result.exit_code == 0
+        pyproject = (tmp_path / "pyright-proj" / "pyproject.toml").read_text()
+        assert "[tool.pyright]" in pyproject
+        assert 'pyright = "' in pyproject
+        assert "[tool.mypy]" not in pyproject
+        assert "[tool.ty]" not in pyproject
+
+    def test_pyright_strict_mode(self, tmp_path: Path) -> None:
+        """Test that pyright with strict typing uses strict mode."""
+        runner.invoke(
+            app,
+            [
+                "create",
+                "pyright-strict",
+                "--type-checker",
+                "pyright",
+                "--output",
+                str(tmp_path),
+                "--no-git",
+            ],
+        )
+
+        pyproject = (tmp_path / "pyright-strict" / "pyproject.toml").read_text()
+        assert 'typeCheckingMode = "strict"' in pyproject
+
     def test_none_type_checker_with_strict_typing(self, tmp_path: Path) -> None:
         """Test that --type-checker none omits type checker even with strict typing."""
         runner.invoke(
@@ -315,6 +355,7 @@ class TestCreateWithTypeChecker:
 
         pyproject = (tmp_path / "no-tc" / "pyproject.toml").read_text()
         assert "[tool.mypy]" not in pyproject
+        assert "[tool.pyright]" not in pyproject
         assert "[tool.ty]" not in pyproject
 
     def test_ty_in_ci_workflow(self, tmp_path: Path) -> None:
@@ -336,6 +377,27 @@ class TestCreateWithTypeChecker:
         ci_content = ci_path.read_text()
         assert "ty check" in ci_content
         assert "mypy" not in ci_content
+
+    def test_pyright_in_ci_workflow(self, tmp_path: Path) -> None:
+        """Test that pyright type checker appears in CI workflow."""
+        runner.invoke(
+            app,
+            [
+                "create",
+                "pyright-ci",
+                "--type-checker",
+                "pyright",
+                "--output",
+                str(tmp_path),
+                "--no-git",
+            ],
+        )
+
+        ci_path = tmp_path / "pyright-ci" / ".github" / "workflows" / "ci.yaml"
+        ci_content = ci_path.read_text()
+        assert "pyright src" in ci_content
+        assert "mypy" not in ci_content
+        assert "ty check" not in ci_content
 
 
 class TestCreateWithUv:
