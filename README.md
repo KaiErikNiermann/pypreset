@@ -1,5 +1,7 @@
 # pypreset
 
+mcp-name: io.github.KaiErikNiermann/pypreset
+
 A meta-tool for scaffolding Python projects with configurable YAML presets. Supports Poetry and uv, generates CI workflows, testing scaffolds, type checking configs, and more.
 
 ## Features
