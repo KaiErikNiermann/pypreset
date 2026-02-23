@@ -92,7 +92,7 @@ docs-serve: docs
 
 # --- Versioning ---
 
-# Bump version, commit, tag, push, and create GitHub release
+# Bump version, commit, tag, push, create GitHub release, wait for PyPI, publish MCP
 release bump="patch":
     @bump="{{bump}}"; \
         if [[ "$bump" == bump=* ]]; then bump="${bump#bump=}"; fi; \
@@ -100,7 +100,7 @@ release bump="patch":
     @version=$(poetry version --short); \
         just _release "$version"
 
-# Use an explicit version, then commit, tag, push, and release
+# Use an explicit version, then full release pipeline
 release-version version:
     @version="{{version}}"; \
         if [[ "$version" == version=* ]]; then version="${version#version=}"; fi; \
@@ -115,7 +115,9 @@ rerun version:
         git tag -d v"$version" || true; \
         git push --delete origin v"$version" || true; \
         git tag v"$version"; \
-        git push origin v"$version"
+        git push origin v"$version"; \
+        just _wait-pypi "$version"; \
+        just _publish-mcp "$version"
 
 # Delete and recreate the GitHub release + retag HEAD at the same version
 rerelease version:
@@ -125,17 +127,46 @@ rerelease version:
         just rerun "$version"; \
         gh release create v"$version" --title "v$version" --generate-notes
 
-# Internal helper — commit, tag, push, create release
+# Internal: sync versions, commit, tag, push, create release, wait for PyPI, publish MCP
 _release version:
     @version="{{version}}"; \
         if [[ "$version" == version=* ]]; then version="${version#version=}"; fi; \
+        just _sync-versions "$version"; \
         poetry lock; \
-        git add pyproject.toml; \
+        git add pyproject.toml server.json; \
         git add -f poetry.lock; \
         git commit -m "chore(release): v$version"; \
         git push; \
         git tag v"$version"; \
         git push origin v"$version"; \
-        gh release create v"$version" --title "v$version" --generate-notes
+        gh release create v"$version" --title "v$version" --generate-notes; \
+        just _wait-pypi "$version"; \
+        just _publish-mcp "$version"
+
+# Internal: update version in server.json to match pyproject.toml
+_sync-versions version:
+    @version="{{version}}"; \
+        if [[ "$version" == version=* ]]; then version="${version#version=}"; fi; \
+        sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$version\"/g" server.json; \
+        echo "Synced server.json to v$version"
+
+# Internal: wait for PyPI publish workflow to complete
+_wait-pypi version:
+    @version="{{version}}"; \
+        if [[ "$version" == version=* ]]; then version="${version#version=}"; fi; \
+        echo "Waiting for PyPI publish workflow..."; \
+        run_id=$(gh run list --workflow "Publish to PyPI" --limit 1 --json databaseId -q '.[0].databaseId'); \
+        gh run watch "$run_id" --exit-status && \
+        echo "PyPI publish succeeded for v$version" || \
+        { echo "PyPI publish failed — skipping MCP registry publish"; exit 1; }
+
+# Internal: update server.json version and publish to MCP registry
+_publish-mcp version:
+    @version="{{version}}"; \
+        if [[ "$version" == version=* ]]; then version="${version#version=}"; fi; \
+        echo "Publishing to MCP registry..."; \
+        mcp-publisher publish && \
+        echo "MCP registry publish succeeded for v$version" || \
+        echo "MCP registry publish failed (may need: mcp-publisher login github)"
 
 all: format lint-fix typecheck radon test
