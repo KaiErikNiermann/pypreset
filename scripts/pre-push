@@ -7,7 +7,7 @@ echo "==> Pre-push: running ruff autofix + lint..."
 poetry run ruff check src/ tests/ --fix --quiet 2>/dev/null || true
 poetry run ruff format src/ tests/ --quiet 2>/dev/null || true
 
-# Check for remaining issues
+# Check for remaining lint issues
 if ! poetry run ruff check src/ tests/; then
     echo ""
     echo "==> Pre-push BLOCKED: fix the above lint errors before pushing."
@@ -15,3 +15,30 @@ if ! poetry run ruff check src/ tests/; then
 fi
 
 echo "==> Pre-push: lint clean."
+
+echo "==> Pre-push: running type check..."
+if ! poetry run pyright src/; then
+    echo ""
+    echo "==> Pre-push BLOCKED: fix the above type errors before pushing."
+    exit 1
+fi
+
+echo "==> Pre-push: type check clean."
+
+echo "==> Pre-push: running complexity check (radon)..."
+if ! poetry run radon cc src/ -a -nd; then
+    echo ""
+    echo "==> Pre-push BLOCKED: fix functions with grade D or worse before pushing."
+    exit 1
+fi
+
+echo "==> Pre-push: complexity clean."
+
+echo "==> Pre-push: running tests..."
+if ! poetry run pytest --ignore=tests/test_integration.py -q; then
+    echo ""
+    echo "==> Pre-push BLOCKED: fix failing tests before pushing."
+    exit 1
+fi
+
+echo "==> Pre-push: all checks passed."
