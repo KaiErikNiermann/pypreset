@@ -116,3 +116,4 @@ docs/_build/
 
 # local stuff
 .github/instructions
+.mcpregistry*

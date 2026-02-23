@@ -1,8 +1,8 @@
 [tool.poetry]
 name = "pypreset"
 version = "0.1.4"
-description = "A meta-tool for setting up Poetry-based Python projects with configurable presets"
-authors = ["Your Name <you@example.com>"]
+description = "A meta-tool for setting up Python projects with configurable presets"
+authors = ["applesauce <kai.niermann@gmail.com>"]
 readme = "README.md"
 packages = [{include = "pypreset", from = "src"}]
 
