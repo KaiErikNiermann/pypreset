@@ -3,7 +3,7 @@
 import logging
 import re
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any, Literal
 
@@ -16,7 +16,7 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
-class PackageManager(str, Enum):
+class PackageManager(StrEnum):
     """Detected package manager."""
 
     POETRY = "poetry"
@@ -27,7 +27,7 @@ class PackageManager(str, Enum):
     UNKNOWN = "unknown"
 
 
-class DetectedLinter(str, Enum):
+class DetectedLinter(StrEnum):
     """Detected linting/formatting tools."""
 
     RUFF = "ruff"
@@ -37,7 +37,7 @@ class DetectedLinter(str, Enum):
     NONE = "none"
 
 
-class DetectedTestFramework(str, Enum):
+class DetectedTestFramework(StrEnum):
     """Detected testing framework."""
 
     PYTEST = "pytest"
@@ -45,7 +45,7 @@ class DetectedTestFramework(str, Enum):
     NONE = "none"
 
 
-class DetectedTypeChecker(str, Enum):
+class DetectedTypeChecker(StrEnum):
     """Detected type checker."""
 
     MYPY = "mypy"

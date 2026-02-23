@@ -40,6 +40,7 @@ from pypreset.versioning import VersioningAssistant, VersioningError
 if TYPE_CHECKING:
     from pypreset.augment_generator import AugmentResult
     from pypreset.interactive_prompts import AugmentConfig
+    from pypreset.models import ProjectConfig
 
 app = typer.Typer(
     name="pypreset",

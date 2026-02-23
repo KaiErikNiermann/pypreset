@@ -1,12 +1,12 @@
 """Configuration models for pypreset."""
 
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 
-class LayoutStyle(str, Enum):
+class LayoutStyle(StrEnum):
     """Project directory layout style.
 
     See https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/
@@ -16,7 +16,7 @@ class LayoutStyle(str, Enum):
     FLAT = "flat"
 
 
-class TypingLevel(str, Enum):
+class TypingLevel(StrEnum):
     """Python typing strictness level."""
 
     NONE = "none"
@@ -24,7 +24,7 @@ class TypingLevel(str, Enum):
     STRICT = "strict"
 
 
-class TestingFramework(str, Enum):
+class TestingFramework(StrEnum):
     """Supported testing frameworks."""
 
     PYTEST = "pytest"
@@ -32,7 +32,7 @@ class TestingFramework(str, Enum):
     NONE = "none"
 
 
-class FormattingTool(str, Enum):
+class FormattingTool(StrEnum):
     """Supported formatting/linting tools."""
 
     RUFF = "ruff"
@@ -40,7 +40,7 @@ class FormattingTool(str, Enum):
     NONE = "none"
 
 
-class TypeChecker(str, Enum):
+class TypeChecker(StrEnum):
     """Supported type checking tools."""
 
     MYPY = "mypy"
@@ -49,7 +49,7 @@ class TypeChecker(str, Enum):
     NONE = "none"
 
 
-class CreationPackageManager(str, Enum):
+class CreationPackageManager(StrEnum):
     """Package manager for project creation."""
 
     POETRY = "poetry"

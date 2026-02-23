@@ -3,7 +3,7 @@
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +19,7 @@ from pypreset.project_analyzer import (
 logger = logging.getLogger(__name__)
 
 
-class AugmentComponent(str, Enum):
+class AugmentComponent(StrEnum):
     """Available augment components."""
 
     TEST_WORKFLOW = "test_workflow"
