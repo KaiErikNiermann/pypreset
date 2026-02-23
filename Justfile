@@ -160,13 +160,29 @@ _wait-pypi version:
         echo "PyPI publish succeeded for v$version" || \
         { echo "PyPI publish failed — skipping MCP registry publish"; exit 1; }
 
-# Internal: update server.json version and publish to MCP registry
+# Internal: publish to MCP registry (auto-login on 401, wait for PyPI propagation on 404)
 _publish-mcp version:
     @version="{{version}}"; \
         if [[ "$version" == version=* ]]; then version="${version#version=}"; fi; \
         echo "Publishing to MCP registry..."; \
-        mcp-publisher publish && \
-        echo "MCP registry publish succeeded for v$version" || \
-        echo "MCP registry publish failed (may need: mcp-publisher login github)"
+        attempt=1; max_attempts=12; \
+        while [ "$attempt" -le "$max_attempts" ]; do \
+            output=$(mcp-publisher publish 2>&1) && \
+            { echo "MCP registry publish succeeded for v$version"; break; } || true; \
+            if echo "$output" | grep -q "401\|expired\|Unauthorized"; then \
+                echo "Token expired — re-authenticating..."; \
+                mcp-publisher login github; \
+                echo "Retrying publish..."; \
+            elif echo "$output" | grep -q "404\|not found\|Not Found"; then \
+                echo "PyPI package not yet visible (attempt $attempt/$max_attempts) — waiting 15s..."; \
+                sleep 15; \
+            else \
+                echo "MCP registry publish failed: $output"; exit 1; \
+            fi; \
+            attempt=$((attempt + 1)); \
+        done; \
+        if [ "$attempt" -gt "$max_attempts" ]; then \
+            echo "MCP registry publish failed after $max_attempts attempts"; exit 1; \
+        fi
 
 all: format lint-fix typecheck radon test

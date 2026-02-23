@@ -2,9 +2,26 @@
 name = "pypreset"
 version = "0.1.5"
 description = "A meta-tool for setting up Python projects with configurable presets"
+license = "MIT"
 authors = ["applesauce <kai.niermann@gmail.com>"]
 readme = "README.md"
+homepage = "https://github.com/KaiErikNiermann/pypreset"
+repository = "https://github.com/KaiErikNiermann/pypreset"
+documentation = "https://kaierikniermann.github.io/pypreset/"
+keywords = ["scaffolding", "project-template", "preset", "poetry", "uv"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Topic :: Software Development :: Code Generators",
+    "Typing :: Typed",
+]
 packages = [{include = "pypreset", from = "src"}]
+
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/KaiErikNiermann/pypreset/issues"
+"Changelog" = "https://github.com/KaiErikNiermann/pypreset/releases"
 
 [tool.poetry.scripts]
 pypreset = "pypreset.cli:app"
