@@ -8,42 +8,43 @@ list presets, validate structure, and manage configuration — all programmatica
 Installation
 ------------
 
-The MCP server requires the ``mcp`` extra:
+pypreset is published to the `MCP Registry <https://registry.modelcontextprotocol.io/>`_
+as ``io.github.KaiErikNiermann/pypreset``.
+
+**Install from the registry via uvx (recommended):**
+
+.. code-block:: bash
+
+   # Claude Code — one-liner
+   claude mcp add pypreset -- uvx --extra mcp pypreset-mcp
+
+No local install needed — ``uvx`` fetches the package on demand.
+
+**Or install locally from PyPI:**
 
 .. code-block:: bash
 
    pip install pypreset[mcp]
-
-Running the Server
-------------------
-
-The MCP server uses STDIO transport and is started via:
-
-.. code-block:: bash
-
-   pypreset-mcp
-
-This is intended to be launched by an MCP client (Claude Code, Cursor, etc.),
-not run manually.
 
 Client Configuration
 --------------------
 
 **Claude Code** (``~/.claude/settings.json``):
 
+Using ``uvx`` (no local install):
+
 .. code-block:: json
 
    {
      "mcpServers": {
        "pypreset": {
-         "command": "pypreset-mcp",
-         "args": [],
-         "env": {}
+         "command": "uvx",
+         "args": ["--extra", "mcp", "pypreset-mcp"]
        }
      }
    }
 
-**Claude Desktop** (``claude_desktop_config.json``):
+Using a local install:
 
 .. code-block:: json
 
@@ -56,7 +57,7 @@ Client Configuration
      }
    }
 
-If installed via ``uvx``:
+**Claude Desktop** (``claude_desktop_config.json``):
 
 .. code-block:: json
 

@@ -19,11 +19,10 @@ A meta-tool for scaffolding Python projects with configurable YAML presets. Supp
 ## Installation
 
 ```bash
-# Core CLI
-poetry install
+pip install pypreset
 
 # With MCP server support
-poetry install -E mcp
+pip install pypreset[mcp]
 ```
 
 ## Quick Start
@@ -140,14 +139,34 @@ pypreset config show                    # View current config
 
 ## MCP Server
 
-An MCP (Model Context Protocol) server exposes pypreset to AI coding assistants over STDIO.
+pypreset is published to the [MCP Registry](https://registry.modelcontextprotocol.io/) as `io.github.KaiErikNiermann/pypreset`.
+
+**Install via the registry (recommended):**
 
 ```bash
-# Run the server
-pypreset-mcp
+# Claude Code
+claude mcp add pypreset -- uvx --extra mcp pypreset-mcp
+
+# Or add manually to ~/.claude/settings.json
 ```
 
-Add to Claude Code `settings.json`:
+```json
+{
+  "mcpServers": {
+    "pypreset": {
+      "command": "uvx",
+      "args": ["--extra", "mcp", "pypreset-mcp"]
+    }
+  }
+}
+```
+
+**Or install locally:**
+
+```bash
+pip install pypreset[mcp]
+```
+
 ```json
 {
   "mcpServers": {

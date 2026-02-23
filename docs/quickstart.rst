@@ -14,13 +14,20 @@ For MCP server support (AI assistant integration):
 
 .. code-block:: bash
 
+   # Install locally
    pip install pypreset[mcp]
+
+   # Or use via uvx (no install needed)
+   uvx --extra mcp pypreset-mcp
+
+The MCP server is also published to the `MCP Registry <https://registry.modelcontextprotocol.io/>`_
+as ``io.github.KaiErikNiermann/pypreset``. See :doc:`mcp-server` for client configuration.
 
 For development:
 
 .. code-block:: bash
 
-   git clone https://github.com/OWNER/pypreset
+   git clone https://github.com/KaiErikNiermann/pypreset
    cd pypreset
    poetry install
 
