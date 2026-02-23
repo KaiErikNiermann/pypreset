@@ -9,24 +9,24 @@ from pathlib import Path
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-from pypreset.models import PresetConfig
+from pypreset.models import PresetConfig  # noqa: E402
 
 
 def main() -> None:
     """Generate and save the JSON schema for PresetConfig."""
     schema = PresetConfig.model_json_schema()
-    
+
     # Add schema metadata
     schema["$schema"] = "http://json-schema.org/draft-07/schema#"
     schema["title"] = "PySetup CLI Preset Configuration"
     schema["description"] = "Schema for pypreset preset YAML files"
-    
+
     output_path = Path(__file__).parent.parent / "schemas" / "preset.schema.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     with output_path.open("w") as f:
         json.dump(schema, f, indent=2)
-    
+
     print(f"Schema generated: {output_path}")
 
 
