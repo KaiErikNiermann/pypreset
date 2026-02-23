@@ -12,7 +12,9 @@ from typing import Any
 import yaml
 
 from pypreset.models import (
+    ContainerRuntime,
     CreationPackageManager,
+    DocumentationTool,
     FormattingTool,
     LayoutStyle,
     TestingFramework,
@@ -33,6 +35,8 @@ _ENUM_FIELDS: dict[str, type[Enum]] = {
     "testing_framework": TestingFramework,
     "type_checker": TypeChecker,
     "package_manager": CreationPackageManager,
+    "container_runtime": ContainerRuntime,
+    "documentation_tool": DocumentationTool,
 }
 
 
@@ -127,6 +131,16 @@ def apply_user_defaults(config: dict[str, Any]) -> dict[str, Any]:
     if "package_manager" in user_cfg:
         result.setdefault("package_manager", user_cfg["package_manager"])
 
+    # container_runtime → docker.container_runtime
+    if "container_runtime" in user_cfg:
+        docker = result.setdefault("docker", {})
+        docker.setdefault("container_runtime", user_cfg["container_runtime"])
+
+    # documentation_tool → documentation.tool
+    if "documentation_tool" in user_cfg:
+        documentation = result.setdefault("documentation", {})
+        documentation.setdefault("tool", user_cfg["documentation_tool"])
+
     return result
 
 
@@ -153,4 +167,6 @@ def get_default_config_template() -> dict[str, Any]:
         "testing_framework": "pytest",
         "type_checker": "mypy",
         "package_manager": "poetry",
+        "container_runtime": "docker",
+        "documentation_tool": "none",
     }

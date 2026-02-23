@@ -98,6 +98,21 @@ data/processed/*
 *.ipynb_checkpoints
 {% endif %}
 
+{% if tox is defined and tox.enabled %}
+# tox
+.tox/
+{% endif %}
+
+{% if documentation is defined and documentation.tool == "mkdocs" %}
+# MkDocs
+site/
+{% endif %}
+
+{% if documentation is defined and documentation.tool == "sphinx" %}
+# Sphinx
+docs/_build/
+{% endif %}
+
 # OS specific
 .DS_Store
 Thumbs.db

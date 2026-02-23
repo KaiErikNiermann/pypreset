@@ -27,8 +27,11 @@ Create Command Flow
    generator.ProjectGenerator
        ├── Creates directories
        ├── Renders Jinja2 templates → pyproject.toml, workflows, etc.
-       ├── Optionally generates Dockerfile + .dockerignore
+       ├── Optionally generates Dockerfile/.dockerignore (or Containerfile for Podman)
        ├── Optionally generates .devcontainer/devcontainer.json
+       ├── Optionally generates codecov.yml
+       ├── Optionally generates documentation scaffold (MkDocs or Sphinx)
+       ├── Optionally generates tox.ini (with tox-uv backend)
        ├── Optionally runs git init
        └── Optionally runs poetry install / uv sync
        ↓
@@ -56,7 +59,10 @@ Augment Command Flow
        ├── GitignoreGenerator
        ├── PypiPublishWorkflowGenerator
        ├── DockerfileGenerator
-       └── DevcontainerGenerator
+       ├── DevcontainerGenerator
+       ├── CodecovGenerator
+       ├── DocumentationGenerator
+       └── ToxGenerator
        ↓
    AugmentResult (files created / skipped / errors)
 
@@ -80,7 +86,8 @@ Key Modules
      - Purpose
    * - ``models.py``
      - Pydantic models (``ProjectConfig``, ``PresetConfig``, ``OverrideOptions``),
-       enums (``LayoutStyle``, ``TypeChecker``, ``CreationPackageManager``),
+       enums (``LayoutStyle``, ``TypeChecker``, ``CreationPackageManager``,
+       ``ContainerRuntime``, ``CoverageTool``, ``DocumentationTool``),
        and ``Partial*`` variants for preset merging
    * - ``preset_loader.py``
      - YAML loading, preset inheritance (``deep_merge``), placeholder substitution

@@ -29,6 +29,17 @@ dependabot:
   schedule: weekly
   open_pull_requests_limit: 5
 
+docker:
+  container_runtime: docker
+
+documentation:
+  enabled: false
+  tool: none
+  deploy_gh_pages: false
+
+tox:
+  enabled: false
+
 typing_level: strict
 layout: src
 

@@ -104,6 +104,21 @@ Override preset defaults with CLI flags:
    # Generate Dockerfile, .dockerignore, and VS Code devcontainer config
    pypreset create my-service --preset cli-tool --docker --devcontainer
 
+   # Use Podman instead of Docker
+   pypreset create my-service --preset cli-tool --docker --container-runtime podman
+
+   # Enable Codecov integration with 80% threshold
+   pypreset create my-project --preset empty-package --coverage-tool codecov --coverage-threshold 80
+
+   # Generate MkDocs documentation scaffold with GitHub Pages deployment
+   pypreset create my-project --preset empty-package --docs mkdocs --docs-gh-pages
+
+   # Generate Sphinx documentation scaffold
+   pypreset create my-project --preset empty-package --docs sphinx
+
+   # Generate tox multi-environment testing config (with tox-uv backend)
+   pypreset create my-project --preset empty-package --tox
+
 Augmenting Existing Projects
 -----------------------------
 
@@ -127,6 +142,11 @@ Add CI workflows, tests, and configuration to an existing project:
    # Add Dockerfile and devcontainer
    pypreset augment --dockerfile --devcontainer
 
+   # Add Codecov config, documentation, or tox
+   pypreset augment --codecov
+   pypreset augment --docs mkdocs
+   pypreset augment --tox
+
 The augment command reads your ``pyproject.toml`` to detect your package manager,
 test framework, linter, and type checker, then generates appropriate configurations.
 
@@ -144,6 +164,8 @@ Set persistent defaults so you don't repeat flags:
    pypreset config set layout flat
    pypreset config set type_checker ty
    pypreset config set package_manager uv
+   pypreset config set container_runtime podman
+   pypreset config set documentation_tool mkdocs
 
    # View current config
    pypreset config show

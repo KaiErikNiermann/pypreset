@@ -1,6 +1,7 @@
 """Tests for configuration models."""
 
 from pypreset.models import (
+    CoverageConfig,
     Dependencies,
     DirectoryStructure,
     FileTemplate,
@@ -129,7 +130,7 @@ class TestProjectConfig:
         )
         assert config.metadata.name == "full-project"
         assert len(config.dependencies.main) == 2
-        assert config.testing.coverage is True
+        assert config.testing.coverage_config.enabled is True
 
 
 class TestPresetConfig:
@@ -220,3 +221,166 @@ class TestDockerConfig:
 
         config = DockerConfig(enabled=True, devcontainer=True)
         assert config.devcontainer is True
+
+    def test_container_runtime_default(self) -> None:
+        """Test default container runtime is docker."""
+        from pypreset.models import ContainerRuntime, DockerConfig
+
+        config = DockerConfig()
+        assert config.container_runtime == ContainerRuntime.DOCKER
+
+    def test_container_runtime_podman(self) -> None:
+        """Test setting container runtime to podman."""
+        from pypreset.models import ContainerRuntime, DockerConfig
+
+        config = DockerConfig(container_runtime=ContainerRuntime.PODMAN)
+        assert config.container_runtime == ContainerRuntime.PODMAN
+
+
+class TestContainerRuntime:
+    """Tests for ContainerRuntime enum."""
+
+    def test_values(self) -> None:
+        from pypreset.models import ContainerRuntime
+
+        assert ContainerRuntime.DOCKER == "docker"
+        assert ContainerRuntime.PODMAN == "podman"
+
+
+class TestCoverageConfig:
+    """Tests for CoverageConfig and coverage bool coercion."""
+
+    def test_default_coverage_config(self) -> None:
+        from pypreset.models import CoverageConfig, CoverageTool
+
+        config = CoverageConfig()
+        assert config.enabled is False
+        assert config.tool == CoverageTool.NONE
+        assert config.threshold is None
+        assert config.ignore_patterns == []
+
+    def test_coverage_bool_true_coercion(self) -> None:
+        """Test that coverage=True is coerced to CoverageConfig."""
+        config = TestingConfig(enabled=True, coverage=True)
+        assert isinstance(config.coverage, CoverageConfig)
+        assert config.coverage.enabled is True
+        assert config.coverage.tool.value == "codecov"
+
+    def test_coverage_bool_false_coercion(self) -> None:
+        """Test that coverage=False is coerced to CoverageConfig."""
+        config = TestingConfig(enabled=True, coverage=False)
+        assert isinstance(config.coverage, CoverageConfig)
+        assert config.coverage.enabled is False
+
+    def test_coverage_dict_passthrough(self) -> None:
+        """Test that coverage dict is parsed as CoverageConfig."""
+        from pypreset.models import CoverageConfig
+
+        config = TestingConfig(
+            enabled=True,
+            coverage={"enabled": True, "tool": "codecov", "threshold": 80},
+        )
+        assert isinstance(config.coverage, CoverageConfig)
+        assert config.coverage.threshold == 80
+
+    def test_coverage_config_property(self) -> None:
+        """Test coverage_config property always returns CoverageConfig."""
+        config = TestingConfig(enabled=True, coverage=True)
+        cc = config.coverage_config
+        assert isinstance(cc, CoverageConfig)
+        assert cc.enabled is True
+
+
+class TestDocumentationConfig:
+    """Tests for DocumentationConfig model."""
+
+    def test_default(self) -> None:
+        from pypreset.models import DocumentationConfig, DocumentationTool
+
+        config = DocumentationConfig()
+        assert config.enabled is False
+        assert config.tool == DocumentationTool.NONE
+        assert config.deploy_gh_pages is False
+
+    def test_mkdocs(self) -> None:
+        from pypreset.models import DocumentationConfig, DocumentationTool
+
+        config = DocumentationConfig(
+            enabled=True, tool=DocumentationTool.MKDOCS, deploy_gh_pages=True
+        )
+        assert config.tool == DocumentationTool.MKDOCS
+        assert config.deploy_gh_pages is True
+
+    def test_sphinx(self) -> None:
+        from pypreset.models import DocumentationConfig, DocumentationTool
+
+        config = DocumentationConfig(enabled=True, tool=DocumentationTool.SPHINX)
+        assert config.tool == DocumentationTool.SPHINX
+
+    def test_on_project_config(self) -> None:
+        from pypreset.models import DocumentationConfig, DocumentationTool
+
+        config = ProjectConfig(
+            metadata=Metadata(name="docs-test"),
+            documentation=DocumentationConfig(enabled=True, tool=DocumentationTool.MKDOCS),
+        )
+        assert config.documentation.enabled is True
+        assert config.documentation.tool == DocumentationTool.MKDOCS
+
+
+class TestToxConfig:
+    """Tests for ToxConfig model."""
+
+    def test_default(self) -> None:
+        from pypreset.models import ToxConfig
+
+        config = ToxConfig()
+        assert config.enabled is False
+
+    def test_enabled(self) -> None:
+        from pypreset.models import ToxConfig
+
+        config = ToxConfig(enabled=True)
+        assert config.enabled is True
+
+    def test_on_project_config(self) -> None:
+        from pypreset.models import ToxConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="tox-test"),
+            tox=ToxConfig(enabled=True),
+        )
+        assert config.tox.enabled is True
+
+
+class TestNewOverrideOptions:
+    """Tests for new OverrideOptions fields."""
+
+    def test_new_override_defaults(self) -> None:
+        overrides = OverrideOptions()
+        assert overrides.container_runtime is None
+        assert overrides.coverage_enabled is None
+        assert overrides.coverage_tool is None
+        assert overrides.coverage_threshold is None
+        assert overrides.docs_enabled is None
+        assert overrides.docs_tool is None
+        assert overrides.docs_deploy_gh_pages is None
+        assert overrides.tox_enabled is None
+
+    def test_new_overrides_set(self) -> None:
+        from pypreset.models import ContainerRuntime, CoverageTool, DocumentationTool
+
+        overrides = OverrideOptions(
+            container_runtime=ContainerRuntime.PODMAN,
+            coverage_enabled=True,
+            coverage_tool=CoverageTool.CODECOV,
+            coverage_threshold=80,
+            docs_enabled=True,
+            docs_tool=DocumentationTool.MKDOCS,
+            docs_deploy_gh_pages=True,
+            tox_enabled=True,
+        )
+        assert overrides.container_runtime == ContainerRuntime.PODMAN
+        assert overrides.coverage_threshold == 80
+        assert overrides.docs_tool == DocumentationTool.MKDOCS
+        assert overrides.tox_enabled is True

@@ -12,6 +12,7 @@ from pypreset.models import (
     Dependencies,
     DirectoryStructure,
     DockerConfig,
+    DocumentationConfig,
     EntryPoint,
     FileTemplate,
     FormattingConfig,
@@ -21,6 +22,7 @@ from pypreset.models import (
     PresetConfig,
     ProjectConfig,
     TestingConfig,
+    ToxConfig,
     TypingLevel,
 )
 from pypreset.user_config import apply_user_defaults
@@ -163,6 +165,9 @@ def apply_overrides(config: dict[str, Any], overrides: OverrideOptions) -> dict[
         (overrides.python_version, "metadata", "python_version"),
         (overrides.docker_enabled, "docker", "enabled"),
         (overrides.devcontainer_enabled, "docker", "devcontainer"),
+        (overrides.docs_enabled, "documentation", "enabled"),
+        (overrides.docs_deploy_gh_pages, "documentation", "deploy_gh_pages"),
+        (overrides.tox_enabled, "tox", "enabled"),
     ]
     for value, section, key in _nested_overrides:
         if value is not None:
@@ -171,6 +176,32 @@ def apply_overrides(config: dict[str, Any], overrides: OverrideOptions) -> dict[
     # Enum overrides stored via .value
     if overrides.type_checker is not None:
         _set_nested(result, "formatting", "type_checker", overrides.type_checker.value)
+    if overrides.container_runtime is not None:
+        _set_nested(result, "docker", "container_runtime", overrides.container_runtime.value)
+    if overrides.docs_tool is not None:
+        _set_nested(result, "documentation", "tool", overrides.docs_tool.value)
+
+    # Coverage overrides (normalize testing.coverage from bool to dict first)
+    if any(
+        v is not None
+        for v in (overrides.coverage_enabled, overrides.coverage_tool, overrides.coverage_threshold)
+    ):
+        testing = result.setdefault("testing", {})
+        raw_cov = testing.get("coverage", {})
+        cov: dict[str, Any] = (
+            {"enabled": raw_cov}
+            if isinstance(raw_cov, bool)
+            else dict(raw_cov)
+            if isinstance(raw_cov, dict)
+            else {}
+        )
+        if overrides.coverage_enabled is not None:
+            cov["enabled"] = overrides.coverage_enabled
+        if overrides.coverage_tool is not None:
+            cov["tool"] = overrides.coverage_tool.value
+        if overrides.coverage_threshold is not None:
+            cov["threshold"] = overrides.coverage_threshold
+        testing["coverage"] = cov
 
     # Top-level enum overrides
     if overrides.typing_level is not None:
@@ -296,6 +327,14 @@ def _dict_to_project_config(data: dict[str, Any]) -> ProjectConfig:
     docker_data = data.get("docker", {})
     docker = DockerConfig(**docker_data) if docker_data else DockerConfig()  # type: ignore[call-arg]
 
+    # Build documentation config
+    docs_data = data.get("documentation", {})
+    documentation = DocumentationConfig(**docs_data) if docs_data else DocumentationConfig()  # type: ignore[call-arg]
+
+    # Build tox config
+    tox_data = data.get("tox", {})
+    tox = ToxConfig(**tox_data) if tox_data else ToxConfig()  # type: ignore[call-arg]
+
     # Build entry points
     entry_points = [EntryPoint(**ep) for ep in data.get("entry_points", [])]
 
@@ -319,6 +358,8 @@ def _dict_to_project_config(data: dict[str, Any]) -> ProjectConfig:
         formatting=formatting,
         dependabot=dependabot,
         docker=docker,
+        documentation=documentation,
+        tox=tox,
         typing_level=typing_level,
         layout=layout,
         package_manager=package_manager,

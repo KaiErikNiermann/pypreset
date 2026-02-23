@@ -57,6 +57,16 @@ class AugmentConfig:
     generate_pypi_publish: bool = False
     generate_dockerfile: bool = False
     generate_devcontainer: bool = False
+    generate_codecov: bool = False
+    generate_documentation: bool = False
+    generate_tox: bool = False
+
+    # Documentation settings
+    documentation_tool: str = "none"
+    docs_deploy_gh_pages: bool = False
+
+    # Container runtime
+    container_runtime: str = "docker"
 
     # Dependabot settings
     dependabot_schedule: str = "weekly"

@@ -1,0 +1,58 @@
+[tox]
+requires =
+    tox>=4
+    tox-uv
+env_list =
+    py{{ project.python_version | replace('.', '') }}
+    lint
+{% if typing_level in ["basic", "strict"] %}
+    typecheck
+{% endif %}
+
+[testenv]
+description = Run tests
+{% if testing.framework == "pytest" %}
+deps =
+    pytest>=8.3
+{% if testing.coverage %}
+    pytest-cov>=4.1
+{% endif %}
+commands =
+{% if testing.coverage %}
+    pytest --cov={{ project.package_name }} --cov-report=term-missing {posargs}
+{% else %}
+    pytest {posargs}
+{% endif %}
+{% endif %}
+
+[testenv:lint]
+description = Run linters
+skip_install = true
+{% if formatting.tool == "ruff" %}
+deps =
+    ruff>=0.8
+commands =
+    ruff check {% if layout == "src" %}src/{% else %}{{ project.package_name }}/{% endif %} tests/
+    ruff format --check {% if layout == "src" %}src/{% else %}{{ project.package_name }}/{% endif %} tests/
+{% endif %}
+
+{% if typing_level in ["basic", "strict"] %}
+[testenv:typecheck]
+description = Run type checking
+{% if formatting.type_checker == "mypy" %}
+deps =
+    mypy>=1.13
+commands =
+    mypy {% if layout == "src" %}src/{% else %}{{ project.package_name }}/{% endif %}
+{% elif formatting.type_checker == "pyright" %}
+deps =
+    pyright>=1.1
+commands =
+    pyright {% if layout == "src" %}src/{% else %}{{ project.package_name }}/{% endif %}
+{% elif formatting.type_checker == "ty" %}
+deps =
+    ty>=0.0.1a7
+commands =
+    ty check {% if layout == "src" %}src/{% else %}{{ project.package_name }}/{% endif %}
+{% endif %}
+{% endif %}

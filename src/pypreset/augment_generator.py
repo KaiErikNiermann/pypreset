@@ -33,6 +33,9 @@ class AugmentComponent(StrEnum):
     PYPI_PUBLISH = "pypi_publish"
     DOCKERFILE = "dockerfile"
     DEVCONTAINER = "devcontainer"
+    CODECOV = "codecov"
+    DOCUMENTATION = "documentation"
+    TOX = "tox"
 
 
 @dataclass
@@ -110,6 +113,15 @@ def get_augment_context(config: AugmentConfig) -> dict[str, Any]:
         "package_manager": config.package_manager.value,
         "docker": {
             "base_image": _resolve_base_image(config.python_version),
+            "container_runtime": getattr(config, "container_runtime", "docker"),
+        },
+        "documentation": {
+            "enabled": getattr(config, "generate_documentation", False),
+            "tool": getattr(config, "documentation_tool", "none"),
+            "deploy_gh_pages": getattr(config, "docs_deploy_gh_pages", False),
+        },
+        "tox": {
+            "enabled": getattr(config, "generate_tox", False),
         },
     }
 
@@ -331,7 +343,7 @@ class PypiPublishWorkflowGenerator(ComponentGenerator):
 
 
 class DockerfileGenerator(ComponentGenerator):
-    """Generates Dockerfile and .dockerignore."""
+    """Generates Dockerfile/Containerfile and ignore file."""
 
     @property
     def component_name(self) -> str:
@@ -349,13 +361,17 @@ class DockerfileGenerator(ComponentGenerator):
         else:
             template_name = "Dockerfile.j2"
 
+        is_podman = getattr(self.config, "container_runtime", "docker") == "podman"
+        dockerfile_name = "Containerfile" if is_podman else "Dockerfile"
+        ignore_name = ".containerignore" if is_podman else ".dockerignore"
+
         content = self._render_template(template_name)
-        result = self._write_file(Path("Dockerfile"), content, force)
+        result = self._write_file(Path(dockerfile_name), content, force)
         if result:
             files.append(result)
 
         ignore_content = self._render_template("dockerignore.j2")
-        result = self._write_file(Path(".dockerignore"), ignore_content, force)
+        result = self._write_file(Path(ignore_name), ignore_content, force)
         if result:
             files.append(result)
 
@@ -383,6 +399,86 @@ class DevcontainerGenerator(ComponentGenerator):
         return files
 
 
+class CodecovGenerator(ComponentGenerator):
+    """Generates codecov.yml configuration."""
+
+    @property
+    def component_name(self) -> str:
+        return "codecov"
+
+    def should_generate(self) -> bool:
+        return getattr(self.config, "generate_codecov", False)
+
+    def generate(self, force: bool = False) -> list[GeneratedFile]:
+        files: list[GeneratedFile] = []
+        content = self._render_template("codecov.yml.j2")
+        result = self._write_file(Path("codecov.yml"), content, force)
+        if result:
+            files.append(result)
+        return files
+
+
+class DocumentationGenerator(ComponentGenerator):
+    """Generates documentation scaffolding (MkDocs or Sphinx)."""
+
+    @property
+    def component_name(self) -> str:
+        return "documentation"
+
+    def should_generate(self) -> bool:
+        return getattr(self.config, "generate_documentation", False)
+
+    def generate(self, force: bool = False) -> list[GeneratedFile]:
+        files: list[GeneratedFile] = []
+        doc_tool = getattr(self.config, "documentation_tool", "none")
+
+        if doc_tool == "mkdocs":
+            content = self._render_template("mkdocs.yml.j2")
+            result = self._write_file(Path("mkdocs.yml"), content, force)
+            if result:
+                files.append(result)
+            index_content = self._render_template("docs_index.md.j2")
+            result = self._write_file(Path("docs/index.md"), index_content, force)
+            if result:
+                files.append(result)
+        elif doc_tool == "sphinx":
+            conf_content = self._render_template("sphinx_conf.py.j2")
+            result = self._write_file(Path("docs/conf.py"), conf_content, force)
+            if result:
+                files.append(result)
+            index_content = self._render_template("docs_index.rst.j2")
+            result = self._write_file(Path("docs/index.rst"), index_content, force)
+            if result:
+                files.append(result)
+
+        if getattr(self.config, "docs_deploy_gh_pages", False):
+            workflow_content = self._render_template("docs_workflow.yaml.j2")
+            result = self._write_file(Path(".github/workflows/docs.yaml"), workflow_content, force)
+            if result:
+                files.append(result)
+
+        return files
+
+
+class ToxGenerator(ComponentGenerator):
+    """Generates tox.ini configuration."""
+
+    @property
+    def component_name(self) -> str:
+        return "tox"
+
+    def should_generate(self) -> bool:
+        return getattr(self.config, "generate_tox", False)
+
+    def generate(self, force: bool = False) -> list[GeneratedFile]:
+        files: list[GeneratedFile] = []
+        content = self._render_template("tox.ini.j2")
+        result = self._write_file(Path("tox.ini"), content, force)
+        if result:
+            files.append(result)
+        return files
+
+
 class AugmentOrchestrator:
     """Orchestrates the augment operation across components."""
 
@@ -400,6 +496,9 @@ class AugmentOrchestrator:
             PypiPublishWorkflowGenerator(self.project_dir, config),
             DockerfileGenerator(self.project_dir, config),
             DevcontainerGenerator(self.project_dir, config),
+            CodecovGenerator(self.project_dir, config),
+            DocumentationGenerator(self.project_dir, config),
+            ToxGenerator(self.project_dir, config),
         ]
 
     def run(

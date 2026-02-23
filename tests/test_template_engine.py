@@ -167,6 +167,12 @@ class TestRenderTemplate:
                 "enabled": True,
                 "framework": "pytest",
                 "coverage": False,
+                "coverage_config": {
+                    "enabled": False,
+                    "tool": "none",
+                    "threshold": None,
+                    "ignore_patterns": [],
+                },
             },
             "formatting": {
                 "enabled": True,
@@ -176,6 +182,14 @@ class TestRenderTemplate:
                 "pre_commit": False,
                 "version_bumping": False,
                 "type_checker": "mypy",
+            },
+            "documentation": {
+                "enabled": False,
+                "tool": "none",
+                "deploy_gh_pages": False,
+            },
+            "tox": {
+                "enabled": False,
             },
             "typing_level": "strict",
             "layout": "src",

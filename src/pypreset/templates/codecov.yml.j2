@@ -1,0 +1,32 @@
+codecov:
+  require_ci_to_pass: yes
+
+coverage:
+  precision: 2
+  round: down
+{% if testing.coverage_config.threshold %}
+  status:
+    project:
+      default:
+        target: {{ testing.coverage_config.threshold }}%
+        threshold: 1%
+    patch:
+      default:
+        target: {{ testing.coverage_config.threshold }}%
+{% else %}
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        target: auto
+{% endif %}
+
+{% if testing.coverage_config.ignore_patterns %}
+ignore:
+{% for pattern in testing.coverage_config.ignore_patterns %}
+  - "{{ pattern }}"
+{% endfor %}
+{% endif %}

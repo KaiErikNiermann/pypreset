@@ -58,6 +58,17 @@ dev = [
 {% if formatting.version_bumping %}
     "bump-my-version>=0.31.0",
 {% endif %}
+{% if tox.enabled %}
+    "tox>=4.0",
+    "tox-uv>=1.0",
+{% endif %}
+{% if documentation.enabled and documentation.tool == "sphinx" %}
+    "sphinx>=7.0",
+    "sphinx-rtd-theme>=2.0",
+{% elif documentation.enabled and documentation.tool == "mkdocs" %}
+    "mkdocs-material>=9.0",
+    "mkdocstrings[python]>=0.24",
+{% endif %}
 {% for pkg in dependencies.dev %}
     "{{ pkg }}",
 {% endfor %}
@@ -136,6 +147,25 @@ python_files = ["test_*.py", "*_test.py"]
 {% if testing.coverage %}
 addopts = "--cov={{ project.package_name }} --cov-report=term-missing"
 {% endif %}
+{% endif %}
+
+{% if testing.coverage_config.enabled %}
+[tool.coverage.run]
+source = ["{{ project.package_name }}"]
+{% if testing.coverage_config.ignore_patterns %}
+omit = [
+{% for pattern in testing.coverage_config.ignore_patterns %}
+    "{{ pattern }}",
+{% endfor %}
+]
+{% endif %}
+
+[tool.coverage.report]
+{% if testing.coverage_config.threshold %}
+fail_under = {{ testing.coverage_config.threshold }}
+{% endif %}
+show_missing = true
+skip_empty = true
 {% endif %}
 
 [build-system]

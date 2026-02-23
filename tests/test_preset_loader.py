@@ -175,3 +175,52 @@ class TestBuildProjectConfig:
         assert config.metadata.name == "my-analysis"
         assert any("pandas" in pkg.lower() for pkg in config.dependencies.main)
         assert len(config.structure.directories) > 0
+
+    def test_override_container_runtime(self) -> None:
+        """Test overriding container runtime to podman."""
+        from pypreset.models import ContainerRuntime
+
+        overrides = OverrideOptions(container_runtime=ContainerRuntime.PODMAN)
+        config = build_project_config("test-proj", "empty-package", overrides=overrides)
+        assert config.docker.container_runtime == ContainerRuntime.PODMAN
+
+    def test_override_coverage(self) -> None:
+        """Test overriding coverage settings."""
+        from pypreset.models import CoverageTool
+
+        overrides = OverrideOptions(
+            coverage_enabled=True,
+            coverage_tool=CoverageTool.CODECOV,
+            coverage_threshold=80,
+        )
+        config = build_project_config("test-proj", "empty-package", overrides=overrides)
+        cc = config.testing.coverage_config
+        assert cc.enabled is True
+        assert cc.tool == CoverageTool.CODECOV
+        assert cc.threshold == 80
+
+    def test_override_docs(self) -> None:
+        """Test overriding documentation settings."""
+        from pypreset.models import DocumentationTool
+
+        overrides = OverrideOptions(
+            docs_enabled=True,
+            docs_tool=DocumentationTool.MKDOCS,
+            docs_deploy_gh_pages=True,
+        )
+        config = build_project_config("test-proj", "empty-package", overrides=overrides)
+        assert config.documentation.enabled is True
+        assert config.documentation.tool == DocumentationTool.MKDOCS
+        assert config.documentation.deploy_gh_pages is True
+
+    def test_override_tox(self) -> None:
+        """Test overriding tox setting."""
+        overrides = OverrideOptions(tox_enabled=True)
+        config = build_project_config("test-proj", "empty-package", overrides=overrides)
+        assert config.tox.enabled is True
+
+    def test_coverage_bool_backward_compat(self) -> None:
+        """Test that coverage: true in preset YAML still works."""
+        config = build_project_config("test-proj", "empty-package")
+        # empty-package has coverage: false
+        assert config.testing.coverage_config.enabled is False

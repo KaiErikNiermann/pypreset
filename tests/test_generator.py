@@ -562,3 +562,188 @@ class TestDevcontainerGeneration:
 
         content = (project_dir / ".devcontainer" / "devcontainer.json").read_text()
         assert "uv" in content
+
+
+class TestPodmanGeneration:
+    """Tests for Podman container runtime support."""
+
+    def test_podman_creates_containerfile(self, temp_output_dir: Path) -> None:
+        """Test that podman runtime uses Containerfile and .containerignore."""
+        from pypreset.models import ContainerRuntime, DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="podman-test"),
+            docker=DockerConfig(enabled=True, container_runtime=ContainerRuntime.PODMAN),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert (project_dir / "Containerfile").exists()
+        assert (project_dir / ".containerignore").exists()
+        assert not (project_dir / "Dockerfile").exists()
+        assert not (project_dir / ".dockerignore").exists()
+
+    def test_docker_runtime_creates_dockerfile(self, temp_output_dir: Path) -> None:
+        """Test that docker runtime uses Dockerfile."""
+        from pypreset.models import ContainerRuntime, DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="docker-test-rt"),
+            docker=DockerConfig(enabled=True, container_runtime=ContainerRuntime.DOCKER),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert (project_dir / "Dockerfile").exists()
+        assert not (project_dir / "Containerfile").exists()
+
+    def test_podman_devcontainer_has_userns(self, temp_output_dir: Path) -> None:
+        """Test that podman devcontainer has userns=keep-id."""
+        from pypreset.models import ContainerRuntime, DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="podman-devc"),
+            docker=DockerConfig(
+                devcontainer=True,
+                container_runtime=ContainerRuntime.PODMAN,
+            ),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / ".devcontainer" / "devcontainer.json").read_text()
+        assert "userns=keep-id" in content
+
+
+class TestCodecovGeneration:
+    """Tests for codecov.yml generation."""
+
+    def test_codecov_generated_when_enabled(self, temp_output_dir: Path) -> None:
+        """Test codecov.yml is created when coverage tool is codecov."""
+        from pypreset.models import CoverageConfig, CoverageTool
+
+        config = ProjectConfig(
+            metadata=Metadata(name="codecov-test"),
+            testing=TestingConfig(
+                enabled=True,
+                coverage=CoverageConfig(enabled=True, tool=CoverageTool.CODECOV, threshold=80),
+            ),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        codecov_path = project_dir / "codecov.yml"
+        assert codecov_path.exists()
+        content = codecov_path.read_text()
+        assert "80%" in content
+
+    def test_no_codecov_when_disabled(self, temp_output_dir: Path) -> None:
+        """Test no codecov.yml when coverage is disabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="no-codecov"),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert not (project_dir / "codecov.yml").exists()
+
+
+class TestDocumentationGeneration:
+    """Tests for documentation scaffolding generation."""
+
+    def test_mkdocs_scaffolding(self, temp_output_dir: Path) -> None:
+        """Test MkDocs documentation scaffolding."""
+        from pypreset.models import DocumentationConfig, DocumentationTool
+
+        config = ProjectConfig(
+            metadata=Metadata(name="mkdocs-test"),
+            documentation=DocumentationConfig(enabled=True, tool=DocumentationTool.MKDOCS),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert (project_dir / "mkdocs.yml").exists()
+        assert (project_dir / "docs" / "index.md").exists()
+
+        content = (project_dir / "mkdocs.yml").read_text()
+        assert "mkdocs-test" in content
+        assert "material" in content
+
+    def test_sphinx_scaffolding(self, temp_output_dir: Path) -> None:
+        """Test Sphinx documentation scaffolding."""
+        from pypreset.models import DocumentationConfig, DocumentationTool
+
+        config = ProjectConfig(
+            metadata=Metadata(name="sphinx-test"),
+            documentation=DocumentationConfig(enabled=True, tool=DocumentationTool.SPHINX),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert (project_dir / "docs" / "conf.py").exists()
+        assert (project_dir / "docs" / "index.rst").exists()
+
+        content = (project_dir / "docs" / "conf.py").read_text()
+        assert "sphinx-test" in content
+        assert "sphinx_rtd_theme" in content
+
+    def test_docs_gh_pages_workflow(self, temp_output_dir: Path) -> None:
+        """Test GitHub Pages deploy workflow is generated."""
+        from pypreset.models import DocumentationConfig, DocumentationTool
+
+        config = ProjectConfig(
+            metadata=Metadata(name="docs-gh"),
+            documentation=DocumentationConfig(
+                enabled=True, tool=DocumentationTool.MKDOCS, deploy_gh_pages=True
+            ),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        workflow_path = project_dir / ".github" / "workflows" / "docs.yaml"
+        assert workflow_path.exists()
+        content = workflow_path.read_text()
+        assert "Deploy Documentation" in content
+        assert "mkdocs" in content
+
+    def test_no_docs_when_disabled(self, temp_output_dir: Path) -> None:
+        """Test no docs generated when disabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="no-docs"),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert not (project_dir / "mkdocs.yml").exists()
+        assert not (project_dir / "docs" / "conf.py").exists()
+
+
+class TestToxGeneration:
+    """Tests for tox.ini generation."""
+
+    def test_tox_generated_when_enabled(self, temp_output_dir: Path) -> None:
+        """Test tox.ini is created when tox is enabled."""
+        from pypreset.models import ToxConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="tox-test"),
+            tox=ToxConfig(enabled=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        tox_path = project_dir / "tox.ini"
+        assert tox_path.exists()
+        content = tox_path.read_text()
+        assert "tox-uv" in content
+        assert "pytest" in content
+
+    def test_no_tox_when_disabled(self, temp_output_dir: Path) -> None:
+        """Test no tox.ini when disabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="no-tox"),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert not (project_dir / "tox.ini").exists()

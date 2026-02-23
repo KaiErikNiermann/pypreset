@@ -3,7 +3,7 @@
 from enum import StrEnum
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class LayoutStyle(StrEnum):
@@ -56,6 +56,28 @@ class CreationPackageManager(StrEnum):
     UV = "uv"
 
 
+class ContainerRuntime(StrEnum):
+    """Container runtime for Dockerfile/Containerfile generation."""
+
+    DOCKER = "docker"
+    PODMAN = "podman"
+
+
+class CoverageTool(StrEnum):
+    """Coverage service integration."""
+
+    CODECOV = "codecov"
+    NONE = "none"
+
+
+class DocumentationTool(StrEnum):
+    """Documentation generator."""
+
+    SPHINX = "sphinx"
+    MKDOCS = "mkdocs"
+    NONE = "none"
+
+
 class FileTemplate(BaseModel):
     """A file template definition."""
 
@@ -90,6 +112,17 @@ class Dependencies(BaseModel):
     )
 
 
+class CoverageConfig(BaseModel):
+    """Coverage service configuration."""
+
+    enabled: bool = Field(default=False, description="Whether coverage is enabled")
+    tool: CoverageTool = Field(
+        default=CoverageTool.NONE, description="Coverage service integration"
+    )
+    threshold: int | None = Field(default=None, description="Minimum coverage % (e.g. 80)")
+    ignore_patterns: list[str] = Field(default_factory=list, description="Paths to exclude")
+
+
 class TestingConfig(BaseModel):
     """Testing configuration."""
 
@@ -97,7 +130,28 @@ class TestingConfig(BaseModel):
     framework: TestingFramework = Field(
         TestingFramework.PYTEST, description="Testing framework to use"
     )
-    coverage: bool = Field(False, description="Whether to include coverage tools")
+    coverage: bool | CoverageConfig = Field(False, description="Coverage configuration")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _coerce_coverage(cls, data: Any) -> Any:
+        if not isinstance(data, dict):
+            return data
+        cov = data.get("coverage")
+        if cov is True:
+            data["coverage"] = CoverageConfig(enabled=True, tool=CoverageTool.CODECOV)
+        elif cov is False:
+            data["coverage"] = CoverageConfig(enabled=False)
+        return data
+
+    @property
+    def coverage_config(self) -> CoverageConfig:
+        """Always return a CoverageConfig, coercing bool if needed."""
+        if isinstance(self.coverage, CoverageConfig):
+            return self.coverage
+        return CoverageConfig(
+            enabled=self.coverage, tool=CoverageTool.CODECOV if self.coverage else CoverageTool.NONE
+        )
 
 
 class FormattingConfig(BaseModel):
@@ -127,13 +181,30 @@ class DependabotConfig(BaseModel):
 
 
 class DockerConfig(BaseModel):
-    """Docker configuration for generating Dockerfile and .dockerignore."""
+    """Docker/Podman configuration for generating Dockerfile/Containerfile."""
 
     enabled: bool = Field(False, description="Whether to generate Dockerfile and .dockerignore")
     base_image: str | None = Field(
         None, description="Base image override (auto-resolved from python_version if None)"
     )
     devcontainer: bool = Field(False, description="Whether to generate .devcontainer/ config")
+    container_runtime: ContainerRuntime = Field(
+        ContainerRuntime.DOCKER, description="Container runtime (docker or podman)"
+    )
+
+
+class DocumentationConfig(BaseModel):
+    """Documentation generator configuration."""
+
+    enabled: bool = Field(False, description="Whether to generate documentation scaffolding")
+    tool: DocumentationTool = Field(DocumentationTool.NONE, description="Documentation tool")
+    deploy_gh_pages: bool = Field(False, description="Generate GitHub Pages deploy workflow")
+
+
+class ToxConfig(BaseModel):
+    """tox configuration for multi-environment testing."""
+
+    enabled: bool = Field(False, description="Whether to generate tox.ini")
 
 
 class Metadata(BaseModel):
@@ -187,12 +258,23 @@ class PartialDependencies(BaseModel):
     optional: dict[str, list[str]] | None = Field(None, description="Optional dependency groups")
 
 
+class PartialCoverageConfig(BaseModel):
+    """Partial coverage config for preset configs."""
+
+    enabled: bool | None = Field(None, description="Whether coverage is enabled")
+    tool: CoverageTool | None = Field(None, description="Coverage service integration")
+    threshold: int | None = Field(None, description="Minimum coverage %")
+    ignore_patterns: list[str] | None = Field(None, description="Paths to exclude")
+
+
 class PartialTestingConfig(BaseModel):
     """Partial testing config for preset configs."""
 
     enabled: bool | None = Field(None, description="Whether testing is enabled")
     framework: TestingFramework | None = Field(None, description="Testing framework to use")
-    coverage: bool | None = Field(None, description="Whether to include coverage tools")
+    coverage: bool | PartialCoverageConfig | None = Field(
+        None, description="Coverage configuration"
+    )
 
 
 class PartialFormattingConfig(BaseModel):
@@ -229,6 +311,23 @@ class PartialDockerConfig(BaseModel):
     )
     base_image: str | None = Field(None, description="Base image override")
     devcontainer: bool | None = Field(None, description="Whether to generate .devcontainer/ config")
+    container_runtime: ContainerRuntime | None = Field(
+        None, description="Container runtime (docker or podman)"
+    )
+
+
+class PartialDocumentationConfig(BaseModel):
+    """Partial documentation config for preset configs."""
+
+    enabled: bool | None = Field(None, description="Whether to generate documentation")
+    tool: DocumentationTool | None = Field(None, description="Documentation tool")
+    deploy_gh_pages: bool | None = Field(None, description="Deploy to GitHub Pages")
+
+
+class PartialToxConfig(BaseModel):
+    """Partial tox config for preset configs."""
+
+    enabled: bool | None = Field(None, description="Whether to generate tox.ini")
 
 
 class ProjectConfig(BaseModel):
@@ -241,6 +340,8 @@ class ProjectConfig(BaseModel):
     formatting: FormattingConfig = Field(default_factory=FormattingConfig)  # type: ignore[arg-type]
     dependabot: DependabotConfig = Field(default_factory=DependabotConfig)  # type: ignore[arg-type]
     docker: DockerConfig = Field(default_factory=DockerConfig)  # type: ignore[arg-type]
+    documentation: DocumentationConfig = Field(default_factory=DocumentationConfig)  # type: ignore[arg-type]
+    tox: ToxConfig = Field(default_factory=ToxConfig)  # type: ignore[arg-type]
     typing_level: TypingLevel = Field(TypingLevel.STRICT, description="Typing strictness")
     layout: LayoutStyle = Field(LayoutStyle.SRC, description="Project layout style (src or flat)")
     package_manager: CreationPackageManager = Field(
@@ -265,6 +366,8 @@ class PresetConfig(BaseModel):
     formatting: PartialFormattingConfig = Field(default_factory=PartialFormattingConfig)  # type: ignore[arg-type]
     dependabot: PartialDependabotConfig = Field(default_factory=PartialDependabotConfig)  # type: ignore[arg-type]
     docker: PartialDockerConfig = Field(default_factory=PartialDockerConfig)  # type: ignore[arg-type]
+    documentation: PartialDocumentationConfig = Field(default_factory=PartialDocumentationConfig)  # type: ignore[arg-type]
+    tox: PartialToxConfig = Field(default_factory=PartialToxConfig)  # type: ignore[arg-type]
     typing_level: TypingLevel | None = None
     layout: LayoutStyle | None = None
     package_manager: CreationPackageManager | None = None
@@ -295,3 +398,13 @@ class OverrideOptions(BaseModel):
     )
     docker_enabled: bool | None = Field(None, description="Override Docker generation")
     devcontainer_enabled: bool | None = Field(None, description="Override devcontainer generation")
+    container_runtime: ContainerRuntime | None = Field(
+        None, description="Override container runtime"
+    )
+    coverage_enabled: bool | None = Field(None, description="Override coverage enabled")
+    coverage_tool: CoverageTool | None = Field(None, description="Override coverage tool")
+    coverage_threshold: int | None = Field(None, description="Override coverage threshold")
+    docs_enabled: bool | None = Field(None, description="Override documentation generation")
+    docs_tool: DocumentationTool | None = Field(None, description="Override documentation tool")
+    docs_deploy_gh_pages: bool | None = Field(None, description="Override GH Pages deploy")
+    tox_enabled: bool | None = Field(None, description="Override tox generation")

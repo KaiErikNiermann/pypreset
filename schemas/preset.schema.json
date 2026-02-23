@@ -1,5 +1,42 @@
 {
   "$defs": {
+    "ContainerRuntime": {
+      "description": "Container runtime for Dockerfile/Containerfile generation.",
+      "enum": [
+        "docker",
+        "podman"
+      ],
+      "title": "ContainerRuntime",
+      "type": "string"
+    },
+    "CoverageTool": {
+      "description": "Coverage service integration.",
+      "enum": [
+        "codecov",
+        "none"
+      ],
+      "title": "CoverageTool",
+      "type": "string"
+    },
+    "CreationPackageManager": {
+      "description": "Package manager for project creation.",
+      "enum": [
+        "poetry",
+        "uv"
+      ],
+      "title": "CreationPackageManager",
+      "type": "string"
+    },
+    "DocumentationTool": {
+      "description": "Documentation generator.",
+      "enum": [
+        "sphinx",
+        "mkdocs",
+        "none"
+      ],
+      "title": "DocumentationTool",
+      "type": "string"
+    },
     "EntryPoint": {
       "description": "Script entry point configuration.",
       "properties": {
@@ -77,6 +114,76 @@
       ],
       "title": "FormattingTool",
       "type": "string"
+    },
+    "LayoutStyle": {
+      "description": "Project directory layout style.\n\nSee https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/",
+      "enum": [
+        "src",
+        "flat"
+      ],
+      "title": "LayoutStyle",
+      "type": "string"
+    },
+    "PartialCoverageConfig": {
+      "description": "Partial coverage config for preset configs.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether coverage is enabled",
+          "title": "Enabled"
+        },
+        "tool": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CoverageTool"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Coverage service integration"
+        },
+        "threshold": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Minimum coverage %",
+          "title": "Threshold"
+        },
+        "ignore_patterns": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Paths to exclude",
+          "title": "Ignore Patterns"
+        }
+      },
+      "title": "PartialCoverageConfig",
+      "type": "object"
     },
     "PartialDependabotConfig": {
       "description": "Partial dependabot config for preset configs.",
@@ -226,6 +333,109 @@
       "title": "PartialDirectoryStructure",
       "type": "object"
     },
+    "PartialDockerConfig": {
+      "description": "Partial docker config for preset configs.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether to generate Dockerfile and .dockerignore",
+          "title": "Enabled"
+        },
+        "base_image": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Base image override",
+          "title": "Base Image"
+        },
+        "devcontainer": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether to generate .devcontainer/ config",
+          "title": "Devcontainer"
+        },
+        "container_runtime": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContainerRuntime"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Container runtime (docker or podman)"
+        }
+      },
+      "title": "PartialDockerConfig",
+      "type": "object"
+    },
+    "PartialDocumentationConfig": {
+      "description": "Partial documentation config for preset configs.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether to generate documentation",
+          "title": "Enabled"
+        },
+        "tool": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DocumentationTool"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Documentation tool"
+        },
+        "deploy_gh_pages": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Deploy to GitHub Pages",
+          "title": "Deploy Gh Pages"
+        }
+      },
+      "title": "PartialDocumentationConfig",
+      "type": "object"
+    },
     "PartialFormattingConfig": {
       "description": "Partial formatting config for preset configs.",
       "properties": {
@@ -266,6 +476,57 @@
           "default": null,
           "description": "Maximum line length",
           "title": "Line Length"
+        },
+        "radon": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Enable radon complexity checking",
+          "title": "Radon"
+        },
+        "pre_commit": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Generate pre-commit hooks config",
+          "title": "Pre Commit"
+        },
+        "version_bumping": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Include bump-my-version for version management",
+          "title": "Version Bumping"
+        },
+        "type_checker": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TypeChecker"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Type checking tool to use"
         }
       },
       "title": "PartialFormattingConfig",
@@ -438,15 +699,38 @@
               "type": "boolean"
             },
             {
+              "$ref": "#/$defs/PartialCoverageConfig"
+            },
+            {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "Whether to include coverage tools",
+          "description": "Coverage configuration",
           "title": "Coverage"
         }
       },
       "title": "PartialTestingConfig",
+      "type": "object"
+    },
+    "PartialToxConfig": {
+      "description": "Partial tox config for preset configs.",
+      "properties": {
+        "enabled": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Whether to generate tox.ini",
+          "title": "Enabled"
+        }
+      },
+      "title": "PartialToxConfig",
       "type": "object"
     },
     "TestingFramework": {
@@ -457,6 +741,17 @@
         "none"
       ],
       "title": "TestingFramework",
+      "type": "string"
+    },
+    "TypeChecker": {
+      "description": "Supported type checking tools.",
+      "enum": [
+        "mypy",
+        "pyright",
+        "ty",
+        "none"
+      ],
+      "title": "TypeChecker",
       "type": "string"
     },
     "TypingLevel": {
@@ -514,10 +809,41 @@
     "dependabot": {
       "$ref": "#/$defs/PartialDependabotConfig"
     },
+    "docker": {
+      "$ref": "#/$defs/PartialDockerConfig"
+    },
+    "documentation": {
+      "$ref": "#/$defs/PartialDocumentationConfig"
+    },
+    "tox": {
+      "$ref": "#/$defs/PartialToxConfig"
+    },
     "typing_level": {
       "anyOf": [
         {
           "$ref": "#/$defs/TypingLevel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "layout": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LayoutStyle"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "package_manager": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/CreationPackageManager"
         },
         {
           "type": "null"

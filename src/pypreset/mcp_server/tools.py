@@ -12,7 +12,10 @@ if TYPE_CHECKING:
     from fastmcp import FastMCP
 
 from pypreset.models import (
+    ContainerRuntime,  # noqa: F401
+    CoverageTool,  # noqa: F401
     CreationPackageManager,
+    DocumentationTool,  # noqa: F401
     LayoutStyle,
     OverrideOptions,
     TypeChecker,
@@ -65,9 +68,35 @@ def register_tools(mcp: FastMCP) -> None:
         devcontainer: Annotated[
             bool, Field(description="Generate .devcontainer/ configuration")
         ] = False,
+        container_runtime: Annotated[
+            str | None,
+            Field(description="Container runtime: 'docker' or 'podman'"),
+        ] = None,
+        docs: Annotated[
+            str | None,
+            Field(description="Documentation tool: 'sphinx', 'mkdocs', or 'none'"),
+        ] = None,
+        docs_gh_pages: Annotated[
+            bool, Field(description="Generate GitHub Pages deploy workflow for docs")
+        ] = False,
+        tox: Annotated[bool, Field(description="Generate tox.ini with tox-uv")] = False,
+        coverage_tool: Annotated[
+            str | None,
+            Field(description="Coverage service: 'codecov' or 'none'"),
+        ] = None,
+        coverage_threshold: Annotated[
+            int | None,
+            Field(description="Minimum coverage percentage"),
+        ] = None,
     ) -> str:
         from pypreset.generator import generate_project
         from pypreset.preset_loader import build_project_config
+
+        # Derive docs_enabled from docs param
+        docs_enabled = True if docs and docs != "none" else None
+
+        # Derive coverage_enabled from coverage_tool param
+        coverage_enabled = True if coverage_tool and coverage_tool != "none" else None
 
         overrides = OverrideOptions(
             testing_enabled=None,
@@ -82,6 +111,14 @@ def register_tools(mcp: FastMCP) -> None:
             python_version=python_version,
             docker_enabled=docker if docker else None,
             devcontainer_enabled=devcontainer if devcontainer else None,
+            container_runtime=ContainerRuntime(container_runtime) if container_runtime else None,
+            coverage_enabled=coverage_enabled,
+            coverage_tool=CoverageTool(coverage_tool) if coverage_tool else None,
+            coverage_threshold=coverage_threshold,
+            docs_enabled=docs_enabled,
+            docs_tool=DocumentationTool(docs) if docs else None,
+            docs_deploy_gh_pages=docs_gh_pages if docs_gh_pages else None,
+            tox_enabled=tox if tox else None,
         )
 
         config = build_project_config(
@@ -106,6 +143,12 @@ def register_tools(mcp: FastMCP) -> None:
                 "package_manager": config.package_manager.value,
                 "docker_enabled": config.docker.enabled,
                 "devcontainer_enabled": config.docker.devcontainer,
+                "container_runtime": config.docker.container_runtime.value,
+                "documentation_enabled": config.documentation.enabled,
+                "documentation_tool": config.documentation.tool.value,
+                "tox_enabled": config.tox.enabled,
+                "coverage_enabled": config.testing.coverage_config.enabled,
+                "coverage_tool": config.testing.coverage_config.tool.value,
             }
         )
 
@@ -244,6 +287,14 @@ def register_tools(mcp: FastMCP) -> None:
         generate_devcontainer: Annotated[
             bool, Field(description="Generate .devcontainer/ configuration")
         ] = False,
+        generate_codecov: Annotated[bool, Field(description="Generate codecov.yml")] = False,
+        generate_documentation: Annotated[
+            bool, Field(description="Generate documentation scaffolding")
+        ] = False,
+        documentation_tool: Annotated[
+            str, Field(description="Documentation tool: 'sphinx' or 'mkdocs'")
+        ] = "sphinx",
+        generate_tox: Annotated[bool, Field(description="Generate tox.ini")] = False,
     ) -> str:
         from pypreset.augment_generator import augment_project as _augment
         from pypreset.interactive_prompts import InteractivePrompter
@@ -264,6 +315,10 @@ def register_tools(mcp: FastMCP) -> None:
         config.generate_gitignore = generate_gitignore
         config.generate_dockerfile = generate_dockerfile
         config.generate_devcontainer = generate_devcontainer
+        config.generate_codecov = generate_codecov
+        config.generate_documentation = generate_documentation
+        config.documentation_tool = documentation_tool
+        config.generate_tox = generate_tox
 
         result = _augment(project_dir=path, config=config, force=force)
 

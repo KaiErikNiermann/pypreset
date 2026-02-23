@@ -15,7 +15,10 @@ from pypreset.augment_generator import augment_project
 from pypreset.generator import generate_project
 from pypreset.interactive_prompts import run_auto_session, run_interactive_session
 from pypreset.models import (
+    ContainerRuntime,
+    CoverageTool,
     CreationPackageManager,
+    DocumentationTool,
     LayoutStyle,
     OverrideOptions,
     TypeChecker,
@@ -140,6 +143,30 @@ def create_project(
             "--devcontainer/--no-devcontainer", help="Generate .devcontainer/ configuration"
         ),
     ] = None,
+    container_runtime: Annotated[
+        ContainerRuntime | None,
+        typer.Option("--container-runtime", help="Container runtime (docker or podman)"),
+    ] = None,
+    coverage_tool: Annotated[
+        CoverageTool | None,
+        typer.Option("--coverage-tool", help="Coverage service (codecov or none)"),
+    ] = None,
+    coverage_threshold: Annotated[
+        int | None,
+        typer.Option("--coverage-threshold", help="Minimum coverage percentage"),
+    ] = None,
+    docs: Annotated[
+        DocumentationTool | None,
+        typer.Option("--docs", help="Documentation tool (sphinx, mkdocs, or none)"),
+    ] = None,
+    docs_gh_pages: Annotated[
+        bool | None,
+        typer.Option("--docs-gh-pages/--no-docs-gh-pages", help="Deploy docs to GitHub Pages"),
+    ] = None,
+    tox: Annotated[
+        bool | None,
+        typer.Option("--tox/--no-tox", help="Generate tox.ini with tox-uv"),
+    ] = None,
     extra_package: Annotated[
         list[str] | None,
         typer.Option("--extra-package", "-e", help="Additional packages to install"),
@@ -165,6 +192,12 @@ def create_project(
         logging.getLogger().setLevel(logging.DEBUG)
 
     # Build override options
+    # Determine coverage_enabled from coverage_tool
+    coverage_enabled = True if coverage_tool and coverage_tool != CoverageTool.NONE else None
+
+    # Determine docs_enabled from docs tool
+    docs_enabled = True if docs and docs != DocumentationTool.NONE else None
+
     overrides = OverrideOptions(
         testing_enabled=testing,
         formatting_enabled=formatting,
@@ -178,6 +211,14 @@ def create_project(
         package_manager=package_manager,
         docker_enabled=docker,
         devcontainer_enabled=devcontainer,
+        container_runtime=container_runtime,
+        coverage_enabled=coverage_enabled,
+        coverage_tool=coverage_tool,
+        coverage_threshold=coverage_threshold,
+        docs_enabled=docs_enabled,
+        docs_tool=docs,
+        docs_deploy_gh_pages=docs_gh_pages,
+        tox_enabled=tox,
         extra_packages=extra_package or [],
         extra_dev_packages=extra_dev_package or [],
     )
@@ -294,9 +335,11 @@ def _display_dry_run(
         ("Pre-commit hooks", config.formatting.pre_commit),
         ("bump-my-version", config.formatting.version_bumping),
         ("Dependabot", config.dependabot.enabled),
-        ("Coverage", config.testing.coverage),
+        ("Coverage", config.testing.coverage_config.enabled),
         ("Docker", config.docker.enabled),
         ("Devcontainer", config.docker.devcontainer),
+        ("Documentation", config.documentation.enabled),
+        ("tox", config.tox.enabled),
     ]
     active = [name for name, enabled in flags if enabled]
     if active:
@@ -348,6 +391,28 @@ def _display_dry_run(
     if config.docker.devcontainer:
         tree_lines.append("  .devcontainer/")
         tree_lines.append("    devcontainer.json")
+
+    if (
+        config.testing.coverage_config.enabled
+        and config.testing.coverage_config.tool.value == "codecov"
+    ):
+        tree_lines.append("  codecov.yml")
+
+    if config.documentation.enabled:
+        doc_tool = config.documentation.tool.value
+        if doc_tool == "mkdocs":
+            tree_lines.append("  mkdocs.yml")
+            tree_lines.append("  docs/")
+            tree_lines.append("    index.md")
+        elif doc_tool == "sphinx":
+            tree_lines.append("  docs/")
+            tree_lines.append("    conf.py")
+            tree_lines.append("    index.rst")
+        if config.documentation.deploy_gh_pages:
+            tree_lines.append("  .github/workflows/docs.yaml")
+
+    if config.tox.enabled:
+        tree_lines.append("  tox.ini")
 
     rprint(Panel("\n".join(tree_lines), title="Project Structure", border_style="green"))
 
@@ -597,6 +662,18 @@ def augment_cmd(
             "--devcontainer/--no-devcontainer", help="Generate .devcontainer/ configuration"
         ),
     ] = None,
+    codecov: Annotated[
+        bool | None,
+        typer.Option("--codecov/--no-codecov", help="Generate codecov.yml"),
+    ] = None,
+    augment_docs: Annotated[
+        str | None,
+        typer.Option("--docs", help="Generate documentation scaffolding (sphinx or mkdocs)"),
+    ] = None,
+    augment_tox: Annotated[
+        bool | None,
+        typer.Option("--tox/--no-tox", help="Generate tox.ini"),
+    ] = None,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose output")] = False,
 ) -> None:
     """Augment an existing project with workflows, tests, and configuration.
@@ -665,6 +742,15 @@ def augment_cmd(
             devcontainer_flag=devcontainer_flag,
         )
 
+        # Apply new augment overrides
+        if codecov is not None:
+            config.generate_codecov = codecov
+        if augment_tox is not None:
+            config.generate_tox = augment_tox
+        if augment_docs is not None:
+            config.generate_documentation = True
+            config.documentation_tool = augment_docs
+
         if not any(
             [
                 config.generate_test_workflow,
@@ -675,6 +761,9 @@ def augment_cmd(
                 config.generate_pypi_publish,
                 config.generate_dockerfile,
                 config.generate_devcontainer,
+                config.generate_codecov,
+                config.generate_documentation,
+                config.generate_tox,
             ]
         ):
             rprint("[yellow]No components selected for generation.[/yellow]")

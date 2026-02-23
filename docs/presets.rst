@@ -66,7 +66,7 @@ A complete preset file has this structure:
    testing:
      enabled: true
      framework: pytest
-     coverage: false
+     coverage: false          # or a dict: {enabled: true, tool: codecov, threshold: 80}
 
    formatting:
      enabled: true
@@ -82,6 +82,15 @@ A complete preset file has this structure:
      enabled: false           # Generate Dockerfile + .dockerignore
      base_image: null          # Override (auto-resolved from python_version if null)
      devcontainer: false       # Generate .devcontainer/ config
+     container_runtime: docker # docker | podman
+
+   documentation:
+     enabled: false           # Generate documentation scaffolding
+     tool: none               # none | sphinx | mkdocs
+     deploy_gh_pages: false   # Generate GitHub Pages deploy workflow
+
+   tox:
+     enabled: false           # Generate tox.ini with tox-uv backend
 
    typing_level: strict     # none | basic | strict
    layout: src              # src | flat

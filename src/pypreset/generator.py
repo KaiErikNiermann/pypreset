@@ -33,6 +33,7 @@ class ProjectGenerator:
         self.context = get_template_context(config)
         self._is_src = config.layout == LayoutStyle.SRC
         self._is_uv = config.package_manager == CreationPackageManager.UV
+        self._is_podman = config.docker.container_runtime.value == "podman"
 
     @property
     def _package_dir(self) -> Path:
@@ -78,6 +79,21 @@ class ProjectGenerator:
         # Create devcontainer if enabled
         if self.config.docker.devcontainer:
             self._create_devcontainer()
+
+        # Create codecov config if enabled
+        if (
+            self.config.testing.coverage_config.enabled
+            and self.config.testing.coverage_config.tool.value == "codecov"
+        ):
+            self._create_codecov_config()
+
+        # Create documentation scaffolding if enabled
+        if self.config.documentation.enabled:
+            self._create_documentation()
+
+        # Create tox config if enabled
+        if self.config.tox.enabled:
+            self._create_tox_config()
 
         logger.info(f"Project '{self.config.metadata.name}' generated successfully")
         return self.project_dir
@@ -207,17 +223,25 @@ class ProjectGenerator:
         logger.debug(f"Created .pre-commit-config.yaml: {config_path}")
 
     def _create_docker_files(self) -> None:
-        """Create Dockerfile and .dockerignore."""
+        """Create Dockerfile/Containerfile and ignore file."""
         template = "Dockerfile_uv.j2" if self._is_uv else "Dockerfile.j2"
         content = render_template(self.env, template, self.context)
-        dockerfile_path = self.project_dir / "Dockerfile"
+
+        if self._is_podman:
+            dockerfile_name = "Containerfile"
+            ignore_name = ".containerignore"
+        else:
+            dockerfile_name = "Dockerfile"
+            ignore_name = ".dockerignore"
+
+        dockerfile_path = self.project_dir / dockerfile_name
         dockerfile_path.write_text(content)
-        logger.debug(f"Created Dockerfile: {dockerfile_path}")
+        logger.debug(f"Created {dockerfile_name}: {dockerfile_path}")
 
         ignore_content = render_template(self.env, "dockerignore.j2", self.context)
-        ignore_path = self.project_dir / ".dockerignore"
+        ignore_path = self.project_dir / ignore_name
         ignore_path.write_text(ignore_content)
-        logger.debug(f"Created .dockerignore: {ignore_path}")
+        logger.debug(f"Created {ignore_name}: {ignore_path}")
 
     def _create_devcontainer(self) -> None:
         """Create .devcontainer/devcontainer.json configuration."""
@@ -228,6 +252,52 @@ class ProjectGenerator:
         devcontainer_path = devcontainer_dir / "devcontainer.json"
         devcontainer_path.write_text(content)
         logger.debug(f"Created devcontainer.json: {devcontainer_path}")
+
+    def _create_codecov_config(self) -> None:
+        """Create codecov.yml configuration."""
+        content = render_template(self.env, "codecov.yml.j2", self.context)
+        codecov_path = self.project_dir / "codecov.yml"
+        codecov_path.write_text(content)
+        logger.debug(f"Created codecov.yml: {codecov_path}")
+
+    def _create_documentation(self) -> None:
+        """Create documentation scaffolding based on the chosen tool."""
+        docs_dir = self.project_dir / "docs"
+        docs_dir.mkdir(parents=True, exist_ok=True)
+
+        doc_tool = self.config.documentation.tool.value
+
+        if doc_tool == "mkdocs":
+            # mkdocs.yml at project root
+            config_content = render_template(self.env, "mkdocs.yml.j2", self.context)
+            (self.project_dir / "mkdocs.yml").write_text(config_content)
+            # docs/index.md
+            index_content = render_template(self.env, "docs_index.md.j2", self.context)
+            (docs_dir / "index.md").write_text(index_content)
+            logger.debug("Created MkDocs documentation scaffolding")
+        elif doc_tool == "sphinx":
+            # docs/conf.py
+            conf_content = render_template(self.env, "sphinx_conf.py.j2", self.context)
+            (docs_dir / "conf.py").write_text(conf_content)
+            # docs/index.rst
+            index_content = render_template(self.env, "docs_index.rst.j2", self.context)
+            (docs_dir / "index.rst").write_text(index_content)
+            logger.debug("Created Sphinx documentation scaffolding")
+
+        # GitHub Pages deploy workflow
+        if self.config.documentation.deploy_gh_pages:
+            workflows_dir = self.project_dir / ".github" / "workflows"
+            workflows_dir.mkdir(parents=True, exist_ok=True)
+            workflow_content = render_template(self.env, "docs_workflow.yaml.j2", self.context)
+            (workflows_dir / "docs.yaml").write_text(workflow_content)
+            logger.debug("Created docs deployment workflow")
+
+    def _create_tox_config(self) -> None:
+        """Create tox.ini configuration."""
+        content = render_template(self.env, "tox.ini.j2", self.context)
+        tox_path = self.project_dir / "tox.ini"
+        tox_path.write_text(content)
+        logger.debug(f"Created tox.ini: {tox_path}")
 
     def _render_test_file(self) -> str:
         """Render a basic test file."""

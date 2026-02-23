@@ -12,7 +12,10 @@ A meta-tool for scaffolding Python projects with configurable YAML presets. Supp
 - **Two layout styles**: `src/` layout and flat layout
 - **Type checking**: mypy, pyright, ty, or none
 - **Code quality**: ruff linting/formatting, radon complexity checks, pre-commit hooks
-- **Docker & devcontainer**: generate multi-stage Dockerfiles, `.dockerignore`, and VS Code devcontainer configs
+- **Docker & devcontainer**: generate multi-stage Dockerfiles, `.dockerignore`, and VS Code devcontainer configs (Docker or Podman)
+- **Coverage integration**: Codecov support with configurable thresholds and ignore patterns
+- **Documentation scaffolding**: MkDocs (Material theme) or Sphinx (RTD theme) with optional GitHub Pages deployment
+- **Multi-environment testing**: tox configuration with tox-uv backend
 - **Version management**: bump-my-version integration, GitHub release automation via `gh` CLI
 - **User defaults**: persistent config at `~/.config/pypreset/config.yaml`
 - **MCP server**: expose all functionality to AI coding assistants via Model Context Protocol
@@ -43,6 +46,13 @@ pypreset create my-bot --preset discord-bot
 
 # Create a project with Docker support
 pypreset create my-service --preset cli-tool --docker --devcontainer
+
+# Create with Podman, Codecov, docs, and tox
+pypreset create my-project --preset empty-package \
+    --container-runtime podman --docker \
+    --coverage-tool codecov --coverage-threshold 80 \
+    --docs mkdocs --docs-gh-pages \
+    --tox
 ```
 
 ## Commands
@@ -72,6 +82,12 @@ pypreset create <name> [OPTIONS]
 | `--extra-dev-package`, `-d` | Additional dev packages (repeatable) |
 | `--docker` / `--no-docker` | Generate Dockerfile and `.dockerignore` |
 | `--devcontainer` / `--no-devcontainer` | Generate `.devcontainer/` configuration |
+| `--container-runtime` | `docker` or `podman` |
+| `--coverage-tool` | `codecov` or `none` |
+| `--coverage-threshold` | Minimum coverage % (e.g., `80`) |
+| `--docs` | `sphinx`, `mkdocs`, or `none` |
+| `--docs-gh-pages` / `--no-docs-gh-pages` | Generate GitHub Pages deploy workflow |
+| `--tox` / `--no-tox` | Generate `tox.ini` with tox-uv backend |
 | `--git` / `--no-git` | Initialize git repository |
 | `--install` / `--no-install` | Run dependency install after creation |
 
@@ -91,6 +107,11 @@ pypreset augment --test-workflow --lint-workflow --gitignore
 
 # Add Dockerfile and devcontainer config
 pypreset augment --dockerfile --devcontainer
+
+# Add Codecov, documentation, or tox
+pypreset augment --codecov
+pypreset augment --docs mkdocs
+pypreset augment --tox
 
 # Overwrite existing files
 pypreset augment --force

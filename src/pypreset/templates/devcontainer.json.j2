@@ -6,6 +6,9 @@
     "ghcr.io/astral-sh/uv-devcontainer-features/uv:latest": {}
   },
 {% endif %}
+{% if docker.container_runtime == "podman" %}
+  "runArgs": ["--userns=keep-id"],
+{% endif %}
   "postCreateCommand": "{% if package_manager == 'uv' %}uv sync{% else %}pip install poetry && poetry install{% endif %}",
   "customizations": {
     "vscode": {

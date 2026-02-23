@@ -55,7 +55,13 @@ def get_template_context(config: ProjectConfig) -> dict[str, Any]:
         "testing": {
             "enabled": config.testing.enabled,
             "framework": config.testing.framework.value,
-            "coverage": config.testing.coverage,
+            "coverage": config.testing.coverage_config.enabled,
+            "coverage_config": {
+                "enabled": config.testing.coverage_config.enabled,
+                "tool": config.testing.coverage_config.tool.value,
+                "threshold": config.testing.coverage_config.threshold,
+                "ignore_patterns": config.testing.coverage_config.ignore_patterns,
+            },
         },
         "formatting": {
             "enabled": config.formatting.enabled,
@@ -77,6 +83,15 @@ def get_template_context(config: ProjectConfig) -> dict[str, Any]:
                 config.metadata.python_version, config.docker.base_image
             ),
             "devcontainer": config.docker.devcontainer,
+            "container_runtime": config.docker.container_runtime.value,
+        },
+        "documentation": {
+            "enabled": config.documentation.enabled,
+            "tool": config.documentation.tool.value,
+            "deploy_gh_pages": config.documentation.deploy_gh_pages,
+        },
+        "tox": {
+            "enabled": config.tox.enabled,
         },
         "typing_level": config.typing_level.value,
         "layout": config.layout.value,
