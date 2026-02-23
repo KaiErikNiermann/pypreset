@@ -59,8 +59,12 @@ clean:
     find . -type f -name '*.pyc' -delete
 
 # Development setup
-dev: install
+dev: install setup-hooks
     @echo "Development environment ready!"
+
+# Install git hooks (pre-push lint check)
+setup-hooks:
+    @cp scripts/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push && echo "Installed pre-push hook"
 
 # Run the CLI
 run:

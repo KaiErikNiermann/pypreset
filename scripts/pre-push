@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "==> Pre-push: running ruff autofix + lint..."
+
+# Autofix what we can
+poetry run ruff check src/ tests/ --fix --quiet 2>/dev/null || true
+poetry run ruff format src/ tests/ --quiet 2>/dev/null || true
+
+# Check for remaining issues
+if ! poetry run ruff check src/ tests/; then
+    echo ""
+    echo "==> Pre-push BLOCKED: fix the above lint errors before pushing."
+    exit 1
+fi
+
+echo "==> Pre-push: lint clean."
