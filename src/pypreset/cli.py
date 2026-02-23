@@ -143,6 +143,10 @@ def create_project(
     install: Annotated[
         bool, typer.Option("--install/--no-install", help="Run dependency install")
     ] = False,
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run", help="Preview what would be created without generating anything"),
+    ] = False,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose output")] = False,
 ) -> None:
     """Create a new Python project from a preset."""
@@ -167,13 +171,18 @@ def create_project(
 
     try:
         # Build project configuration
-        rprint(f"[blue]Creating project '{name}' with preset '{preset}'...[/blue]")
         project_config = build_project_config(
             project_name=name,
             preset_name=preset,
             overrides=overrides,
             custom_preset_path=config,
         )
+
+        if dry_run:
+            _display_dry_run(name, preset, output_dir.absolute(), project_config, init_git, install)
+            return
+
+        rprint(f"[blue]Creating project '{name}' with preset '{preset}'...[/blue]")
 
         # Generate the project
         project_dir = generate_project(
@@ -214,6 +223,129 @@ def create_project(
 
             traceback.print_exc()
         raise typer.Exit(1) from None
+
+
+def _display_dry_run(
+    name: str,
+    preset: str,
+    output_dir: Path,
+    config: "ProjectConfig",
+    init_git: bool,
+    install: bool,
+) -> None:
+    """Display a dry-run summary of what would be created."""
+    from pypreset.models import CreationPackageManager, LayoutStyle
+    from pypreset.template_engine import render_path
+
+    package_name = name.replace("-", "_")
+    is_src = config.layout == LayoutStyle.SRC
+    is_uv = config.package_manager == CreationPackageManager.UV
+    project_dir = output_dir / name
+    context = {"project": {"name": name, "package_name": package_name}}
+
+    # --- Header ---
+    rprint(
+        Panel.fit(
+            "[bold]Dry run[/bold] — nothing will be created",
+            title=f"pypreset create {name} --preset {preset}",
+            border_style="yellow",
+        )
+    )
+
+    # --- Project overview ---
+    overview = Table(title="Project Overview", show_header=False, box=None, padding=(0, 2))
+    overview.add_column(style="cyan")
+    overview.add_column()
+    overview.add_row("Location", str(project_dir))
+    overview.add_row("Preset", preset)
+    overview.add_row("Package manager", config.package_manager.value)
+    overview.add_row("Layout", config.layout.value)
+    overview.add_row("Python", config.metadata.python_version)
+    overview.add_row(
+        "Typing", f"{config.typing_level.value} ({config.formatting.type_checker.value})"
+    )
+    overview.add_row(
+        "Testing", config.testing.framework.value if config.testing.enabled else "disabled"
+    )
+    overview.add_row(
+        "Formatting", config.formatting.tool.value if config.formatting.enabled else "disabled"
+    )
+    overview.add_row("Git init", "yes" if init_git else "no")
+    overview.add_row("Install deps", "yes" if install else "no")
+    console.print(overview)
+    rprint()
+
+    # --- Feature flags ---
+    flags: list[tuple[str, bool]] = [
+        ("Radon complexity", config.formatting.radon),
+        ("Pre-commit hooks", config.formatting.pre_commit),
+        ("bump-my-version", config.formatting.version_bumping),
+        ("Dependabot", config.dependabot.enabled),
+        ("Coverage", config.testing.coverage),
+    ]
+    active = [name for name, enabled in flags if enabled]
+    if active:
+        rprint(f"[cyan]Extras:[/cyan] {', '.join(active)}")
+        rprint()
+
+    # --- Directory tree ---
+    tree_lines: list[str] = []
+    pkg_prefix = f"src/{package_name}" if is_src else package_name
+
+    tree_lines.append(f"{name}/")
+    tree_lines.append(f"  {pkg_prefix}/")
+    tree_lines.append("    __init__.py")
+
+    # Preset-defined directories
+    for dir_path in config.structure.directories:
+        rendered = render_path(dir_path, context)
+        tree_lines.append(f"  {rendered}/")
+
+    # Preset-defined files
+    for file_def in config.structure.files:
+        rendered = render_path(file_def.path, context)
+        tree_lines.append(f"  {rendered}")
+
+    if config.testing.enabled:
+        tree_lines.append("  tests/")
+        tree_lines.append("    __init__.py")
+        tree_lines.append("    test_basic.py")
+
+    pyproject_tmpl = "pyproject_uv.toml" if is_uv else "pyproject.toml"
+    tree_lines.append(f"  {pyproject_tmpl.replace('_uv', '')} [dim]({pyproject_tmpl}.j2)[/dim]")
+    tree_lines.append("  README.md")
+    tree_lines.append("  .gitignore")
+
+    if config.testing.enabled or config.formatting.enabled:
+        ci_tmpl = "github_ci_uv.yaml" if is_uv else "github_ci.yaml"
+        tree_lines.append(f"  .github/workflows/ci.yaml [dim]({ci_tmpl}.j2)[/dim]")
+
+    if config.dependabot.enabled:
+        tree_lines.append("  .github/dependabot.yml")
+
+    if config.formatting.pre_commit:
+        tree_lines.append("  .pre-commit-config.yaml")
+
+    rprint(Panel("\n".join(tree_lines), title="Project Structure", border_style="green"))
+
+    # --- Dependencies ---
+    if config.dependencies.main or config.dependencies.dev:
+        dep_table = Table(title="Dependencies")
+        dep_table.add_column("Package", style="white")
+        dep_table.add_column("Group", style="dim")
+
+        for pkg in config.dependencies.main:
+            dep_table.add_row(pkg, "main")
+        for pkg in config.dependencies.dev:
+            dep_table.add_row(pkg, "dev")
+
+        console.print(dep_table)
+
+    # --- Entry points ---
+    if config.entry_points:
+        rprint("\n[cyan]Entry points:[/cyan]")
+        for ep in config.entry_points:
+            rprint(f"  {ep.name} = {ep.module}")
 
 
 @app.command("list-presets")
