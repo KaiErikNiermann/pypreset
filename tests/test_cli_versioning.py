@@ -2,7 +2,7 @@
 
 from typer.testing import CliRunner
 
-from pysetup.cli import app
+from pypreset.cli import app
 
 runner = CliRunner()
 

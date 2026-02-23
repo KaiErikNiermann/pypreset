@@ -39,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/project/pysetup/
+      url: https://pypi.org/project/pypreset/
 
     steps:
       - uses: actions/checkout@v4

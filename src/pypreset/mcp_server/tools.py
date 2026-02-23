@@ -11,7 +11,7 @@ from pydantic import Field
 if TYPE_CHECKING:
     from fastmcp import FastMCP
 
-from pysetup.models import (
+from pypreset.models import (
     CreationPackageManager,
     LayoutStyle,
     OverrideOptions,
@@ -61,8 +61,8 @@ def register_tools(mcp: FastMCP) -> None:
             str | None, Field(description="Python version override (e.g. '3.12')")
         ] = None,
     ) -> str:
-        from pysetup.generator import generate_project
-        from pysetup.preset_loader import build_project_config
+        from pypreset.generator import generate_project
+        from pypreset.preset_loader import build_project_config
 
         overrides = OverrideOptions(
             testing_enabled=None,
@@ -111,7 +111,7 @@ def register_tools(mcp: FastMCP) -> None:
     def validate_project(
         project_dir: Annotated[str, Field(description="Path to the project directory to validate")],
     ) -> str:
-        from pysetup.validator import validate_project as _validate
+        from pypreset.validator import validate_project as _validate
 
         is_valid, results = _validate(Path(project_dir))
 
@@ -138,7 +138,7 @@ def register_tools(mcp: FastMCP) -> None:
         tags={"preset"},
     )
     def list_presets() -> str:
-        from pysetup.preset_loader import list_available_presets
+        from pypreset.preset_loader import list_available_presets
 
         presets = list_available_presets()
         return json.dumps([{"name": name, "description": desc} for name, desc in presets])
@@ -154,7 +154,7 @@ def register_tools(mcp: FastMCP) -> None:
     def show_preset(
         preset_name: Annotated[str, Field(description="Name of the preset to show")],
     ) -> str:
-        from pysetup.preset_loader import load_preset
+        from pypreset.preset_loader import load_preset
 
         preset = load_preset(preset_name)
         return json.dumps(preset.model_dump(exclude_none=True), default=str)
@@ -168,7 +168,7 @@ def register_tools(mcp: FastMCP) -> None:
         tags={"config"},
     )
     def get_user_config() -> str:
-        from pysetup.user_config import get_config_path, load_user_config
+        from pypreset.user_config import get_config_path, load_user_config
 
         config = load_user_config()
         return json.dumps(
@@ -199,7 +199,7 @@ def register_tools(mcp: FastMCP) -> None:
             ),
         ],
     ) -> str:
-        from pysetup.user_config import load_user_config, save_user_config
+        from pypreset.user_config import load_user_config, save_user_config
 
         current = load_user_config()
         current.update(values)
@@ -230,9 +230,9 @@ def register_tools(mcp: FastMCP) -> None:
         generate_tests_dir: Annotated[bool, Field(description="Generate tests directory")] = True,
         generate_gitignore: Annotated[bool, Field(description="Generate .gitignore")] = True,
     ) -> str:
-        from pysetup.augment_generator import augment_project as _augment
-        from pysetup.interactive_prompts import InteractivePrompter
-        from pysetup.project_analyzer import analyze_project
+        from pypreset.augment_generator import augment_project as _augment
+        from pypreset.interactive_prompts import InteractivePrompter
+        from pypreset.project_analyzer import analyze_project
 
         path = Path(project_dir)
         analysis = analyze_project(path)

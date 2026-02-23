@@ -1,7 +1,7 @@
 Versioning
 ==========
 
-.. automodule:: pysetup.versioning
+.. automodule:: pypreset.versioning
    :members:
    :undoc-members:
    :show-inheritance:

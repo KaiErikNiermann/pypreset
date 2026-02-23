@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from pysetup.generator import ProjectGenerator, generate_project
-from pysetup.models import (
+from pypreset.generator import ProjectGenerator, generate_project
+from pypreset.models import (
     DependabotConfig,
     DirectoryStructure,
     FileTemplate,
@@ -18,8 +18,8 @@ from pysetup.models import (
     ProjectConfig,
     TestingConfig,
 )
-from pysetup.preset_loader import build_project_config
-from pysetup.validator import validate_project
+from pypreset.preset_loader import build_project_config
+from pypreset.validator import validate_project
 
 
 class TestProjectGenerator:

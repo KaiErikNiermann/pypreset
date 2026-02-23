@@ -1,6 +1,6 @@
-"""User-level configuration for pysetup defaults.
+"""User-level configuration for pypreset defaults.
 
-Reads from ~/.config/pysetup/config.yaml and provides defaults
+Reads from ~/.config/pypreset/config.yaml and provides defaults
 that are applied during project creation and augmentation.
 """
 
@@ -11,7 +11,7 @@ from typing import Any
 
 import yaml
 
-from pysetup.models import (
+from pypreset.models import (
     CreationPackageManager,
     FormattingTool,
     LayoutStyle,
@@ -22,7 +22,7 @@ from pysetup.models import (
 
 logger = logging.getLogger(__name__)
 
-CONFIG_DIR = Path.home() / ".config" / "pysetup"
+CONFIG_DIR = Path.home() / ".config" / "pypreset"
 CONFIG_FILE = CONFIG_DIR / "config.yaml"
 
 # Keys that map to enum types for validation

@@ -26,13 +26,13 @@ List available presets:
 
 .. code-block:: bash
 
-   pysetup list-presets
+   pypreset list-presets
 
 Inspect a preset:
 
 .. code-block:: bash
 
-   pysetup show-preset cli-tool
+   pypreset show-preset cli-tool
 
 Preset YAML Schema
 ------------------
@@ -126,14 +126,14 @@ Place custom preset YAML files in:
 
 .. code-block:: text
 
-   ~/.config/pysetup/presets/
+   ~/.config/pypreset/presets/
 
 User presets take precedence over built-in presets with the same name. Use them
 to define your organization's project templates:
 
 .. code-block:: yaml
 
-   # ~/.config/pysetup/presets/company-service.yaml
+   # ~/.config/pypreset/presets/company-service.yaml
    name: company-service
    description: Internal microservice template
 
@@ -158,4 +158,4 @@ Then use it:
 
 .. code-block:: bash
 
-   pysetup create my-service --preset company-service
+   pypreset create my-service --preset company-service

@@ -5,7 +5,7 @@ from unittest.mock import patch
 
 import yaml
 
-from pysetup.user_config import (
+from pypreset.user_config import (
     apply_user_defaults,
     get_default_config_template,
     load_user_config,
@@ -18,7 +18,7 @@ class TestLoadUserConfig:
 
     def test_returns_empty_when_no_file(self, tmp_path: Path) -> None:
         """Missing config file returns empty dict."""
-        with patch("pysetup.user_config.get_config_path", return_value=tmp_path / "nope.yaml"):
+        with patch("pypreset.user_config.get_config_path", return_value=tmp_path / "nope.yaml"):
             assert load_user_config() == {}
 
     def test_loads_valid_config(self, tmp_path: Path) -> None:
@@ -26,7 +26,7 @@ class TestLoadUserConfig:
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text(yaml.safe_dump({"python_version": "3.13", "layout": "flat"}))
 
-        with patch("pysetup.user_config.get_config_path", return_value=cfg_path):
+        with patch("pypreset.user_config.get_config_path", return_value=cfg_path):
             result = load_user_config()
 
         assert result["python_version"] == "3.13"
@@ -37,7 +37,7 @@ class TestLoadUserConfig:
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text(yaml.safe_dump({"layout": "invalid_layout", "python_version": "3.12"}))
 
-        with patch("pysetup.user_config.get_config_path", return_value=cfg_path):
+        with patch("pypreset.user_config.get_config_path", return_value=cfg_path):
             result = load_user_config()
 
         assert "layout" not in result
@@ -48,7 +48,7 @@ class TestLoadUserConfig:
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text("this: is: not: valid: yaml: [")
 
-        with patch("pysetup.user_config.get_config_path", return_value=cfg_path):
+        with patch("pypreset.user_config.get_config_path", return_value=cfg_path):
             assert load_user_config() == {}
 
 
@@ -60,7 +60,7 @@ class TestApplyUserDefaults:
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text(yaml.safe_dump({"python_version": "3.13"}))
 
-        with patch("pysetup.user_config.get_config_path", return_value=cfg_path):
+        with patch("pypreset.user_config.get_config_path", return_value=cfg_path):
             result = apply_user_defaults({})
 
         assert result["metadata"]["python_version"] == "3.13"
@@ -71,7 +71,7 @@ class TestApplyUserDefaults:
         cfg_path.write_text(yaml.safe_dump({"python_version": "3.13"}))
 
         config = {"metadata": {"python_version": "3.11"}}
-        with patch("pysetup.user_config.get_config_path", return_value=cfg_path):
+        with patch("pypreset.user_config.get_config_path", return_value=cfg_path):
             result = apply_user_defaults(config)
 
         assert result["metadata"]["python_version"] == "3.11"
@@ -81,7 +81,7 @@ class TestApplyUserDefaults:
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text(yaml.safe_dump({"layout": "flat"}))
 
-        with patch("pysetup.user_config.get_config_path", return_value=cfg_path):
+        with patch("pypreset.user_config.get_config_path", return_value=cfg_path):
             result = apply_user_defaults({})
 
         assert result["layout"] == "flat"
@@ -91,7 +91,7 @@ class TestApplyUserDefaults:
         cfg_path = tmp_path / "config.yaml"
         cfg_path.write_text(yaml.safe_dump({"formatter": "black"}))
 
-        with patch("pysetup.user_config.get_config_path", return_value=cfg_path):
+        with patch("pypreset.user_config.get_config_path", return_value=cfg_path):
             result = apply_user_defaults({})
 
         assert result["formatting"]["tool"] == "black"
@@ -99,7 +99,7 @@ class TestApplyUserDefaults:
     def test_noop_when_no_config(self, tmp_path: Path) -> None:
         """No user config means input passes through unchanged."""
         with patch(
-            "pysetup.user_config.get_config_path",
+            "pypreset.user_config.get_config_path",
             return_value=tmp_path / "nope.yaml",
         ):
             config = {"metadata": {"name": "test"}}
@@ -114,7 +114,7 @@ class TestSaveUserConfig:
     def test_saves_and_loads_roundtrip(self, tmp_path: Path) -> None:
         """Config can be saved and loaded back."""
         cfg_path = tmp_path / "subdir" / "config.yaml"
-        with patch("pysetup.user_config.get_config_path", return_value=cfg_path):
+        with patch("pypreset.user_config.get_config_path", return_value=cfg_path):
             save_user_config({"python_version": "3.14", "layout": "src"})
             result = load_user_config()
 

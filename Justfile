@@ -14,7 +14,7 @@ test:
 
 # Run tests with coverage
 test-cov:
-    poetry run pytest -v --cov=pysetup --cov-report=term-missing
+    poetry run pytest -v --cov=pypreset --cov-report=term-missing
 
 # Run integration tests (requires poetry)
 test-integration:
@@ -64,11 +64,11 @@ dev: install
 
 # Run the CLI
 run:
-    poetry run pysetup
+    poetry run pypreset
 
 # Run the MCP server (STDIO transport)
 mcp-serve:
-    poetry run pysetup-mcp
+    poetry run pypreset-mcp
 
 # Run MCP server tests only
 test-mcp:

@@ -34,12 +34,12 @@ poetry run pytest tests/test_models.py::test_name -v
 
 ## Architecture
 
-`pysetup` is a CLI meta-tool that scaffolds Poetry-based Python projects from YAML presets. The data flow is:
+`pypreset` is a CLI meta-tool that scaffolds Poetry-based Python projects from YAML presets. The data flow is:
 
 **`create` command flow:**
 1. `cli.py` — Typer entry point; parses args into `OverrideOptions`
 2. `preset_loader.py` → `build_project_config()` — loads a YAML preset, resolves its inheritance chain (`base:` field), deep-merges configs, applies runtime overrides, replaces `__PROJECT_NAME__`/`__PACKAGE_NAME__` placeholders, returns a `ProjectConfig`
-3. `generator.py` → `ProjectGenerator` — writes directories, renders Jinja2 templates from `src/pysetup/templates/`, creates `pyproject.toml`, README, `.gitignore`, GitHub workflows, and optionally runs `git init` / `poetry install`
+3. `generator.py` → `ProjectGenerator` — writes directories, renders Jinja2 templates from `src/pypreset/templates/`, creates `pyproject.toml`, README, `.gitignore`, GitHub workflows, and optionally runs `git init` / `poetry install`
 4. `validator.py` — checks the generated project for structural correctness
 
 **`augment` command flow** (adds CI/tests/gitignore to an *existing* project):
@@ -60,21 +60,21 @@ poetry run pytest tests/test_models.py::test_name -v
 | `generator.py` | `ProjectGenerator` class; selects templates based on `package_manager` (Poetry vs uv) |
 | `augment_generator.py` | Generates individual components into existing projects |
 | `project_analyzer.py` | Heuristic detection of tooling from `pyproject.toml` |
-| `user_config.py` | User-level defaults from `~/.config/pysetup/config.yaml`; applied as lowest-priority base layer |
+| `user_config.py` | User-level defaults from `~/.config/pypreset/config.yaml`; applied as lowest-priority base layer |
 | `versioning.py` | `VersioningAssistant`; wraps `poetry version`, git, and `gh` CLI |
 | `mcp_server/` | MCP server subpackage — tools, resources, and prompts for AI assistant integration |
 
 ### Preset system
 
-- Built-in presets live in `src/pysetup/presets/*.yaml`
-- User presets can be placed in `~/.config/pysetup/presets/`
+- Built-in presets live in `src/pypreset/presets/*.yaml`
+- User presets can be placed in `~/.config/pypreset/presets/`
 - Presets support single inheritance via `base: <preset-name>`
 - List merging in `deep_merge` is **additive** (child list extends parent list, not replaces)
 - `__PROJECT_NAME__` and `__PACKAGE_NAME__` are placeholder strings replaced in entry points
 
 ### Templates
 
-Jinja2 templates in `src/pysetup/templates/` receive a `project` context dict (built in `template_engine.py::get_template_context()`). Template names referenced in preset YAML `files[].template` fields must match filenames in this directory.
+Jinja2 templates in `src/pypreset/templates/` receive a `project` context dict (built in `template_engine.py::get_template_context()`). Template names referenced in preset YAML `files[].template` fields must match filenames in this directory.
 
 Key templates come in pairs for Poetry vs uv:
 - `pyproject.toml.j2` (Poetry) / `pyproject_uv.toml.j2` (uv with PEP 621 `[project]` + hatchling)
@@ -82,13 +82,13 @@ Key templates come in pairs for Poetry vs uv:
 
 ### Config priority (lowest to highest)
 
-1. User defaults (`~/.config/pysetup/config.yaml`) via `apply_user_defaults()`
+1. User defaults (`~/.config/pypreset/config.yaml`) via `apply_user_defaults()`
 2. Preset config (YAML preset files with inheritance)
 3. CLI overrides (`--layout`, `--type-checker`, `--package-manager`, etc.)
 
-### MCP server (`src/pysetup/mcp_server/`)
+### MCP server (`src/pypreset/mcp_server/`)
 
-An MCP (Model Context Protocol) server that exposes pysetup functionality to AI coding assistants via STDIO transport. Install with `pip install pysetup[mcp]` or `poetry install -E mcp`.
+An MCP (Model Context Protocol) server that exposes pypreset functionality to AI coding assistants via STDIO transport. Install with `pip install pypreset[mcp]` or `poetry install -E mcp`.
 
 **Tools** (`tools.py`): `create_project`, `augment_project`, `validate_project`, `list_presets`, `show_preset`, `get_user_config`, `set_user_config`
 
@@ -102,8 +102,8 @@ Claude Code `settings.json` example:
 ```json
 {
   "mcpServers": {
-    "pysetup": {
-      "command": "pysetup-mcp",
+    "pypreset": {
+      "command": "pypreset-mcp",
       "args": []
     }
   }

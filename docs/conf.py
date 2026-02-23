@@ -1,8 +1,8 @@
-"""Sphinx configuration for pysetup documentation."""
+"""Sphinx configuration for pypreset documentation."""
 
-project = "pysetup"
-copyright = "2026, pysetup contributors"  # noqa: A001
-author = "pysetup contributors"
+project = "pypreset"
+copyright = "2026, pypreset contributors"  # noqa: A001
+author = "pypreset contributors"
 release = "0.1.0"
 
 extensions = [

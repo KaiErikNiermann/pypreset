@@ -9,7 +9,7 @@ from rich.console import Console
 from rich.prompt import Confirm, Prompt
 from rich.table import Table
 
-from pysetup.project_analyzer import (
+from pypreset.project_analyzer import (
     DetectedLinter,
     DetectedTestFramework,
     DetectedTypeChecker,

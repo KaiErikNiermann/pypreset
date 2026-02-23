@@ -1,4 +1,4 @@
-"""Configuration models for pysetup."""
+"""Configuration models for pypreset."""
 
 from enum import Enum
 from typing import Any, Literal

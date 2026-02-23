@@ -1,7 +1,7 @@
 Template Engine
 ===============
 
-.. automodule:: pysetup.template_engine
+.. automodule:: pypreset.template_engine
    :members:
    :undoc-members:
    :show-inheritance:

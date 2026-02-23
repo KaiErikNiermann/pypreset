@@ -4,7 +4,7 @@ Architecture
 Overview
 --------
 
-pysetup has two primary workflows: **create** (scaffold a new project) and
+pypreset has two primary workflows: **create** (scaffold a new project) and
 **augment** (add components to an existing project). Both are driven by YAML
 preset configurations and Jinja2 templates.
 
@@ -18,7 +18,7 @@ Create Command Flow
    preset_loader.build_project_config()
        ├── load_preset() → YAML file
        ├── resolve_preset_chain() → deep_merge inheritance
-       ├── apply_user_defaults() → ~/.config/pysetup/config.yaml
+       ├── apply_user_defaults() → ~/.config/pypreset/config.yaml
        ├── apply_overrides() → CLI flags (highest priority)
        └── _replace_placeholders() → __PROJECT_NAME__ / __PACKAGE_NAME__
        ↓
@@ -61,7 +61,7 @@ Configuration Priority
 
 From lowest to highest priority:
 
-1. **User defaults** — ``~/.config/pysetup/config.yaml`` via ``apply_user_defaults()``
+1. **User defaults** — ``~/.config/pypreset/config.yaml`` via ``apply_user_defaults()``
 2. **Preset config** — YAML preset files with single inheritance via ``base:``
 3. **CLI overrides** — ``--layout``, ``--type-checker``, ``--package-manager``, etc.
 
@@ -90,7 +90,7 @@ Key Modules
    * - ``project_analyzer.py``
      - Heuristic detection of tooling from ``pyproject.toml``
    * - ``user_config.py``
-     - User-level defaults from ``~/.config/pysetup/config.yaml``
+     - User-level defaults from ``~/.config/pypreset/config.yaml``
    * - ``validator.py``
      - Project structure validation
    * - ``versioning.py``
@@ -101,8 +101,8 @@ Key Modules
 Preset System
 -------------
 
-- Built-in presets live in ``src/pysetup/presets/*.yaml``
-- User presets in ``~/.config/pysetup/presets/`` take precedence
+- Built-in presets live in ``src/pypreset/presets/*.yaml``
+- User presets in ``~/.config/pypreset/presets/`` take precedence
 - Presets support single inheritance via the ``base:`` field
 - ``deep_merge`` is **additive** for lists — child extends parent, not replaces
 - ``__PROJECT_NAME__`` and ``__PACKAGE_NAME__`` are placeholder strings replaced
@@ -111,7 +111,7 @@ Preset System
 Template System
 ---------------
 
-Jinja2 templates in ``src/pysetup/templates/`` receive a context dict built by
+Jinja2 templates in ``src/pypreset/templates/`` receive a context dict built by
 ``template_engine.get_template_context()``. Template names referenced in preset
 YAML ``files[].template`` fields must match filenames in this directory.
 

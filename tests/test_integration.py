@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
-from pysetup.generator import generate_project
-from pysetup.preset_loader import build_project_config
+from pypreset.generator import generate_project
+from pypreset.preset_loader import build_project_config
 
 
 def _run_command(

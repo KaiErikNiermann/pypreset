@@ -1,14 +1,14 @@
 [tool.poetry]
-name = "pysetup"
+name = "pypreset"
 version = "0.1.0"
 description = "A meta-tool for setting up Poetry-based Python projects with configurable presets"
 authors = ["Your Name <you@example.com>"]
 readme = "README.md"
-packages = [{include = "pysetup", from = "src"}]
+packages = [{include = "pypreset", from = "src"}]
 
 [tool.poetry.scripts]
-pysetup = "pysetup.cli:app"
-pysetup-mcp = "pysetup.mcp_server:main"
+pypreset = "pypreset.cli:app"
+pypreset-mcp = "pypreset.mcp_server:main"
 
 [tool.poetry.dependencies]
 python = ">=3.14"

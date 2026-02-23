@@ -1,12 +1,12 @@
 """Tests for template engine functionality."""
 
-from pysetup.models import (
+from pypreset.models import (
     Dependencies,
     EntryPoint,
     Metadata,
     ProjectConfig,
 )
-from pysetup.template_engine import (
+from pypreset.template_engine import (
     create_jinja_environment,
     get_template_context,
     get_templates_dir,

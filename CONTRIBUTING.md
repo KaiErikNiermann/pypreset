@@ -11,7 +11,7 @@
 
 ```bash
 git clone <repo-url>
-cd pysetup
+cd pypreset
 just install
 ```
 
@@ -66,7 +66,7 @@ just test-integration-full  # All integration tests (requires Docker)
 ## Project Structure
 
 ```
-src/pysetup/
+src/pypreset/
 ├── cli.py                 # Typer CLI entry point
 ├── models.py              # Pydantic models and enums
 ├── preset_loader.py       # YAML preset loading, inheritance, merging
@@ -75,7 +75,7 @@ src/pysetup/
 ├── project_analyzer.py    # Detect tooling from pyproject.toml
 ├── template_engine.py     # Jinja2 template rendering
 ├── interactive_prompts.py # Interactive CLI prompts for augment
-├── user_config.py         # User defaults (~/.config/pysetup/)
+├── user_config.py         # User defaults (~/.config/pypreset/)
 ├── validator.py           # Project structure validation
 ├── versioning.py          # Release management via git/gh
 ├── mcp_server/            # MCP server (optional FastMCP dependency)
@@ -101,7 +101,7 @@ The typical path for a new feature toggle:
 
 ## Adding a New Preset
 
-Create a YAML file in `src/pysetup/presets/`. Presets support single inheritance:
+Create a YAML file in `src/pypreset/presets/`. Presets support single inheritance:
 
 ```yaml
 name: my-preset
@@ -122,7 +122,7 @@ List merging is additive — a child preset's lists extend the parent's rather t
 
 ## Adding a New Template
 
-1. Create a `.j2` file in `src/pysetup/templates/`
+1. Create a `.j2` file in `src/pypreset/templates/`
 2. Reference it in a preset's `structure.files[].template` field
 3. The template receives the context dict from `template_engine.py::get_template_context()`
 
@@ -136,7 +136,7 @@ Tests use FastMCP's in-memory `Client` (no STDIO subprocess):
 
 ```python
 from fastmcp import Client
-from pysetup.mcp_server import create_server
+from pypreset.mcp_server import create_server
 
 async def test_list_presets():
     server = create_server()
@@ -151,6 +151,6 @@ Run MCP tests: `just test-mcp`
 
 From lowest to highest:
 
-1. User defaults (`~/.config/pysetup/config.yaml`)
+1. User defaults (`~/.config/pypreset/config.yaml`)
 2. Preset config (YAML files with inheritance)
 3. CLI flags (`--layout`, `--type-checker`, etc.)

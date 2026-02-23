@@ -1,7 +1,7 @@
 Preset Loader
 =============
 
-.. automodule:: pysetup.preset_loader
+.. automodule:: pypreset.preset_loader
    :members:
    :undoc-members:
    :show-inheritance:

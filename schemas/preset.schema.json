@@ -470,7 +470,7 @@
       "type": "string"
     }
   },
-  "description": "Schema for pysetup preset YAML files",
+  "description": "Schema for pypreset preset YAML files",
   "properties": {
     "name": {
       "description": "Preset name",

@@ -1,18 +1,18 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.OWNER/pysetup",
-  "title": "pysetup",
-  "description": "MCP server for pysetup — scaffolds Poetry/uv Python projects from YAML presets, augments existing projects with CI/tests/config, validates structure, and manages versions.",
+  "name": "io.github.OWNER/pypreset",
+  "title": "pypreset",
+  "description": "MCP server for pypreset — scaffolds Poetry/uv Python projects from YAML presets, augments existing projects with CI/tests/config, validates structure, and manages versions.",
   "version": "0.1.0",
   "repository": {
-    "url": "https://github.com/OWNER/pysetup",
+    "url": "https://github.com/OWNER/pypreset",
     "source": "github"
   },
   "packages": [
     {
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
-      "identifier": "pysetup",
+      "identifier": "pypreset",
       "version": "0.1.0",
       "runtimeHint": "uvx",
       "runtimeArguments": ["--extra", "mcp"],

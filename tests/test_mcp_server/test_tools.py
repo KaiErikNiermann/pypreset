@@ -153,8 +153,8 @@ class TestUserConfig:
     ) -> None:
         # Point config path to tmp_path to avoid mutating real config
         config_file = tmp_path / "config.yaml"
-        monkeypatch.setattr("pysetup.user_config.CONFIG_FILE", config_file)
-        monkeypatch.setattr("pysetup.user_config.CONFIG_DIR", tmp_path)
+        monkeypatch.setattr("pypreset.user_config.CONFIG_FILE", config_file)
+        monkeypatch.setattr("pypreset.user_config.CONFIG_DIR", tmp_path)
 
         result = await mcp_client.call_tool(
             "set_user_config",

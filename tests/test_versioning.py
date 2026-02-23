@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from pysetup.versioning import VersioningAssistant, VersioningError
+from pypreset.versioning import VersioningAssistant, VersioningError
 
 
 @dataclass(frozen=True)

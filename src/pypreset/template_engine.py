@@ -6,7 +6,7 @@ from typing import Any
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-from pysetup.models import ProjectConfig
+from pypreset.models import ProjectConfig
 
 logger = logging.getLogger(__name__)
 

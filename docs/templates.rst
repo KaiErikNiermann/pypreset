@@ -1,8 +1,8 @@
 Templates
 =========
 
-pysetup uses `Jinja2 <https://jinja.palletsprojects.com/>`_ templates to generate
-project files. Templates live in ``src/pysetup/templates/`` and are referenced by
+pypreset uses `Jinja2 <https://jinja.palletsprojects.com/>`_ templates to generate
+project files. Templates live in ``src/pypreset/templates/`` and are referenced by
 preset YAML files.
 
 Available Templates
@@ -70,7 +70,7 @@ Available Templates
 
 **Augment templates** (in ``templates/augment/``):
 
-Used by ``pysetup augment`` to add components to existing projects. These include
+Used by ``pypreset augment`` to add components to existing projects. These include
 CI workflow templates for various package managers and a PyPI publish workflow.
 
 Template Context
@@ -124,7 +124,7 @@ backend, and CI workflows use ``astral-sh/setup-uv`` instead of ``snok/install-p
 Writing Custom Templates
 -------------------------
 
-1. Create a ``.j2`` file in ``src/pysetup/templates/``
+1. Create a ``.j2`` file in ``src/pypreset/templates/``
 2. Reference it in a preset YAML under ``structure.files[].template``
 3. Use the ``project`` context variable for all project metadata
 

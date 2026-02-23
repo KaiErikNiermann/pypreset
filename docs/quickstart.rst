@@ -8,20 +8,20 @@ Install from PyPI:
 
 .. code-block:: bash
 
-   pip install pysetup
+   pip install pypreset
 
 For MCP server support (AI assistant integration):
 
 .. code-block:: bash
 
-   pip install pysetup[mcp]
+   pip install pypreset[mcp]
 
 For development:
 
 .. code-block:: bash
 
-   git clone https://github.com/OWNER/pysetup
-   cd pysetup
+   git clone https://github.com/OWNER/pypreset
+   cd pypreset
    poetry install
 
 Creating Your First Project
@@ -31,7 +31,7 @@ Create a Python package with sensible defaults:
 
 .. code-block:: bash
 
-   pysetup create my-package
+   pypreset create my-package
 
 This uses the ``empty-package`` preset by default and generates:
 
@@ -49,26 +49,26 @@ Presets define project templates. List available presets:
 
 .. code-block:: bash
 
-   pysetup list-presets
+   pypreset list-presets
 
 Create a project with a specific preset:
 
 .. code-block:: bash
 
    # CLI tool with typer
-   pysetup create my-cli --preset cli-tool
+   pypreset create my-cli --preset cli-tool
 
    # Data science project with jupyter/pandas/matplotlib
-   pysetup create my-analysis --preset data-science
+   pypreset create my-analysis --preset data-science
 
    # Discord bot
-   pysetup create my-bot --preset discord-bot
+   pypreset create my-bot --preset discord-bot
 
 Inspect a preset before using it:
 
 .. code-block:: bash
 
-   pysetup show-preset cli-tool
+   pypreset show-preset cli-tool
 
 Customizing Projects
 --------------------
@@ -78,21 +78,21 @@ Override preset defaults with CLI flags:
 .. code-block:: bash
 
    # Use uv instead of Poetry
-   pysetup create my-project --preset cli-tool --package-manager uv
+   pypreset create my-project --preset cli-tool --package-manager uv
 
    # Use flat layout instead of src/
-   pysetup create my-project --preset empty-package --layout flat
+   pypreset create my-project --preset empty-package --layout flat
 
    # Use ty type checker instead of mypy
-   pysetup create my-project --preset cli-tool --type-checker ty
+   pypreset create my-project --preset cli-tool --type-checker ty
 
    # Add extra dependencies
-   pysetup create my-project --preset empty-package \
+   pypreset create my-project --preset empty-package \
        --extra-package requests \
        --extra-dev-package pytest-cov
 
    # Enable radon complexity checking and pre-commit hooks
-   pysetup create my-project --preset cli-tool --radon --pre-commit
+   pypreset create my-project --preset cli-tool --radon --pre-commit
 
 Augmenting Existing Projects
 -----------------------------
@@ -103,16 +103,16 @@ Add CI workflows, tests, and configuration to an existing project:
 
    # Interactive mode — prompts for missing values
    cd my-existing-project
-   pysetup augment
+   pypreset augment
 
    # Auto-detect everything, no prompts
-   pysetup augment --auto
+   pypreset augment --auto
 
    # Generate only specific components
-   pysetup augment --test-workflow --lint-workflow --gitignore
+   pypreset augment --test-workflow --lint-workflow --gitignore
 
    # Add a PyPI publish workflow
-   pysetup augment --pypi-publish
+   pypreset augment --pypi-publish
 
 The augment command reads your ``pyproject.toml`` to detect your package manager,
 test framework, linter, and type checker, then generates appropriate configurations.
@@ -125,17 +125,17 @@ Set persistent defaults so you don't repeat flags:
 .. code-block:: bash
 
    # Create default config
-   pysetup config init
+   pypreset config init
 
    # Set defaults
-   pysetup config set layout flat
-   pysetup config set type_checker ty
-   pysetup config set package_manager uv
+   pypreset config set layout flat
+   pypreset config set type_checker ty
+   pypreset config set package_manager uv
 
    # View current config
-   pysetup config show
+   pypreset config show
 
-Config is stored at ``~/.config/pysetup/config.yaml``. Presets and CLI flags
+Config is stored at ``~/.config/pypreset/config.yaml``. Presets and CLI flags
 override these defaults.
 
 Version Management
@@ -145,9 +145,9 @@ Bump, tag, and release:
 
 .. code-block:: bash
 
-   pysetup version release patch       # 0.1.0 → 0.1.1
-   pysetup version release minor       # 0.1.0 → 0.2.0
-   pysetup version release major       # 0.1.0 → 1.0.0
-   pysetup version release-version 2.0.0  # Explicit version
+   pypreset version release patch       # 0.1.0 → 0.1.1
+   pypreset version release minor       # 0.1.0 → 0.2.0
+   pypreset version release major       # 0.1.0 → 1.0.0
+   pypreset version release-version 2.0.0  # Explicit version
 
 Requires the ``gh`` CLI to be installed and authenticated.

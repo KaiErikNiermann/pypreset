@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# pysetup installer script
+# pypreset installer script
 # Installs the CLI tool to make it available system-wide
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INSTALL_METHOD="${1:-pipx}"
 
-echo "🔧 Installing pysetup..."
+echo "🔧 Installing pypreset..."
 
 case "$INSTALL_METHOD" in
     pipx)
@@ -20,14 +20,14 @@ case "$INSTALL_METHOD" in
         
         echo "📦 Installing with pipx (isolated environment)..."
         pipx install "$SCRIPT_DIR" --force
-        echo "✅ Installed! Run 'pysetup --help' to get started."
+        echo "✅ Installed! Run 'pypreset --help' to get started."
         ;;
     
     pip)
         # Alternative: install with pip to user directory
         echo "📦 Installing with pip (user install)..."
         pip install --user "$SCRIPT_DIR"
-        echo "✅ Installed! Run 'pysetup --help' to get started."
+        echo "✅ Installed! Run 'pypreset --help' to get started."
         echo "⚠️  Make sure ~/.local/bin is in your PATH"
         ;;
     
@@ -59,5 +59,5 @@ esac
 
 echo ""
 echo "Try it out:"
-echo "  pysetup list-presets"
-echo "  pysetup create my-project --preset cli-tool"
+echo "  pypreset list-presets"
+echo "  pypreset create my-project --preset cli-tool"

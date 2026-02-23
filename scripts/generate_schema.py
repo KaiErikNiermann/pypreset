@@ -9,7 +9,7 @@ from pathlib import Path
 src_path = Path(__file__).parent.parent / "src"
 sys.path.insert(0, str(src_path))
 
-from pysetup.models import PresetConfig
+from pypreset.models import PresetConfig
 
 
 def main() -> None:
@@ -19,7 +19,7 @@ def main() -> None:
     # Add schema metadata
     schema["$schema"] = "http://json-schema.org/draft-07/schema#"
     schema["title"] = "PySetup CLI Preset Configuration"
-    schema["description"] = "Schema for pysetup preset YAML files"
+    schema["description"] = "Schema for pypreset preset YAML files"
     
     output_path = Path(__file__).parent.parent / "schemas" / "preset.schema.json"
     output_path.parent.mkdir(parents=True, exist_ok=True)

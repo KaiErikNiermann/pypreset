@@ -1,4 +1,4 @@
-"""Pytest fixtures for pysetup tests."""
+"""Pytest fixtures for pypreset tests."""
 
 from collections.abc import Generator
 from pathlib import Path
@@ -17,4 +17,4 @@ def temp_output_dir(tmp_path: Path) -> Generator[Path, None, None]:
 @pytest.fixture
 def presets_dir() -> Path:
     """Get the built-in presets directory."""
-    return Path(__file__).parent.parent / "src" / "pysetup" / "presets"
+    return Path(__file__).parent.parent / "src" / "pypreset" / "presets"

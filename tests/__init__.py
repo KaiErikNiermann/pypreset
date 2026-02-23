@@ -1,1 +1,1 @@
-"""Tests package for pysetup."""
+"""Tests package for pypreset."""

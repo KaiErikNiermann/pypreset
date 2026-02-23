@@ -6,7 +6,7 @@ that the resulting YAML is structurally correct without requiring Docker or act.
 
 import yaml
 
-from pysetup.template_engine import create_jinja_environment, render_template
+from pypreset.template_engine import create_jinja_environment, render_template
 
 
 def _make_context(

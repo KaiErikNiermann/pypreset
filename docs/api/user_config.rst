@@ -1,7 +1,7 @@
 User Config
 ===========
 
-.. automodule:: pysetup.user_config
+.. automodule:: pypreset.user_config
    :members:
    :undoc-members:
    :show-inheritance:

@@ -1,7 +1,7 @@
 Models
 ======
 
-.. automodule:: pysetup.models
+.. automodule:: pypreset.models
    :members:
    :undoc-members:
    :show-inheritance:

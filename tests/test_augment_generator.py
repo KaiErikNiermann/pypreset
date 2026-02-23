@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pysetup.augment_generator import (
+from pypreset.augment_generator import (
     AugmentComponent,
     AugmentOrchestrator,
     DependabotGenerator,
@@ -12,8 +12,8 @@ from pysetup.augment_generator import (
     TestWorkflowGenerator,
     augment_project,
 )
-from pysetup.interactive_prompts import AugmentConfig
-from pysetup.project_analyzer import (
+from pypreset.interactive_prompts import AugmentConfig
+from pypreset.project_analyzer import (
     DetectedLinter,
     DetectedTestFramework,
     DetectedTypeChecker,

@@ -5,7 +5,7 @@ from collections.abc import AsyncGenerator
 import pytest_asyncio
 from fastmcp import Client
 
-from pysetup.mcp_server import create_server
+from pypreset.mcp_server import create_server
 
 
 @pytest_asyncio.fixture

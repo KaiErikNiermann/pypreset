@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pysetup.project_analyzer import (
+from pypreset.project_analyzer import (
     DetectedLinter,
     DetectedTestFramework,
     DetectedTypeChecker,
@@ -278,21 +278,21 @@ class TestDetectedValue:
 
     def test_is_reliable_high_confidence(self, tmp_path: Path) -> None:
         """Test that high confidence is reliable."""
-        from pysetup.project_analyzer import DetectedValue
+        from pypreset.project_analyzer import DetectedValue
 
         value = DetectedValue("test", "high", "source")
         assert value.is_reliable is True
 
     def test_is_reliable_medium_confidence(self, tmp_path: Path) -> None:
         """Test that medium confidence is not reliable."""
-        from pysetup.project_analyzer import DetectedValue
+        from pypreset.project_analyzer import DetectedValue
 
         value = DetectedValue("test", "medium", "source")
         assert value.is_reliable is False
 
     def test_is_reliable_low_confidence(self, tmp_path: Path) -> None:
         """Test that low confidence is not reliable."""
-        from pysetup.project_analyzer import DetectedValue
+        from pypreset.project_analyzer import DetectedValue
 
         value = DetectedValue("test", "low", "source")
         assert value.is_reliable is False

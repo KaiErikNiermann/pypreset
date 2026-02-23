@@ -1,4 +1,4 @@
-# pysetup
+# pypreset
 
 A meta-tool for scaffolding Python projects with configurable YAML presets. Supports Poetry and uv, generates CI workflows, testing scaffolds, type checking configs, and more.
 
@@ -11,7 +11,7 @@ A meta-tool for scaffolding Python projects with configurable YAML presets. Supp
 - **Type checking**: mypy, ty, or none
 - **Code quality**: ruff linting/formatting, radon complexity checks, pre-commit hooks
 - **Version management**: bump-my-version integration, GitHub release automation via `gh` CLI
-- **User defaults**: persistent config at `~/.config/pysetup/config.yaml`
+- **User defaults**: persistent config at `~/.config/pypreset/config.yaml`
 - **MCP server**: expose all functionality to AI coding assistants via Model Context Protocol
 
 ## Installation
@@ -28,16 +28,16 @@ poetry install -E mcp
 
 ```bash
 # Create a CLI tool project with Poetry
-pysetup create my-cli --preset cli-tool
+pypreset create my-cli --preset cli-tool
 
 # Create a data science project with uv
-pysetup create my-analysis --preset data-science --package-manager uv
+pypreset create my-analysis --preset data-science --package-manager uv
 
 # Create an empty package with src layout (default)
-pysetup create my-package --preset empty-package
+pypreset create my-package --preset empty-package
 
 # Create a Discord bot
-pysetup create my-bot --preset discord-bot
+pypreset create my-bot --preset discord-bot
 ```
 
 ## Commands
@@ -45,7 +45,7 @@ pysetup create my-bot --preset discord-bot
 ### `create` — Scaffold a new project
 
 ```bash
-pysetup create <name> [OPTIONS]
+pypreset create <name> [OPTIONS]
 ```
 
 | Option | Description |
@@ -74,25 +74,25 @@ Analyzes `pyproject.toml` to auto-detect your tooling, then generates the select
 
 ```bash
 # Interactive mode (prompts for missing values)
-pysetup augment ./my-project
+pypreset augment ./my-project
 
 # Auto-detect everything, no prompts
-pysetup augment --auto
+pypreset augment --auto
 
 # Generate only specific components
-pysetup augment --test-workflow --lint-workflow --gitignore
+pypreset augment --test-workflow --lint-workflow --gitignore
 
 # Overwrite existing files
-pysetup augment --force
+pypreset augment --force
 ```
 
 ### `version` — Release management
 
 ```bash
-pysetup version release <bump>         # Bump, commit, tag, push, release
-pysetup version release-version <ver>  # Explicit version, then release
-pysetup version rerun <ver>            # Re-tag and push an existing version
-pysetup version rerelease <ver>        # Delete and recreate a GitHub release
+pypreset version release <bump>         # Bump, commit, tag, push, release
+pypreset version release-version <ver>  # Explicit version, then release
+pypreset version rerun <ver>            # Re-tag and push an existing version
+pypreset version rerelease <ver>        # Delete and recreate a GitHub release
 ```
 
 Requires the `gh` CLI to be installed and authenticated.
@@ -100,13 +100,13 @@ Requires the `gh` CLI to be installed and authenticated.
 ### Other commands
 
 ```bash
-pysetup list-presets              # List all available presets
-pysetup show-preset <name>        # Show full preset details
-pysetup validate [path]           # Validate project structure
-pysetup analyze [path]            # Detect and display project tooling
-pysetup config show               # Show current user defaults
-pysetup config init               # Create default config file
-pysetup config set <key> <value>  # Set a config value
+pypreset list-presets              # List all available presets
+pypreset show-preset <name>        # Show full preset details
+pypreset validate [path]           # Validate project structure
+pypreset analyze [path]            # Detect and display project tooling
+pypreset config show               # Show current user defaults
+pypreset config init               # Create default config file
+pypreset config set <key> <value>  # Set a config value
 ```
 
 ## Presets
@@ -117,40 +117,40 @@ Presets are YAML files that define metadata, dependencies, directory structure, 
 
 ### Custom presets
 
-Place custom preset files in `~/.config/pysetup/presets/` or pass a file directly:
+Place custom preset files in `~/.config/pypreset/presets/` or pass a file directly:
 
 ```bash
-pysetup create my-project --config ./my-preset.yaml
+pypreset create my-project --config ./my-preset.yaml
 ```
 
 User presets take precedence over built-in presets with the same name.
 
 ## User Configuration
 
-Persistent defaults are stored at `~/.config/pysetup/config.yaml` and applied as the lowest-priority layer (presets and CLI flags override them).
+Persistent defaults are stored at `~/.config/pypreset/config.yaml` and applied as the lowest-priority layer (presets and CLI flags override them).
 
 ```bash
-pysetup config init                    # Create with defaults
-pysetup config set layout flat         # Set default layout
-pysetup config set type_checker ty     # Set default type checker
-pysetup config show                    # View current config
+pypreset config init                    # Create with defaults
+pypreset config set layout flat         # Set default layout
+pypreset config set type_checker ty     # Set default type checker
+pypreset config show                    # View current config
 ```
 
 ## MCP Server
 
-An MCP (Model Context Protocol) server exposes pysetup to AI coding assistants over STDIO.
+An MCP (Model Context Protocol) server exposes pypreset to AI coding assistants over STDIO.
 
 ```bash
 # Run the server
-pysetup-mcp
+pypreset-mcp
 ```
 
 Add to Claude Code `settings.json`:
 ```json
 {
   "mcpServers": {
-    "pysetup": {
-      "command": "pysetup-mcp",
+    "pypreset": {
+      "command": "pypreset-mcp",
       "args": []
     }
   }

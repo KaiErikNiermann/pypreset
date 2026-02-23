@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from pysetup.models import OverrideOptions
-from pysetup.preset_loader import (
+from pypreset.models import OverrideOptions
+from pypreset.preset_loader import (
     build_project_config,
     deep_merge,
     find_preset_file,

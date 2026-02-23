@@ -1,7 +1,7 @@
 Validator
 =========
 
-.. automodule:: pysetup.validator
+.. automodule:: pypreset.validator
    :members:
    :undoc-members:
    :show-inheritance:

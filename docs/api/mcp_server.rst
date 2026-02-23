@@ -1,7 +1,7 @@
 MCP Server
 ==========
 
-.. automodule:: pysetup.mcp_server
+.. automodule:: pypreset.mcp_server
    :members:
    :undoc-members:
    :show-inheritance:
@@ -9,7 +9,7 @@ MCP Server
 Tools
 -----
 
-.. automodule:: pysetup.mcp_server.tools
+.. automodule:: pypreset.mcp_server.tools
    :members:
    :undoc-members:
    :show-inheritance:
@@ -17,7 +17,7 @@ Tools
 Resources
 ---------
 
-.. automodule:: pysetup.mcp_server.resources
+.. automodule:: pypreset.mcp_server.resources
    :members:
    :undoc-members:
    :show-inheritance:
@@ -25,7 +25,7 @@ Resources
 Prompts
 -------
 
-.. automodule:: pysetup.mcp_server.prompts
+.. automodule:: pypreset.mcp_server.prompts
    :members:
    :undoc-members:
    :show-inheritance:

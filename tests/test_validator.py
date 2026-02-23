@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from pysetup.validator import (
+from pypreset.validator import (
     ProjectValidator,
     ValidationResult,
     validate_project,

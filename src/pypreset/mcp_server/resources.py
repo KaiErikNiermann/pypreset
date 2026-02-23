@@ -19,7 +19,7 @@ def register_resources(mcp: FastMCP) -> None:
         mime_type="application/json",
     )
     def preset_list() -> str:
-        from pysetup.preset_loader import list_available_presets
+        from pypreset.preset_loader import list_available_presets
 
         presets = list_available_presets()
         return json.dumps([{"name": name, "description": desc} for name, desc in presets])
@@ -31,7 +31,7 @@ def register_resources(mcp: FastMCP) -> None:
         mime_type="application/json",
     )
     def user_config() -> str:
-        from pysetup.user_config import get_config_path, load_user_config
+        from pypreset.user_config import get_config_path, load_user_config
 
         config = load_user_config()
         return json.dumps(
@@ -48,7 +48,7 @@ def register_resources(mcp: FastMCP) -> None:
         mime_type="application/json",
     )
     def template_list() -> str:
-        from pysetup.template_engine import get_templates_dir
+        from pypreset.template_engine import get_templates_dir
 
         templates_dir = get_templates_dir()
         templates = (

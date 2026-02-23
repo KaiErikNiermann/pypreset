@@ -1,7 +1,7 @@
-pysetup documentation
+pypreset documentation
 =====================
 
-**pysetup** is a meta-tool for scaffolding Python projects from configurable YAML presets.
+**pypreset** is a meta-tool for scaffolding Python projects from configurable YAML presets.
 It supports Poetry and uv, generates CI workflows, testing scaffolds, type checking configs,
 and more.
 

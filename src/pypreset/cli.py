@@ -1,4 +1,4 @@
-"""CLI interface for pysetup."""
+"""CLI interface for pypreset."""
 
 import contextlib
 import logging
@@ -11,38 +11,38 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from pysetup.augment_generator import augment_project
-from pysetup.generator import generate_project
-from pysetup.interactive_prompts import run_auto_session, run_interactive_session
-from pysetup.models import (
+from pypreset.augment_generator import augment_project
+from pypreset.generator import generate_project
+from pypreset.interactive_prompts import run_auto_session, run_interactive_session
+from pypreset.models import (
     CreationPackageManager,
     LayoutStyle,
     OverrideOptions,
     TypeChecker,
     TypingLevel,
 )
-from pysetup.preset_loader import (
+from pypreset.preset_loader import (
     build_project_config,
     list_available_presets,
     load_preset,
     resolve_preset_chain,
 )
-from pysetup.project_analyzer import analyze_project
-from pysetup.user_config import (
+from pypreset.project_analyzer import analyze_project
+from pypreset.user_config import (
     get_config_path,
     get_default_config_template,
     load_user_config,
     save_user_config,
 )
-from pysetup.validator import validate_project, validate_with_poetry
-from pysetup.versioning import VersioningAssistant, VersioningError
+from pypreset.validator import validate_project, validate_with_poetry
+from pypreset.versioning import VersioningAssistant, VersioningError
 
 if TYPE_CHECKING:
-    from pysetup.augment_generator import AugmentResult
-    from pysetup.interactive_prompts import AugmentConfig
+    from pypreset.augment_generator import AugmentResult
+    from pypreset.interactive_prompts import AugmentConfig
 
 app = typer.Typer(
-    name="pysetup",
+    name="pypreset",
     help="A meta-tool for setting up Poetry-based Python projects with configurable presets.",
     no_args_is_help=True,
 )
@@ -443,11 +443,11 @@ def augment_cmd(
     for the missing details. Use --auto to skip prompts and use detected/default values.
 
     Examples:
-        pysetup augment                    # Augment current directory
-        pysetup augment ./my-project       # Augment specific project
-        pysetup augment --auto             # Auto-detect everything, no prompts
-        pysetup augment --force            # Overwrite existing files
-        pysetup augment --test-workflow    # Only generate test workflow
+        pypreset augment                    # Augment current directory
+        pypreset augment ./my-project       # Augment specific project
+        pypreset augment --auto             # Auto-detect everything, no prompts
+        pypreset augment --force            # Overwrite existing files
+        pypreset augment --test-workflow    # Only generate test workflow
     """
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -650,7 +650,7 @@ def analyze_cmd(
     analysis = analyze_project(project_path)
 
     # Display analysis using the interactive prompter's display method
-    from pysetup.interactive_prompts import InteractivePrompter
+    from pypreset.interactive_prompts import InteractivePrompter
 
     prompter = InteractivePrompter(analysis)
     prompter.display_analysis_summary()
@@ -664,7 +664,7 @@ def config_show_cmd() -> None:
 
     if not user_cfg:
         rprint(f"[yellow]No user config found at {config_path}[/yellow]")
-        rprint("[dim]Run 'pysetup config init' to create one.[/dim]")
+        rprint("[dim]Run 'pypreset config init' to create one.[/dim]")
         return
 
     rprint(f"[cyan]Config file:[/cyan] {config_path}\n")

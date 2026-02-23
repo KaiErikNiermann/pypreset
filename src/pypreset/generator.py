@@ -5,13 +5,13 @@ import stat
 import subprocess
 from pathlib import Path
 
-from pysetup.models import (
+from pypreset.models import (
     CreationPackageManager,
     FileTemplate,
     LayoutStyle,
     ProjectConfig,
 )
-from pysetup.template_engine import (
+from pypreset.template_engine import (
     create_jinja_environment,
     get_template_context,
     render_content,

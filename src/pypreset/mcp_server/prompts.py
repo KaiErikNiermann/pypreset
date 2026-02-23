@@ -26,7 +26,7 @@ def register_prompts(mcp: FastMCP) -> None:
         ] = None,
         preset: Annotated[str | None, Field(description="Preset name, if already chosen")] = None,
     ) -> list[Message]:
-        from pysetup.preset_loader import list_available_presets
+        from pypreset.preset_loader import list_available_presets
 
         presets = list_available_presets()
         preset_info = json.dumps(
@@ -35,7 +35,7 @@ def register_prompts(mcp: FastMCP) -> None:
         )
 
         instructions = [
-            "You are helping the user create a new Python project using pysetup.",
+            "You are helping the user create a new Python project using pypreset.",
             "",
             f"Available presets:\n{preset_info}",
             "",
@@ -81,7 +81,7 @@ def register_prompts(mcp: FastMCP) -> None:
         ] = None,
     ) -> list[Message]:
         instructions = [
-            "You are helping the user augment an existing Python project using pysetup.",
+            "You are helping the user augment an existing Python project using pypreset.",
             "",
             "Guide the user through these steps:",
             "1. Confirm the project directory path",

@@ -1,7 +1,7 @@
 MCP Server
 ==========
 
-pysetup includes an `MCP <https://modelcontextprotocol.io/>`_ (Model Context Protocol)
+pypreset includes an `MCP <https://modelcontextprotocol.io/>`_ (Model Context Protocol)
 server that lets AI coding assistants create projects, augment existing ones,
 list presets, validate structure, and manage configuration — all programmatically.
 
@@ -12,7 +12,7 @@ The MCP server requires the ``mcp`` extra:
 
 .. code-block:: bash
 
-   pip install pysetup[mcp]
+   pip install pypreset[mcp]
 
 Running the Server
 ------------------
@@ -21,7 +21,7 @@ The MCP server uses STDIO transport and is started via:
 
 .. code-block:: bash
 
-   pysetup-mcp
+   pypreset-mcp
 
 This is intended to be launched by an MCP client (Claude Code, Cursor, etc.),
 not run manually.
@@ -35,8 +35,8 @@ Client Configuration
 
    {
      "mcpServers": {
-       "pysetup": {
-         "command": "pysetup-mcp",
+       "pypreset": {
+         "command": "pypreset-mcp",
          "args": [],
          "env": {}
        }
@@ -49,8 +49,8 @@ Client Configuration
 
    {
      "mcpServers": {
-       "pysetup": {
-         "command": "pysetup-mcp",
+       "pypreset": {
+         "command": "pypreset-mcp",
          "args": []
        }
      }
@@ -62,9 +62,9 @@ If installed via ``uvx``:
 
    {
      "mcpServers": {
-       "pysetup": {
+       "pypreset": {
          "command": "uvx",
-         "args": ["--extra", "mcp", "pysetup-mcp"]
+         "args": ["--extra", "mcp", "pypreset-mcp"]
        }
      }
    }
@@ -93,7 +93,7 @@ Tools are actions the AI assistant can invoke:
    * - ``show_preset``
      - Show the full YAML configuration of a specific preset
    * - ``get_user_config``
-     - Read current user-level defaults from ``~/.config/pysetup/config.yaml``
+     - Read current user-level defaults from ``~/.config/pypreset/config.yaml``
    * - ``set_user_config``
      - Update user-level defaults (merges into existing config)
 
@@ -131,7 +131,7 @@ Prompts provide guided workflows:
 Architecture
 ------------
 
-The MCP server is a thin wrapper around pysetup's core modules:
+The MCP server is a thin wrapper around pypreset's core modules:
 
 .. code-block:: text
 
@@ -143,5 +143,5 @@ The MCP server is a thin wrapper around pysetup's core modules:
 The server is built with `FastMCP <https://github.com/jlowin/fastmcp>`_ and uses
 Pydantic ``Field`` annotations for tool parameter validation and documentation.
 
-All tool handlers use lazy imports (``from pysetup.xxx import ...`` inside the
+All tool handlers use lazy imports (``from pypreset.xxx import ...`` inside the
 function body) to keep server startup fast and avoid circular imports.

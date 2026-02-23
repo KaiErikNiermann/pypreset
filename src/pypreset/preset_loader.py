@@ -6,7 +6,7 @@ from typing import Any
 
 import yaml
 
-from pysetup.models import (
+from pypreset.models import (
     CreationPackageManager,
     DependabotConfig,
     Dependencies,
@@ -22,7 +22,7 @@ from pysetup.models import (
     TestingConfig,
     TypingLevel,
 )
-from pysetup.user_config import apply_user_defaults
+from pypreset.user_config import apply_user_defaults
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ def get_builtin_presets_dir() -> Path:
 
 def get_user_presets_dir() -> Path:
     """Get the user's custom presets directory."""
-    return Path.home() / ".config" / "pysetup" / "presets"
+    return Path.home() / ".config" / "pypreset" / "presets"
 
 
 def load_yaml_file(path: Path) -> dict[str, Any]:

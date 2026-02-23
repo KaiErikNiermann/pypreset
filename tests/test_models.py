@@ -1,6 +1,6 @@
 """Tests for configuration models."""
 
-from pysetup.models import (
+from pypreset.models import (
     Dependencies,
     DirectoryStructure,
     FileTemplate,
