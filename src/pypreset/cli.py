@@ -83,8 +83,12 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-def _create_versioning_assistant(project_dir: Path) -> VersioningAssistant:
-    return VersioningAssistant(project_dir)
+def _create_versioning_assistant(
+    project_dir: Path,
+    *,
+    server_file: Path | None = None,
+) -> VersioningAssistant:
+    return VersioningAssistant(project_dir, server_file=server_file)
 
 
 def _warn_metadata(project_dir: Path) -> None:
@@ -828,12 +832,20 @@ def release_cmd(
     project_dir: Annotated[
         Path, typer.Option("--path", "-p", help="Path to the project root")
     ] = Path("."),
+    server_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--server-file",
+            help="[experimental] Path to MCP server JSON file to sync version into",
+        ),
+    ] = None,
 ) -> None:
     """Bump version, commit, tag, push, and create a GitHub release."""
     project_path = project_dir.absolute()
+    resolved_server = server_file.absolute() if server_file else None
     try:
         rprint(f"[blue]🚀 Releasing with bump '{bump}'...[/blue]")
-        assistant = _create_versioning_assistant(project_path)
+        assistant = _create_versioning_assistant(project_path, server_file=resolved_server)
         version = assistant.release(bump)
         rprint(
             Panel.fit(
@@ -852,12 +864,20 @@ def release_version_cmd(
     project_dir: Annotated[
         Path, typer.Option("--path", "-p", help="Path to the project root")
     ] = Path("."),
+    server_file: Annotated[
+        Path | None,
+        typer.Option(
+            "--server-file",
+            help="[experimental] Path to MCP server JSON file to sync version into",
+        ),
+    ] = None,
 ) -> None:
     """Use an explicit version, then commit, tag, push, and release."""
     project_path = project_dir.absolute()
+    resolved_server = server_file.absolute() if server_file else None
     try:
         rprint(f"[blue]🚀 Releasing version '{version}'...[/blue]")
-        assistant = _create_versioning_assistant(project_path)
+        assistant = _create_versioning_assistant(project_path, server_file=resolved_server)
         normalized = assistant.release_version(version)
         rprint(
             Panel.fit(

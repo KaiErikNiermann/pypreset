@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -9,6 +10,8 @@ from typing import TYPE_CHECKING, Literal, Protocol
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 ToolName = Literal["git", "poetry", "gh"]
 
@@ -99,6 +102,28 @@ def _tag_name(version: str) -> str:
     return f"v{version}"
 
 
+def sync_server_file(server_file: Path, version: str) -> int:
+    """Update all ``"version": "..."`` values in a JSON server file.
+
+    Reads the file as text and performs a regex replacement so the rest of the
+    file (formatting, comments, trailing newline) is preserved exactly.
+
+    Returns the number of replacements made.
+    """
+    import re
+
+    text = server_file.read_text(encoding="utf-8")
+    new_text, count = re.subn(
+        r'("version"\s*:\s*)"[^"]*"',
+        rf'\g<1>"{version}"',
+        text,
+    )
+    if count > 0:
+        server_file.write_text(new_text, encoding="utf-8")
+        logger.info("Synced %d version field(s) in %s to %s", count, server_file, version)
+    return count
+
+
 class VersioningAssistant:
     """Implements versioning workflows inspired by the project's Justfile."""
 
@@ -108,11 +133,15 @@ class VersioningAssistant:
         runner: CommandRunner | None = None,
         *,
         preflight: bool = True,
+        server_file: Path | None = None,
     ) -> None:
         self.project_dir = project_dir
         self.runner = runner or SubprocessRunner(project_dir)
+        self.server_file = server_file
         if preflight:
             self._preflight()
+        if server_file and not server_file.exists():
+            raise VersioningError(f"Server file '{server_file}' does not exist")
 
     def release(self, bump: str) -> str:
         """Bump version, commit, tag, push, and create a GitHub release."""
@@ -163,13 +192,24 @@ class VersioningAssistant:
 
     def _release(self, version: str) -> None:
         tag = _tag_name(version)
+        self._sync_server_file(version)
         self._run_checked(["git", "add", "pyproject.toml"])
         self._run_checked(["git", "add", "-f", "poetry.lock"])
+        if self.server_file:
+            self._run_checked(["git", "add", str(self.server_file)])
         self._run_checked(["git", "commit", "-m", f"chore(release): {tag}"])
         self._run_checked(["git", "push"])
         self._run_checked(["git", "tag", tag])
         self._run_checked(["git", "push", "origin", tag])
         self._run_checked(["gh", "release", "create", tag, "--title", tag, "--generate-notes"])
+
+    def _sync_server_file(self, version: str) -> None:
+        """Sync version in the MCP server file if configured."""
+        if not self.server_file:
+            return
+        count = sync_server_file(self.server_file, version)
+        if count == 0:
+            logger.warning("No version fields found in %s — file left unchanged", self.server_file)
 
     def _run_checked(self, args: list[str]) -> None:
         self.runner.run(args, check=True)
