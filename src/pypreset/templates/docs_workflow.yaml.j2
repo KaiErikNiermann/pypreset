@@ -3,6 +3,13 @@ name: Deploy Documentation
 on:
   push:
     branches: [main]
+    paths:
+      - "docs/**"
+{% if documentation.tool == "mkdocs" %}
+      - "mkdocs.yml"
+{% elif documentation.tool == "sphinx" %}
+      - "docs/conf.py"
+{% endif %}
   workflow_dispatch:
 
 permissions:
@@ -49,7 +56,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
-      url: {% raw %}${{ steps.deployment.outputs.page_url }}{% endraw %}
+      url: "{% raw %}${{ steps.deployment.outputs.page_url }}{% endraw %}"
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

@@ -3,8 +3,22 @@ name: CI
 on:
   push:
     branches: [main, master]
+    paths-ignore:
+      - "docs/**"
+{% if documentation.tool == "mkdocs" %}
+      - "mkdocs.yml"
+{% endif %}
+      - "*.md"
+      - "LICENSE"
   pull_request:
     branches: [main, master]
+    paths-ignore:
+      - "docs/**"
+{% if documentation.tool == "mkdocs" %}
+      - "mkdocs.yml"
+{% endif %}
+      - "*.md"
+      - "LICENSE"
 
 jobs:
 {% if testing.enabled %}

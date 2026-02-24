@@ -21,6 +21,7 @@ def _make_context(
     radon: bool = False,
     python_version: str = "3.11",
     package_name: str = "test_project",
+    documentation_tool: str = "none",
 ) -> dict:
     return {
         "project": {
@@ -54,6 +55,11 @@ def _make_context(
             "enabled": True,
             "schedule": "weekly",
             "open_pull_requests_limit": 5,
+        },
+        "documentation": {
+            "enabled": documentation_tool != "none",
+            "tool": documentation_tool,
+            "deploy_gh_pages": False,
         },
         "typing_level": typing_level,
         "layout": "src",
@@ -228,3 +234,118 @@ class TestDependabotConfig:
         workflow = _render_workflow("dependabot.yml.j2", ctx)
         ecosystems = [u["package-ecosystem"] for u in workflow["updates"]]
         assert "github-actions" in ecosystems
+
+
+def _get_trigger(workflow: dict) -> dict:
+    """Extract the 'on' trigger from a workflow dict (handles YAML True key)."""
+    return workflow.get(True) or workflow.get("on", {})
+
+
+class TestCIPathFiltering:
+    """Validate path-ignore rules on CI workflows."""
+
+    def test_poetry_ci_has_paths_ignore_on_push(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "paths-ignore" in trigger["push"]
+
+    def test_poetry_ci_has_paths_ignore_on_pr(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "paths-ignore" in trigger["pull_request"]
+
+    def test_poetry_ci_ignores_docs_dir(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "docs/**" in trigger["push"]["paths-ignore"]
+
+    def test_poetry_ci_ignores_markdown(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "*.md" in trigger["push"]["paths-ignore"]
+
+    def test_poetry_ci_ignores_license(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "LICENSE" in trigger["push"]["paths-ignore"]
+
+    def test_poetry_ci_ignores_mkdocs_yml_when_mkdocs(self) -> None:
+        ctx = _make_context(documentation_tool="mkdocs")
+        workflow = _render_workflow("github_ci.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "mkdocs.yml" in trigger["push"]["paths-ignore"]
+
+    def test_poetry_ci_no_mkdocs_yml_when_no_docs(self) -> None:
+        ctx = _make_context(documentation_tool="none")
+        workflow = _render_workflow("github_ci.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "mkdocs.yml" not in trigger["push"]["paths-ignore"]
+
+    def test_uv_ci_has_paths_ignore_on_push(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_uv.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "paths-ignore" in trigger["push"]
+
+    def test_uv_ci_has_paths_ignore_on_pr(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_uv.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "paths-ignore" in trigger["pull_request"]
+
+    def test_uv_ci_ignores_docs_dir(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_uv.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "docs/**" in trigger["push"]["paths-ignore"]
+
+    def test_uv_ci_ignores_mkdocs_yml_when_mkdocs(self) -> None:
+        ctx = _make_context(documentation_tool="mkdocs")
+        workflow = _render_workflow("github_ci_uv.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "mkdocs.yml" in trigger["push"]["paths-ignore"]
+
+
+class TestDocsWorkflowPathFiltering:
+    """Validate path rules on docs deployment workflow."""
+
+    def test_docs_workflow_has_paths_on_push(self) -> None:
+        ctx = _make_context(documentation_tool="mkdocs")
+        workflow = _render_workflow("docs_workflow.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "paths" in trigger["push"]
+
+    def test_docs_workflow_includes_docs_dir(self) -> None:
+        ctx = _make_context(documentation_tool="mkdocs")
+        workflow = _render_workflow("docs_workflow.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "docs/**" in trigger["push"]["paths"]
+
+    def test_docs_workflow_includes_mkdocs_yml(self) -> None:
+        ctx = _make_context(documentation_tool="mkdocs")
+        workflow = _render_workflow("docs_workflow.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "mkdocs.yml" in trigger["push"]["paths"]
+
+    def test_docs_workflow_includes_sphinx_conf(self) -> None:
+        ctx = _make_context(documentation_tool="sphinx")
+        workflow = _render_workflow("docs_workflow.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "docs/conf.py" in trigger["push"]["paths"]
+
+    def test_docs_workflow_no_mkdocs_yml_for_sphinx(self) -> None:
+        ctx = _make_context(documentation_tool="sphinx")
+        workflow = _render_workflow("docs_workflow.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "mkdocs.yml" not in trigger["push"]["paths"]
+
+    def test_docs_workflow_still_has_workflow_dispatch(self) -> None:
+        ctx = _make_context(documentation_tool="mkdocs")
+        workflow = _render_workflow("docs_workflow.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "workflow_dispatch" in trigger or trigger.get("workflow_dispatch") is None
