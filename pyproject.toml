@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pypreset"
-version = "0.2.0"
+version = "0.2.1"
 description = "A meta-tool for setting up Python projects with configurable presets"
 license = "MIT"
 authors = ["applesauce <kai.niermann@gmail.com>"]
