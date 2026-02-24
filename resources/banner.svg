@@ -1,46 +1,50 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="306" height="120" viewBox="0 0 306 120">
+     width="1400" height="480" viewBox="0 0 1400 480">
   <defs>
     <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
-      <feDropShadow dx="0" dy="1" stdDeviation="1.2" flood-color="#000000" flood-opacity="0.2"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#000000" flood-opacity="0.2"/>
     </filter>
+    <clipPath id="icon-clip">
+      <rect x="20" y="20" width="440" height="440" rx="48" ry="48"/>
+    </clipPath>
   </defs>
 
   <!-- Icon -->
-  <image x="8" y="8" width="104" height="104" href="https://raw.githubusercontent.com/KaiErikNiermann/pypreset/main/icon.png"
-         clip-path="inset(0 round 12px)"/>
-  <rect x="8" y="8" width="104" height="104" rx="12" ry="12"
-        fill="none" stroke="#2d1b4e" stroke-opacity="0.12" stroke-width="0.5"/>
+  <image x="20" y="20" width="440" height="440" href="https://raw.githubusercontent.com/KaiErikNiermann/pypreset/main/icon.png"
+         clip-path="url(#icon-clip)"/>
+  <rect x="20" y="20" width="440" height="440" rx="48" ry="48"
+        fill="none" stroke="#2d1b4e" stroke-opacity="0.12" stroke-width="2"/>
 
   <!-- "Preset" in Montserrat Bold — white with drop shadow -->
-  <g transform="translate(116, 83) scale(0.05, -0.05)" filter="url(#shadow)">
+  <g transform="translate(500, 332) scale(0.2, -0.2)" filter="url(#shadow)"
+     fill="white" stroke="#2d1b4e" stroke-width="30" stroke-linejoin="round" paint-order="stroke fill">
     <!-- P -->
     <path d="M83 0V700H386Q479 700 547.5 669.5Q616 639 653.0 582.0Q690 525 690 446Q690 368 653.0 311.0Q616 254 547.5 223.5Q479 193 386 193H245V0ZM245 325H377Q451 325 488.5 357.0Q526 389 526 446Q526 504 488.5 536.0Q451 568 377 568H245Z"
-          fill="white"/>
+          />
     <!-- r -->
     <g transform="translate(732, 0)">
       <path d="M72 0V538H221V467Q278 546 406 546V402Q386 404 371 404Q306 404 267.0 367.5Q228 331 228 254V0Z"
-            fill="white"/>
+            />
     </g>
     <!-- e -->
     <g transform="translate(1163, 0)">
       <path d="M339 -8Q246 -8 177.0 28.0Q108 64 70.0 126.5Q32 189 32 269Q32 350 69.5 412.5Q107 475 172.0 510.5Q237 546 319 546Q398 546 461.5 512.0Q525 478 562.0 415.5Q599 353 599 267Q599 258 598.0 246.5Q597 235 596 225H189Q201 175 241.5 146.0Q282 117 343 117Q386 117 418.5 130.0Q451 143 478 169L561 79Q485 -8 339 -8ZM188 316H452Q444 367 408.5 397.5Q373 428 320 428Q267 428 231.5 397.5Q196 367 188 316Z"
-            fill="white"/>
+            />
     </g>
     <!-- s -->
     <g transform="translate(1794, 0)">
       <path d="M253 -8Q184 -8 120.5 8.5Q57 25 20 50L72 162Q108 138 159.0 124.0Q210 110 259 110Q313 110 335.5 123.0Q358 136 358 159Q358 185 326.0 194.0Q294 203 249 210Q213 215 175.5 223.0Q138 231 105.5 247.0Q73 263 53.0 293.0Q33 323 33 372Q33 448 98.5 497.0Q164 546 282 546Q337 546 393.5 533.5Q450 521 489 499L437 388Q397 411 358.0 419.5Q319 428 282 428Q229 428 205.5 413.5Q182 399 182 378Q182 355 205.5 344.5Q229 334 266.0 328.5Q303 323 344.5 315.5Q386 308 423.0 292.5Q460 277 483.5 246.5Q507 216 507 163Q507 88 440.5 40.0Q374 -8 253 -8Z"
-            fill="white"/>
+            />
     </g>
     <!-- e -->
     <g transform="translate(2325, 0)">
       <path d="M339 -8Q246 -8 177.0 28.0Q108 64 70.0 126.5Q32 189 32 269Q32 350 69.5 412.5Q107 475 172.0 510.5Q237 546 319 546Q398 546 461.5 512.0Q525 478 562.0 415.5Q599 353 599 267Q599 258 598.0 246.5Q597 235 596 225H189Q201 175 241.5 146.0Q282 117 343 117Q386 117 418.5 130.0Q451 143 478 169L561 79Q485 -8 339 -8ZM188 316H452Q444 367 408.5 397.5Q373 428 320 428Q267 428 231.5 397.5Q196 367 188 316Z"
-            fill="white"/>
+            />
     </g>
     <!-- t -->
     <g transform="translate(2956, 0)">
       <path d="M292 -8Q197 -8 144.0 40.5Q91 89 91 185V418H8V538H91V657H247V538H381V418H247V187Q247 153 264.5 134.5Q282 116 314 116Q351 116 377 136L419 26Q395 9 361.5 0.5Q328 -8 292 -8Z"
-            fill="white"/>
+            />
     </g>
   </g>
 </svg>
