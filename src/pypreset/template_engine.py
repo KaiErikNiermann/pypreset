@@ -46,6 +46,10 @@ def get_template_context(config: ProjectConfig) -> dict[str, Any]:
             "python_version": config.metadata.python_version,
             "keywords": config.metadata.keywords,
             "classifiers": config.metadata.classifiers,
+            "repository_url": config.metadata.repository_url,
+            "homepage_url": config.metadata.homepage_url,
+            "documentation_url": config.metadata.documentation_url,
+            "bug_tracker_url": config.metadata.bug_tracker_url,
         },
         "dependencies": {
             "main": config.dependencies.main,

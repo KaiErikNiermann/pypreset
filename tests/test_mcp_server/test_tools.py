@@ -326,3 +326,87 @@ class TestAugmentProject:
         assert data["success"] is True
         created_paths = [f["path"] for f in data["files_created"]]
         assert ".devcontainer/devcontainer.json" in created_paths
+
+
+@pytest.mark.asyncio
+class TestSetProjectMetadata:
+    """Tests for the set_project_metadata tool."""
+
+    async def test_set_metadata_on_poetry_project(self, mcp_client: Client, tmp_path: Path) -> None:
+        # Create a project first
+        await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "meta-proj",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+            },
+        )
+
+        result = await mcp_client.call_tool(
+            "set_project_metadata",
+            {
+                "project_dir": str(tmp_path / "meta-proj"),
+                "description": "A really cool package",
+                "license": "MIT",
+                "keywords": ["python", "cool"],
+                "repository_url": "https://github.com/user/meta-proj",
+            },
+        )
+        data = json.loads(result.data)
+
+        assert "description" in data["updated_fields"]
+        assert "license" in data["updated_fields"]
+        assert data["metadata"]["description"] == "A really cool package"
+        assert data["metadata"]["license"] == "MIT"
+        assert data["metadata"]["keywords"] == ["python", "cool"]
+        assert data["metadata"]["repository_url"] == "https://github.com/user/meta-proj"
+
+    async def test_set_metadata_with_github_owner(self, mcp_client: Client, tmp_path: Path) -> None:
+        await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "gh-proj",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+            },
+        )
+
+        result = await mcp_client.call_tool(
+            "set_project_metadata",
+            {
+                "project_dir": str(tmp_path / "gh-proj"),
+                "github_owner": "myuser",
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["metadata"]["repository_url"] == "https://github.com/myuser/gh-proj"
+        assert data["metadata"]["homepage_url"] == "https://github.com/myuser/gh-proj"
+        assert data["metadata"]["bug_tracker_url"] == "https://github.com/myuser/gh-proj/issues"
+
+    async def test_returns_publish_warnings(self, mcp_client: Client, tmp_path: Path) -> None:
+        await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "warn-proj",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+            },
+        )
+
+        # Set minimal metadata — should still have warnings
+        result = await mcp_client.call_tool(
+            "set_project_metadata",
+            {
+                "project_dir": str(tmp_path / "warn-proj"),
+                "license": "MIT",
+            },
+        )
+        data = json.loads(result.data)
+
+        assert isinstance(data["warnings"], list)
+        assert len(data["warnings"]) > 0

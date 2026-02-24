@@ -204,3 +204,117 @@ class TestRenderTemplate:
         assert 'version = "0.1.0"' in result
         assert "[tool.poetry]" in result
         assert "[build-system]" in result
+
+    def test_render_pyproject_with_urls(self) -> None:
+        env = create_jinja_environment()
+        context = {
+            "project": {
+                "name": "test-project",
+                "package_name": "test_project",
+                "version": "0.1.0",
+                "description": "A test project",
+                "authors": ["Test <test@example.com>"],
+                "license": "MIT",
+                "readme": "README.md",
+                "python_version": "3.11",
+                "keywords": ["python", "test"],
+                "classifiers": [],
+                "repository_url": "https://github.com/user/test-project",
+                "homepage_url": "https://test-project.dev",
+                "documentation_url": None,
+                "bug_tracker_url": "https://github.com/user/test-project/issues",
+            },
+            "dependencies": {"main": [], "dev": [], "optional": {}},
+            "testing": {
+                "enabled": False,
+                "framework": "pytest",
+                "coverage": False,
+                "coverage_config": {
+                    "enabled": False,
+                    "tool": "none",
+                    "threshold": None,
+                    "ignore_patterns": [],
+                },
+            },
+            "formatting": {
+                "enabled": False,
+                "tool": "ruff",
+                "line_length": 100,
+                "radon": False,
+                "pre_commit": False,
+                "version_bumping": False,
+                "type_checker": "mypy",
+            },
+            "documentation": {"enabled": False, "tool": "none", "deploy_gh_pages": False},
+            "tox": {"enabled": False},
+            "typing_level": "none",
+            "layout": "src",
+            "package_manager": "poetry",
+            "entry_points": [],
+            "extras": {},
+        }
+
+        result = render_template(env, "pyproject.toml.j2", context)
+        assert "[tool.poetry.urls]" in result
+        assert 'Repository = "https://github.com/user/test-project"' in result
+        assert 'Homepage = "https://test-project.dev"' in result
+        assert '"Bug Tracker" = "https://github.com/user/test-project/issues"' in result
+        assert "Documentation" not in result
+        assert 'license = "MIT"' in result
+        assert 'keywords = ["python", "test"]' in result
+
+    def test_render_pyproject_uv_with_urls(self) -> None:
+        env = create_jinja_environment()
+        context = {
+            "project": {
+                "name": "uv-project",
+                "package_name": "uv_project",
+                "version": "0.1.0",
+                "description": "A uv project",
+                "authors": ["Dev <dev@test.com>"],
+                "license": "Apache-2.0",
+                "readme": "README.md",
+                "python_version": "3.12",
+                "keywords": ["uv"],
+                "classifiers": [],
+                "repository_url": "https://github.com/org/uv-project",
+                "homepage_url": None,
+                "documentation_url": "https://uv-project.readthedocs.io",
+                "bug_tracker_url": None,
+            },
+            "dependencies": {"main": [], "dev": [], "optional": {}},
+            "testing": {
+                "enabled": False,
+                "framework": "pytest",
+                "coverage": False,
+                "coverage_config": {
+                    "enabled": False,
+                    "tool": "none",
+                    "threshold": None,
+                    "ignore_patterns": [],
+                },
+            },
+            "formatting": {
+                "enabled": False,
+                "tool": "ruff",
+                "line_length": 100,
+                "radon": False,
+                "pre_commit": False,
+                "version_bumping": False,
+                "type_checker": "mypy",
+            },
+            "documentation": {"enabled": False, "tool": "none", "deploy_gh_pages": False},
+            "tox": {"enabled": False},
+            "typing_level": "none",
+            "layout": "src",
+            "package_manager": "uv",
+            "entry_points": [],
+            "extras": {},
+        }
+
+        result = render_template(env, "pyproject_uv.toml.j2", context)
+        assert "[project.urls]" in result
+        assert 'Repository = "https://github.com/org/uv-project"' in result
+        assert 'Documentation = "https://uv-project.readthedocs.io"' in result
+        assert "Homepage" not in result
+        assert 'keywords = ["uv"]' in result

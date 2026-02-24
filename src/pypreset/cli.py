@@ -3,7 +3,7 @@
 import contextlib
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated
+from typing import TYPE_CHECKING, Annotated, Any
 
 import typer
 from rich import print as rprint
@@ -59,6 +59,13 @@ version_app = typer.Typer(
 
 app.add_typer(version_app, name="version")
 
+metadata_app = typer.Typer(
+    name="metadata",
+    help="Read, set, and check PyPI metadata in pyproject.toml.",
+    no_args_is_help=True,
+)
+app.add_typer(metadata_app, name="metadata")
+
 config_app = typer.Typer(
     name="config",
     help="Manage user-level default preferences.",
@@ -78,6 +85,26 @@ logger = logging.getLogger(__name__)
 
 def _create_versioning_assistant(project_dir: Path) -> VersioningAssistant:
     return VersioningAssistant(project_dir)
+
+
+def _warn_metadata(project_dir: Path) -> None:
+    """Show publish-readiness warnings for project metadata."""
+    import tomllib
+
+    from pypreset.metadata_utils import check_publish_readiness
+
+    pyproject_path = project_dir / "pyproject.toml"
+    if not pyproject_path.exists():
+        return
+
+    with open(pyproject_path, "rb") as f:
+        data = tomllib.load(f)
+
+    warnings = check_publish_readiness(data)
+    if warnings:
+        rprint("\n[dim]PyPI metadata hints (run 'pypreset metadata set' to fix):[/dim]")
+        for w in warnings:
+            rprint(f"  [dim]- {w}[/dim]")
 
 
 @app.command("create")
@@ -266,6 +293,9 @@ def create_project(
             for result in results:
                 if not result.passed:
                     rprint(f"  [yellow]⚠ {result.message}[/yellow]")
+
+        # Warn about incomplete PyPI metadata
+        _warn_metadata(project_dir)
 
     except ValueError as e:
         rprint(f"[red]Error: {e}[/red]")
@@ -916,6 +946,170 @@ def analyze_cmd(
 
     prompter = InteractivePrompter(analysis)
     prompter.display_analysis_summary()
+
+
+@metadata_app.command("show")
+def metadata_show_cmd(
+    project_dir: Annotated[Path, typer.Argument(help="Path to the project")] = Path("."),
+) -> None:
+    """Show current PyPI metadata from pyproject.toml."""
+    from pypreset.metadata_utils import read_pyproject_metadata
+
+    project_path = project_dir.absolute()
+    try:
+        meta = read_pyproject_metadata(project_path)
+    except (FileNotFoundError, ValueError) as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1) from None
+
+    table = Table(title="Project Metadata")
+    table.add_column("Field", style="cyan")
+    table.add_column("Value")
+
+    for key, value in meta.items():
+        display = str(value) if value else "[dim]<empty>[/dim]"
+        table.add_row(key, display)
+
+    console.print(table)
+
+
+@metadata_app.command("set")
+def metadata_set_cmd(
+    project_dir: Annotated[Path, typer.Argument(help="Path to the project")] = Path("."),
+    description: Annotated[
+        str | None, typer.Option("--description", help="Package description")
+    ] = None,
+    authors: Annotated[
+        list[str] | None, typer.Option("--author", help="Author (repeatable)")
+    ] = None,
+    license_id: Annotated[
+        str | None, typer.Option("--license", help="SPDX license identifier")
+    ] = None,
+    keywords: Annotated[
+        list[str] | None, typer.Option("--keyword", help="Keyword (repeatable)")
+    ] = None,
+    repository_url: Annotated[
+        str | None, typer.Option("--repository-url", help="Source repository URL")
+    ] = None,
+    homepage_url: Annotated[
+        str | None, typer.Option("--homepage-url", help="Project homepage URL")
+    ] = None,
+    documentation_url: Annotated[
+        str | None, typer.Option("--documentation-url", help="Documentation site URL")
+    ] = None,
+    bug_tracker_url: Annotated[
+        str | None, typer.Option("--bug-tracker-url", help="Issue tracker URL")
+    ] = None,
+    github_owner: Annotated[
+        str | None,
+        typer.Option("--github-owner", help="GitHub owner/org — auto-generates URLs"),
+    ] = None,
+    overwrite: Annotated[
+        bool, typer.Option("--overwrite", "-f", help="Overwrite existing non-empty values")
+    ] = False,
+) -> None:
+    """Set or update PyPI metadata in pyproject.toml.
+
+    By default, only fills in empty/unset fields. Use --overwrite to replace
+    existing values.
+
+    Examples:
+        pypreset metadata set --description "My awesome package"
+        pypreset metadata set --github-owner myuser
+        pypreset metadata set --license MIT --keyword python --keyword cli
+    """
+    from pypreset.metadata_utils import (
+        generate_default_urls,
+        read_pyproject_metadata,
+        set_pyproject_metadata,
+    )
+
+    project_path = project_dir.absolute()
+
+    try:
+        current = read_pyproject_metadata(project_path)
+    except (FileNotFoundError, ValueError) as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1) from None
+
+    # Build updates
+    updates: dict[str, Any] = {}
+    if description is not None:
+        updates["description"] = description
+    if authors is not None:
+        updates["authors"] = authors
+    if license_id is not None:
+        updates["license"] = license_id
+    if keywords is not None:
+        updates["keywords"] = keywords
+    if repository_url is not None:
+        updates["repository_url"] = repository_url
+    if homepage_url is not None:
+        updates["homepage_url"] = homepage_url
+    if documentation_url is not None:
+        updates["documentation_url"] = documentation_url
+    if bug_tracker_url is not None:
+        updates["bug_tracker_url"] = bug_tracker_url
+
+    # Auto-generate URLs from github_owner
+    if github_owner:
+        auto_urls = generate_default_urls(current["name"], github_owner)
+        for key, value in auto_urls.items():
+            updates.setdefault(key, value)
+
+    if not updates:
+        rprint("[yellow]No metadata fields specified. Use --help to see options.[/yellow]")
+        raise typer.Exit(1)
+
+    try:
+        warnings = set_pyproject_metadata(project_path, updates, overwrite=overwrite)
+    except (FileNotFoundError, ValueError) as e:
+        rprint(f"[red]Error: {e}[/red]")
+        raise typer.Exit(1) from None
+
+    rprint(f"[green]Updated {len(updates)} field(s) in pyproject.toml[/green]")
+    for field in updates:
+        rprint(f"  [cyan]{field}[/cyan] = {updates[field]}")
+
+    if warnings:
+        rprint("\n[yellow]Publish-readiness warnings:[/yellow]")
+        for w in warnings:
+            rprint(f"  [yellow]! {w}[/yellow]")
+
+
+@metadata_app.command("check")
+def metadata_check_cmd(
+    project_dir: Annotated[Path, typer.Argument(help="Path to the project")] = Path("."),
+) -> None:
+    """Check if metadata is ready for PyPI publishing.
+
+    Reports warnings for empty, placeholder, or missing metadata fields
+    that should be filled before publishing to PyPI.
+    """
+    import tomllib
+
+    from pypreset.metadata_utils import check_publish_readiness
+
+    project_path = project_dir.absolute()
+    pyproject_path = project_path / "pyproject.toml"
+
+    if not pyproject_path.exists():
+        rprint(f"[red]Error: No pyproject.toml found in {project_path}[/red]")
+        raise typer.Exit(1)
+
+    with open(pyproject_path, "rb") as f:
+        data = tomllib.load(f)
+
+    warnings = check_publish_readiness(data)
+
+    if warnings:
+        rprint("[yellow]Metadata is not ready for publishing:[/yellow]\n")
+        for w in warnings:
+            rprint(f"  [yellow]! {w}[/yellow]")
+        rprint("\n[dim]Use 'pypreset metadata set' to fill in missing fields.[/dim]")
+        raise typer.Exit(1)
+    else:
+        rprint("[green]All metadata fields look good for publishing![/green]")
 
 
 @config_app.command("show")

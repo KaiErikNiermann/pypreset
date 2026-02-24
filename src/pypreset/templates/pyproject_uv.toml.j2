@@ -12,6 +12,16 @@ requires-python = ">={{ project.python_version }}"
 {% if project.license %}
 license = "{{ project.license }}"
 {% endif %}
+{% if project.keywords %}
+keywords = [{% for kw in project.keywords %}"{{ kw }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+{% endif %}
+{% if project.classifiers %}
+classifiers = [
+{% for cls in project.classifiers %}
+    "{{ cls }}",
+{% endfor %}
+]
+{% endif %}
 dependencies = [
 {% for pkg in dependencies.main %}
     "{{ pkg }}",
@@ -23,6 +33,22 @@ dependencies = [
 {% for ep in entry_points %}
 {{ ep.name }} = "{{ ep.module }}"
 {% endfor %}
+{% endif %}
+
+{% if project.repository_url or project.homepage_url or project.documentation_url or project.bug_tracker_url %}
+[project.urls]
+{% if project.homepage_url %}
+Homepage = "{{ project.homepage_url }}"
+{% endif %}
+{% if project.repository_url %}
+Repository = "{{ project.repository_url }}"
+{% endif %}
+{% if project.documentation_url %}
+Documentation = "{{ project.documentation_url }}"
+{% endif %}
+{% if project.bug_tracker_url %}
+"Bug Tracker" = "{{ project.bug_tracker_url }}"
+{% endif %}
 {% endif %}
 
 {% if testing.enabled or formatting.enabled or dependencies.dev %}

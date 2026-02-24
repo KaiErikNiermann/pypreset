@@ -333,3 +333,101 @@ def register_tools(mcp: FastMCP) -> None:
                 "errors": result.errors,
             }
         )
+
+    # ------------------------------------------------------------------
+    # set_project_metadata
+    # ------------------------------------------------------------------
+    @mcp.tool(
+        name="set_project_metadata",
+        description=(
+            "Set or update PyPI metadata (description, authors, license, URLs, keywords) "
+            "in an existing project's pyproject.toml. Only updates fields that are currently "
+            "empty unless overwrite=True. Returns publish-readiness warnings for any "
+            "fields that are still empty or using placeholder defaults."
+        ),
+        tags={"project", "metadata"},
+    )
+    def set_project_metadata(
+        project_dir: Annotated[str, Field(description="Path to the project directory")],
+        description: Annotated[
+            str | None, Field(description="Short package description for PyPI")
+        ] = None,
+        authors: Annotated[
+            list[str] | None,
+            Field(description="Authors list, e.g. ['Name <email@example.com>']"),
+        ] = None,
+        license: Annotated[
+            str | None, Field(description="SPDX license identifier (e.g. 'MIT', 'Apache-2.0')")
+        ] = None,
+        keywords: Annotated[list[str] | None, Field(description="PyPI search keywords")] = None,
+        classifiers: Annotated[
+            list[str] | None,
+            Field(description="PyPI trove classifiers"),
+        ] = None,
+        repository_url: Annotated[str | None, Field(description="Source repository URL")] = None,
+        homepage_url: Annotated[str | None, Field(description="Project homepage URL")] = None,
+        documentation_url: Annotated[
+            str | None, Field(description="Documentation site URL")
+        ] = None,
+        bug_tracker_url: Annotated[str | None, Field(description="Issue/bug tracker URL")] = None,
+        github_owner: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "GitHub owner/org name — auto-generates repository, homepage, "
+                    "and bug tracker URLs from this (e.g. 'myuser' or 'myorg')"
+                )
+            ),
+        ] = None,
+        overwrite: Annotated[
+            bool,
+            Field(description="Overwrite existing non-empty values (default: only fill blanks)"),
+        ] = False,
+    ) -> str:
+        from pypreset.metadata_utils import (
+            generate_default_urls,
+            read_pyproject_metadata,
+            set_pyproject_metadata,
+        )
+
+        path = Path(project_dir)
+
+        # Read current metadata to get project name for URL generation
+        current = read_pyproject_metadata(path)
+
+        # Build updates dict from non-None arguments
+        updates: dict[str, Any] = {}
+        if description is not None:
+            updates["description"] = description
+        if authors is not None:
+            updates["authors"] = authors
+        if license is not None:
+            updates["license"] = license
+        if keywords is not None:
+            updates["keywords"] = keywords
+        if classifiers is not None:
+            updates["classifiers"] = classifiers
+        if repository_url is not None:
+            updates["repository_url"] = repository_url
+        if homepage_url is not None:
+            updates["homepage_url"] = homepage_url
+        if documentation_url is not None:
+            updates["documentation_url"] = documentation_url
+        if bug_tracker_url is not None:
+            updates["bug_tracker_url"] = bug_tracker_url
+
+        # Auto-generate URLs from github_owner if provided
+        if github_owner:
+            auto_urls = generate_default_urls(current["name"], github_owner)
+            for key, value in auto_urls.items():
+                updates.setdefault(key, value)
+
+        warnings = set_pyproject_metadata(path, updates, overwrite=overwrite)
+
+        return json.dumps(
+            {
+                "updated_fields": list(updates.keys()),
+                "warnings": warnings,
+                "metadata": read_pyproject_metadata(path),
+            }
+        )

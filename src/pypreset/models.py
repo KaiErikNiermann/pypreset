@@ -219,6 +219,10 @@ class Metadata(BaseModel):
     python_version: str = Field("3.11", description="Minimum Python version")
     keywords: list[str] = Field(default_factory=list, description="Project keywords")
     classifiers: list[str] = Field(default_factory=list, description="PyPI classifiers")
+    repository_url: str | None = Field(None, description="Source repository URL")
+    homepage_url: str | None = Field(None, description="Project homepage URL")
+    documentation_url: str | None = Field(None, description="Documentation site URL")
+    bug_tracker_url: str | None = Field(None, description="Issue/bug tracker URL")
 
 
 class EntryPoint(BaseModel):
@@ -241,6 +245,10 @@ class PartialMetadata(BaseModel):
     python_version: str | None = Field(None, description="Minimum Python version")
     keywords: list[str] | None = Field(None, description="Project keywords")
     classifiers: list[str] | None = Field(None, description="PyPI classifiers")
+    repository_url: str | None = Field(None, description="Source repository URL")
+    homepage_url: str | None = Field(None, description="Project homepage URL")
+    documentation_url: str | None = Field(None, description="Documentation site URL")
+    bug_tracker_url: str | None = Field(None, description="Issue/bug tracker URL")
 
 
 class PartialDirectoryStructure(BaseModel):

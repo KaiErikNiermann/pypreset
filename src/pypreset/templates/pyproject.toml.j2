@@ -8,10 +8,39 @@ authors = [{% for author in project.authors %}"{{ author }}"{% if not loop.last 
 authors = ["Your Name <you@example.com>"]
 {% endif %}
 readme = "{{ project.readme }}"
+{% if project.license %}
+license = "{{ project.license }}"
+{% endif %}
+{% if project.keywords %}
+keywords = [{% for kw in project.keywords %}"{{ kw }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+{% endif %}
+{% if project.classifiers %}
+classifiers = [
+{% for cls in project.classifiers %}
+    "{{ cls }}",
+{% endfor %}
+]
+{% endif %}
 {% if layout == "src" %}
 packages = [{include = "{{ project.package_name }}", from = "src"}]
 {% else %}
 packages = [{include = "{{ project.package_name }}"}]
+{% endif %}
+
+{% if project.repository_url or project.homepage_url or project.documentation_url or project.bug_tracker_url %}
+[tool.poetry.urls]
+{% if project.homepage_url %}
+Homepage = "{{ project.homepage_url }}"
+{% endif %}
+{% if project.repository_url %}
+Repository = "{{ project.repository_url }}"
+{% endif %}
+{% if project.documentation_url %}
+Documentation = "{{ project.documentation_url }}"
+{% endif %}
+{% if project.bug_tracker_url %}
+"Bug Tracker" = "{{ project.bug_tracker_url }}"
+{% endif %}
 {% endif %}
 
 {% if entry_points %}
