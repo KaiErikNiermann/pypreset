@@ -335,6 +335,96 @@ def register_tools(mcp: FastMCP) -> None:
         )
 
     # ------------------------------------------------------------------
+    # verify_workflow
+    # ------------------------------------------------------------------
+    @mcp.tool(
+        name="verify_workflow",
+        description=(
+            "Verify GitHub Actions workflows locally using act. "
+            "Checks if act is installed (warns if not — do NOT assume it is), "
+            "optionally auto-installs it on supported Linux distros, "
+            "then runs the workflow in dry-run or full mode. "
+            "All act output and errors are surfaced directly. "
+            "Some workflows cannot be tested locally (e.g. those needing "
+            "GitHub-specific secrets or contexts) — this is expected."
+        ),
+        tags={"workflow", "verify", "act"},
+    )
+    def verify_workflow(
+        project_dir: Annotated[str, Field(description="Path to the project root directory")],
+        workflow_file: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Specific workflow file relative to project (e.g. '.github/workflows/ci.yaml')"
+                )
+            ),
+        ] = None,
+        job: Annotated[
+            str | None,
+            Field(description="Specific job name to verify (runs all jobs if omitted)"),
+        ] = None,
+        event: Annotated[
+            str, Field(description="GitHub event to simulate (default: 'push')")
+        ] = "push",
+        dry_run: Annotated[
+            bool, Field(description="Validate without executing containers (default: true)")
+        ] = True,
+        platform_map: Annotated[
+            str | None,
+            Field(
+                description="Platform mapping (e.g. 'ubuntu-latest=catthehacker/ubuntu:act-latest')"
+            ),
+        ] = None,
+        extra_flags: Annotated[
+            list[str] | None,
+            Field(description="Additional flags to pass through to act"),
+        ] = None,
+        timeout: Annotated[
+            int, Field(description="Timeout in seconds for act commands (default: 600)")
+        ] = 600,
+        auto_install: Annotated[
+            bool,
+            Field(description="Attempt to auto-install act if not found (default: false)"),
+        ] = False,
+    ) -> str:
+        from pypreset.act_runner import verify_workflow as _verify
+
+        wf_path = Path(workflow_file) if workflow_file else None
+
+        result = _verify(
+            project_dir=Path(project_dir),
+            workflow_file=wf_path,
+            job=job,
+            event=event,
+            dry_run=dry_run,
+            platform_map=platform_map,
+            extra_flags=extra_flags,
+            timeout=timeout,
+            auto_install=auto_install,
+        )
+
+        return json.dumps(
+            {
+                "act_available": result.act_available,
+                "act_version": result.act_version,
+                "workflow_path": result.workflow_path,
+                "errors": result.errors,
+                "warnings": result.warnings,
+                "runs": [
+                    {
+                        "success": run.success,
+                        "command": run.command,
+                        "stdout": run.stdout,
+                        "stderr": run.stderr,
+                        "return_code": run.return_code,
+                    }
+                    for run in result.runs
+                ],
+            }
+        )
+
+    # ------------------------------------------------------------------
     # set_project_metadata
     # ------------------------------------------------------------------
     @mcp.tool(

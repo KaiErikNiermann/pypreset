@@ -66,6 +66,13 @@ metadata_app = typer.Typer(
 )
 app.add_typer(metadata_app, name="metadata")
 
+workflow_app = typer.Typer(
+    name="workflow",
+    help="Workflow verification commands.",
+    no_args_is_help=True,
+)
+app.add_typer(workflow_app, name="workflow")
+
 config_app = typer.Typer(
     name="config",
     help="Manage user-level default preferences.",
@@ -1194,6 +1201,154 @@ def config_set_cmd(
 def config_path_cmd() -> None:
     """Print the path to the user config file."""
     rprint(str(get_config_path()))
+
+
+@workflow_app.command("verify")
+def workflow_verify_cmd(
+    project_dir: Annotated[Path, typer.Argument(help="Path to the project root")] = Path("."),
+    workflow_file: Annotated[
+        str | None,
+        typer.Option("--workflow", "-w", help="Specific workflow file (relative to project)"),
+    ] = None,
+    job: Annotated[
+        str | None,
+        typer.Option("--job", "-j", help="Specific job to verify"),
+    ] = None,
+    event: Annotated[
+        str,
+        typer.Option("--event", "-e", help="GitHub event to simulate"),
+    ] = "push",
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run/--full-run",
+            help="Dry-run (validate only) or full run (execute in containers)",
+        ),
+    ] = True,
+    platform_map: Annotated[
+        str | None,
+        typer.Option("--platform", help="Platform mapping (e.g. 'ubuntu-latest=image:tag')"),
+    ] = None,
+    auto_install: Annotated[
+        bool,
+        typer.Option("--auto-install/--no-auto-install", help="Auto-install act if missing"),
+    ] = False,
+    timeout: Annotated[
+        int,
+        typer.Option("--timeout", "-t", help="Timeout in seconds for act commands"),
+    ] = 600,
+    extra_flags: Annotated[
+        list[str] | None,
+        typer.Option("--flag", "-f", help="Extra flags to pass to act (repeatable)"),
+    ] = None,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose output")] = False,
+) -> None:
+    """Verify GitHub Actions workflows locally using act.
+
+    Checks if act is installed, optionally installs it, then runs
+    workflow verification. Surfaces all act output directly.
+
+    Examples:
+        pypreset workflow verify                          # Verify all workflows (dry-run)
+        pypreset workflow verify --workflow .github/workflows/ci.yaml
+        pypreset workflow verify --job lint               # Verify specific job
+        pypreset workflow verify --full-run               # Run workflows in containers
+        pypreset workflow verify --auto-install           # Install act if missing
+        pypreset workflow verify --flag="--secret=FOO=bar"
+    """
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    from pypreset.act_runner import verify_workflow
+
+    project_path = project_dir.absolute()
+
+    if not project_path.exists():
+        rprint(f"[red]Error: Directory '{project_path}' does not exist[/red]")
+        raise typer.Exit(1)
+
+    rprint(f"[blue]Verifying workflows in {project_path}...[/blue]")
+
+    wf_path = Path(workflow_file) if workflow_file else None
+
+    result = verify_workflow(
+        project_dir=project_path,
+        workflow_file=wf_path,
+        job=job,
+        event=event,
+        dry_run=dry_run,
+        platform_map=platform_map,
+        extra_flags=extra_flags or None,
+        timeout=timeout,
+        auto_install=auto_install,
+    )
+
+    # Display act status
+    if result.act_available:
+        rprint(f"  [green]act available:[/green] {result.act_version}")
+    else:
+        rprint("  [red]act not available[/red]")
+
+    # Display warnings
+    for warning in result.warnings:
+        rprint(f"  [yellow]{warning}[/yellow]")
+
+    # Display run results
+    for run in result.runs:
+        cmd_str = " ".join(run.command)
+        if run.success:
+            rprint(f"\n  [green]PASS[/green] {cmd_str}")
+        else:
+            rprint(f"\n  [red]FAIL[/red] {cmd_str}")
+
+        if run.stdout.strip():
+            rprint(f"[dim]{run.stdout.strip()}[/dim]")
+        if run.stderr.strip():
+            rprint(f"[dim]{run.stderr.strip()}[/dim]")
+
+    # Display errors
+    if result.errors:
+        rprint("\n[red]Errors:[/red]")
+        for error in result.errors:
+            rprint(f"  [red]- {error}[/red]")
+        raise typer.Exit(1)
+
+    rprint("\n[green]Workflow verification passed.[/green]")
+
+
+@workflow_app.command("check-act")
+def workflow_check_act_cmd() -> None:
+    """Check if act is installed and show install suggestions."""
+    from pypreset.act_runner import check_act, get_install_suggestion
+
+    check = check_act()
+
+    if check.installed:
+        rprint(f"[green]act is installed:[/green] {check.version}")
+    else:
+        rprint(f"[red]act is not installed:[/red] {check.error}")
+        suggestion, _ = get_install_suggestion()
+        rprint(f"\n[cyan]Suggestion:[/cyan] {suggestion}")
+
+
+@workflow_app.command("install-act")
+def workflow_install_act_cmd() -> None:
+    """Attempt to install act automatically."""
+    from pypreset.act_runner import check_act, install_act
+
+    check = check_act()
+    if check.installed:
+        rprint(f"[green]act is already installed:[/green] {check.version}")
+        return
+
+    rprint("[blue]Attempting to install act...[/blue]")
+    result = install_act()
+
+    if result.success:
+        rprint(f"[green]{result.message}[/green]")
+    else:
+        rprint(f"[red]{result.message}[/red]")
+        raise typer.Exit(1)
 
 
 def main() -> None:

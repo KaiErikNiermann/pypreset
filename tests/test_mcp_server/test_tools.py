@@ -410,3 +410,172 @@ class TestSetProjectMetadata:
 
         assert isinstance(data["warnings"], list)
         assert len(data["warnings"]) > 0
+
+
+@pytest.mark.asyncio
+class TestVerifyWorkflow:
+    """Tests for the verify_workflow tool."""
+
+    async def test_act_not_installed(self, mcp_client: Client, tmp_path: Path) -> None:
+        """When act is not installed, the tool returns errors and warnings."""
+        # Create a project with workflows
+        await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "wf-proj",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+            },
+        )
+
+        # Mock act as not installed to get predictable results
+        from unittest.mock import patch
+
+        from pypreset.act_runner import ActCheckResult
+
+        with (
+            patch(
+                "pypreset.act_runner.check_act",
+                return_value=ActCheckResult(installed=False, error="not on PATH"),
+            ),
+            patch(
+                "pypreset.act_runner.get_install_suggestion",
+                return_value=("Install from website", None),
+            ),
+        ):
+            result = await mcp_client.call_tool(
+                "verify_workflow",
+                {
+                    "project_dir": str(tmp_path / "wf-proj"),
+                },
+            )
+
+        data = json.loads(result.data)
+        assert data["act_available"] is False
+        assert len(data["errors"]) > 0
+        assert len(data["warnings"]) > 0
+
+    async def test_successful_dry_run(self, mcp_client: Client, tmp_path: Path) -> None:
+        """When act is installed and workflow is valid, returns success."""
+        await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "wf-ok",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+            },
+        )
+
+        from unittest.mock import patch
+
+        from pypreset.act_runner import ActCheckResult, ActRunResult
+
+        list_mock = ActRunResult(
+            success=True, command=["act", "--list"], stdout="lint\ntest", return_code=0
+        )
+        verify_mock = ActRunResult(
+            success=True,
+            command=["act", "--dryrun", "push"],
+            stdout="ok",
+            return_code=0,
+        )
+
+        with (
+            patch(
+                "pypreset.act_runner.check_act",
+                return_value=ActCheckResult(installed=True, version="act 0.2.60"),
+            ),
+            patch(
+                "pypreset.act_runner.run_act",
+                side_effect=[list_mock, verify_mock],
+            ),
+        ):
+            result = await mcp_client.call_tool(
+                "verify_workflow",
+                {
+                    "project_dir": str(tmp_path / "wf-ok"),
+                },
+            )
+
+        data = json.loads(result.data)
+        assert data["act_available"] is True
+        assert data["act_version"] == "act 0.2.60"
+        assert len(data["errors"]) == 0
+        assert len(data["runs"]) == 2
+
+    async def test_with_specific_workflow(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Can target a specific workflow file."""
+        await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "wf-specific",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+            },
+        )
+
+        from unittest.mock import patch
+
+        from pypreset.act_runner import ActCheckResult, ActRunResult
+
+        list_mock = ActRunResult(
+            success=True, command=["act", "--list"], stdout="lint", return_code=0
+        )
+        verify_mock = ActRunResult(
+            success=True, command=["act", "--dryrun"], stdout="ok", return_code=0
+        )
+
+        with (
+            patch(
+                "pypreset.act_runner.check_act",
+                return_value=ActCheckResult(installed=True, version="act 0.2.60"),
+            ),
+            patch(
+                "pypreset.act_runner.run_act",
+                side_effect=[list_mock, verify_mock],
+            ),
+        ):
+            result = await mcp_client.call_tool(
+                "verify_workflow",
+                {
+                    "project_dir": str(tmp_path / "wf-specific"),
+                    "workflow_file": ".github/workflows/ci.yaml",
+                    "job": "lint",
+                },
+            )
+
+        data = json.loads(result.data)
+        assert data["act_available"] is True
+        assert data["workflow_path"] == ".github/workflows/ci.yaml"
+
+    async def test_returns_all_fields(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Verify the response shape has all expected fields."""
+        from unittest.mock import patch
+
+        from pypreset.act_runner import ActCheckResult
+
+        with (
+            patch(
+                "pypreset.act_runner.check_act",
+                return_value=ActCheckResult(installed=False, error="not found"),
+            ),
+            patch(
+                "pypreset.act_runner.get_install_suggestion",
+                return_value=("Install act", None),
+            ),
+        ):
+            result = await mcp_client.call_tool(
+                "verify_workflow",
+                {"project_dir": str(tmp_path)},
+            )
+
+        data = json.loads(result.data)
+        assert "act_available" in data
+        assert "act_version" in data
+        assert "workflow_path" in data
+        assert "errors" in data
+        assert "warnings" in data
+        assert "runs" in data
