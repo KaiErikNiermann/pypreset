@@ -25,7 +25,7 @@ mcp-name: io.github.KaiErikNiermann/pypreset
 - **Workflow verification**: local GitHub Actions testing with `act` (auto-detect, auto-install, dry-run and full-run modes)
 - **PyPI metadata management**: read, set, and check publish-readiness of `pyproject.toml` metadata
 - **User defaults**: persistent config at `~/.config/pypreset/config.yaml`
-- **MCP server**: expose all functionality to AI coding assistants via Model Context Protocol
+- **MCP server**: expose all functionality to AI coding assistants via the Model Context Protocol
 
 ## Installation
 
