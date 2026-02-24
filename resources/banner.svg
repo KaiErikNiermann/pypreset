@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="960" height="200" viewBox="0 0 960 200">
+  <defs>
+    <linearGradient id="bg-fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2d1b4e"/>
+      <stop offset="22%" stop-color="#2d1b4e" stop-opacity="0.5"/>
+      <stop offset="45%" stop-color="#2d1b4e" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#2d1b4e" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="text-fill" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2d1b4e" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#2d1b4e" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <!-- White base -->
+  <rect width="960" height="200" fill="white"/>
+
+  <!-- Purple gradient fade -->
+  <rect width="960" height="200" fill="url(#bg-fade)"/>
+
+  <!-- Icon (icon.png embedded via image tag — renders on GitHub) -->
+  <image x="16" y="12" width="176" height="176" href="https://raw.githubusercontent.com/KaiErikNiermann/pypreset/main/icon.png"
+         clip-path="inset(0 round 16px)"/>
+
+  <!-- Rounded border on icon -->
+  <rect x="16" y="12" width="176" height="176" rx="16" ry="16"
+        fill="none" stroke="#2d1b4e" stroke-opacity="0.15" stroke-width="1"/>
+
+  <!-- "Preset" in Montserrat ExtraBold — glyph outlines as paths -->
+  <!-- Coordinate system: translate to position, scale 0.115 from 1000 UPM, flip Y -->
+  <g transform="translate(210, 146) scale(0.115, -0.115)">
+    <!-- P -->
+    <path d="M70 0V700H390Q485 700 555.0 668.5Q625 637 663.0 579.0Q701 521 701 441Q701 362 663.0 304.0Q625 246 555.0 214.5Q485 183 390 183H268V0ZM268 339H378Q440 339 470.5 366.0Q501 393 501 441Q501 490 470.5 517.0Q440 544 378 544H268Z"
+          fill="url(#text-fill)" stroke="#2d1b4e" stroke-opacity="0.16" stroke-width="12"/>
+    <!-- r -->
+    <g transform="translate(737, 0)">
+      <path d="M61 0V542H242V477Q301 551 424 551V380Q400 383 381 383Q323 383 287.0 351.5Q251 320 251 249V0Z"
+            fill="url(#text-fill)" stroke="#2d1b4e" stroke-opacity="0.16" stroke-width="12"/>
+    </g>
+    <!-- e -->
+    <g transform="translate(1180, 0)">
+      <path d="M345 -9Q249 -9 177.5 27.5Q106 64 66.5 127.5Q27 191 27 272Q27 353 66.0 416.0Q105 479 172.5 515.0Q240 551 325 551Q405 551 471.0 518.0Q537 485 576.0 422.5Q615 360 615 270Q615 260 614.0 247.0Q613 234 612 223H218Q230 182 264.5 159.0Q299 136 351 136Q391 136 419.5 147.5Q448 159 476 183L576 79Q497 -9 345 -9ZM215 323H437Q429 366 399.5 391.0Q370 416 326 416Q282 416 252.5 391.0Q223 366 215 323Z"
+            fill="url(#text-fill)" stroke="#2d1b4e" stroke-opacity="0.16" stroke-width="12"/>
+    </g>
+    <!-- s -->
+    <g transform="translate(1822, 0)">
+      <path d="M258 -9Q189 -9 123.5 7.0Q58 23 18 47L75 177Q113 154 164.0 140.5Q215 127 264 127Q312 127 330.5 137.0Q349 147 349 164Q349 184 320.5 191.0Q292 198 252 204Q216 209 177.5 216.5Q139 224 105.0 240.5Q71 257 50.0 288.5Q29 320 29 371Q29 422 59.5 463.0Q90 504 149.0 527.5Q208 551 293 551Q350 551 408.5 539.5Q467 528 507 505L450 376Q410 399 370.0 407.5Q330 416 294 416Q246 416 226.5 404.5Q207 393 207 378Q207 357 235.5 349.5Q264 342 306 336Q341 331 379.5 323.0Q418 315 451.5 298.0Q485 281 505.5 250.5Q526 220 526 169Q526 119 495.5 79.0Q465 39 405.5 15.0Q346 -9 258 -9Z"
+            fill="url(#text-fill)" stroke="#2d1b4e" stroke-opacity="0.16" stroke-width="12"/>
+    </g>
+    <!-- e -->
+    <g transform="translate(2369, 0)">
+      <path d="M345 -9Q249 -9 177.5 27.5Q106 64 66.5 127.5Q27 191 27 272Q27 353 66.0 416.0Q105 479 172.5 515.0Q240 551 325 551Q405 551 471.0 518.0Q537 485 576.0 422.5Q615 360 615 270Q615 260 614.0 247.0Q613 234 612 223H218Q230 182 264.5 159.0Q299 136 351 136Q391 136 419.5 147.5Q448 159 476 183L576 79Q497 -9 345 -9ZM215 323H437Q429 366 399.5 391.0Q370 416 326 416Q282 416 252.5 391.0Q223 366 215 323Z"
+            fill="url(#text-fill)" stroke="#2d1b4e" stroke-opacity="0.16" stroke-width="12"/>
+    </g>
+    <!-- t -->
+    <g transform="translate(3011, 0)">
+      <path d="M303 -9Q199 -9 141.0 42.5Q83 94 83 198V401H4V542H83V663H273V542H397V401H273V200Q273 170 288.5 154.0Q304 138 330 138Q363 138 388 155L435 22Q410 6 375.0 -1.5Q340 -9 303 -9Z"
+            fill="url(#text-fill)" stroke="#2d1b4e" stroke-opacity="0.16" stroke-width="12"/>
+    </g>
+  </g>
+</svg>
