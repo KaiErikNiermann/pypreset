@@ -318,5 +318,5 @@ just all         # format + lint-fix + typecheck + radon + test
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
 
 ## License
-
+ 
 MIT
