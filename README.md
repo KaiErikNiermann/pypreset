@@ -1,4 +1,4 @@
-# pypreset
+# pypreset - yet another scaffold tool
 
 mcp-name: io.github.KaiErikNiermann/pypreset
 
@@ -7,7 +7,7 @@ A meta-tool for scaffolding Python projects with configurable YAML presets. Supp
 ## Features
 
 - **Preset-based project creation** from YAML configs with single inheritance
-- **Augment existing projects** with GitHub Actions workflows, tests, dependabot, `.gitignore`
+- **Augment existing projects** with CI workflows, tests, Docker, documentation, and more
 - **Two package managers**: Poetry and uv (PEP 621 + hatchling)
 - **Two layout styles**: `src/` layout and flat layout
 - **Type checking**: mypy, pyright, ty, or none
@@ -17,6 +17,8 @@ A meta-tool for scaffolding Python projects with configurable YAML presets. Supp
 - **Documentation scaffolding**: MkDocs (Material theme) or Sphinx (RTD theme) with optional GitHub Pages deployment
 - **Multi-environment testing**: tox configuration with tox-uv backend
 - **Version management**: bump-my-version integration, GitHub release automation via `gh` CLI
+- **Workflow verification**: local GitHub Actions testing with `act` (auto-detect, auto-install, dry-run and full-run modes)
+- **PyPI metadata management**: read, set, and check publish-readiness of `pyproject.toml` metadata
 - **User defaults**: persistent config at `~/.config/pypreset/config.yaml`
 - **MCP server**: expose all functionality to AI coding assistants via Model Context Protocol
 
@@ -57,7 +59,7 @@ pypreset create my-project --preset empty-package \
 
 ## Commands
 
-### `create` — Scaffold a new project
+### `create` -- Scaffold a new project
 
 ```bash
 pypreset create <name> [OPTIONS]
@@ -90,10 +92,31 @@ pypreset create <name> [OPTIONS]
 | `--tox` / `--no-tox` | Generate `tox.ini` with tox-uv backend |
 | `--git` / `--no-git` | Initialize git repository |
 | `--install` / `--no-install` | Run dependency install after creation |
+| `--dry-run` | Preview what would be created without generating anything |
 
-### `augment` — Add components to an existing project
+### `augment` -- Add components to an existing project
 
-Analyzes `pyproject.toml` to auto-detect your tooling, then generates the selected components.
+Analyzes `pyproject.toml` to auto-detect your tooling, then generates the selected components. Runs in interactive mode by default (prompts for values it can't detect); use `--auto` to skip prompts.
+
+```bash
+pypreset augment [path] [OPTIONS]
+```
+
+**Available components:**
+
+| Flag | Component | What it generates |
+|------|-----------|-------------------|
+| `--test-workflow` / `--no-test-workflow` | Test CI | GitHub Actions workflow that runs pytest across a Python version matrix |
+| `--lint-workflow` / `--no-lint-workflow` | Lint CI | GitHub Actions workflow for ruff, type checking, and complexity analysis |
+| `--dependabot` / `--no-dependabot` | Dependabot | `.github/dependabot.yml` for automated dependency updates |
+| `--tests` / `--no-tests` | Tests directory | `tests/` with template test files and `conftest.py` |
+| `--gitignore` / `--no-gitignore` | Gitignore | Python-specific `.gitignore` |
+| `--pypi-publish` / `--no-pypi-publish` | PyPI publish | GitHub Actions workflow for OIDC-based publishing to PyPI on release |
+| `--dockerfile` / `--no-dockerfile` | Docker | Multi-stage `Dockerfile` and `.dockerignore` (Poetry or uv aware) |
+| `--devcontainer` / `--no-devcontainer` | Devcontainer | `.devcontainer/devcontainer.json` with VS Code extensions |
+| `--codecov` / `--no-codecov` | Codecov | `codecov.yml` configuration |
+| `--docs` | Documentation | Sphinx or MkDocs scaffolding (`--docs sphinx` or `--docs mkdocs`) |
+| `--tox` / `--no-tox` | tox | `tox.ini` with tox-uv backend for multi-environment testing |
 
 ```bash
 # Interactive mode (prompts for missing values)
@@ -105,28 +128,73 @@ pypreset augment --auto
 # Generate only specific components
 pypreset augment --test-workflow --lint-workflow --gitignore
 
-# Add Dockerfile and devcontainer config
+# Add Docker and devcontainer
 pypreset augment --dockerfile --devcontainer
 
-# Add Codecov, documentation, or tox
-pypreset augment --codecov
+# Add PyPI publish workflow
+pypreset augment --pypi-publish
+
+# Add documentation scaffolding
 pypreset augment --docs mkdocs
-pypreset augment --tox
 
 # Overwrite existing files
 pypreset augment --force
 ```
 
-### `version` — Release management
+### `workflow` -- Local workflow verification
+
+Verify GitHub Actions workflows locally using [act](https://nektosact.com/). The proxy auto-detects whether `act` is installed, can install it on supported systems, and surfaces all `act` output directly.
 
 ```bash
-pypreset version release <bump>         # Bump, commit, tag, push, release
-pypreset version release-version <ver>  # Explicit version, then release
-pypreset version rerun <ver>            # Re-tag and push an existing version
-pypreset version rerelease <ver>        # Delete and recreate a GitHub release
+# Verify all workflows (dry-run, no containers)
+pypreset workflow verify
+
+# Verify a specific workflow file
+pypreset workflow verify --workflow .github/workflows/ci.yaml
+
+# Verify a specific job
+pypreset workflow verify --job lint
+
+# Full run (executes in containers, requires Docker)
+pypreset workflow verify --full-run
+
+# Auto-install act if missing
+pypreset workflow verify --auto-install
+
+# Pass extra flags to act
+pypreset workflow verify --flag="--secret=GITHUB_TOKEN=xxx"
+
+# Check if act is installed
+pypreset workflow check-act
+
+# Install act automatically
+pypreset workflow install-act
+```
+
+Supported auto-install targets: Arch Linux (pacman), Ubuntu/Debian (apt), Fedora (dnf), macOS/Linux with Homebrew. Other systems get a link to the [act installation page](https://nektosact.com/installation/index.html).
+
+### `version` -- Release management
+
+```bash
+pypreset version release --bump patch     # 0.1.0 -> 0.1.1
+pypreset version release --bump minor     # 0.1.0 -> 0.2.0
+pypreset version release --bump major     # 0.1.0 -> 1.0.0
+pypreset version release-version 2.0.0    # Explicit version
+pypreset version rerun <ver>              # Re-tag and push an existing version
+pypreset version rerelease <ver>          # Delete and recreate a GitHub release
 ```
 
 Requires the `gh` CLI to be installed and authenticated.
+
+### `metadata` -- PyPI metadata management
+
+```bash
+pypreset metadata show                                   # Display current metadata
+pypreset metadata set --description "My cool package"    # Set description
+pypreset metadata set --github-owner myuser              # Auto-generate URLs
+pypreset metadata set --license MIT --keyword python     # Set license and keywords
+pypreset metadata check                                  # Check publish-readiness
+```
 
 ### Other commands
 
@@ -208,7 +276,19 @@ pip install pypreset[mcp]
 }
 ```
 
-**Available tools**: `create_project`, `augment_project`, `validate_project`, `list_presets`, `show_preset`, `get_user_config`, `set_user_config`
+**Available tools:**
+
+| Tool | Description |
+|------|-------------|
+| `create_project` | Create a new project from a preset with optional overrides |
+| `augment_project` | Add CI workflows, tests, Docker, docs, and more to an existing project |
+| `validate_project` | Check structural correctness of a project directory |
+| `verify_workflow` | Verify GitHub Actions workflows locally using act |
+| `list_presets` | List all available presets with names and descriptions |
+| `show_preset` | Show the full YAML configuration of a specific preset |
+| `get_user_config` | Read current user-level defaults |
+| `set_user_config` | Update user-level defaults |
+| `set_project_metadata` | Set or update PyPI metadata in `pyproject.toml` |
 
 **Resources**: `preset://list`, `config://user`, `template://list`
 

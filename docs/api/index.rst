@@ -15,5 +15,7 @@ Auto-generated documentation from source code docstrings.
    validator
    project_analyzer
    user_config
+   metadata_utils
+   act_runner
    versioning
    mcp_server

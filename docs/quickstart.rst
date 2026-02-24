@@ -46,7 +46,8 @@ This uses the ``empty-package`` preset by default and generates:
 - ``pyproject.toml`` configured for Poetry
 - ``tests/`` directory with a template test
 - ``.gitignore``
-- GitHub Actions CI workflows
+- GitHub Actions CI workflows (test + lint)
+- Dependabot configuration
 - ``README.md``
 
 Using Presets
@@ -76,6 +77,12 @@ Inspect a preset before using it:
 .. code-block:: bash
 
    pypreset show-preset cli-tool
+
+Preview what a project will look like without creating anything:
+
+.. code-block:: bash
+
+   pypreset create my-project --preset cli-tool --dry-run
 
 Customizing Projects
 --------------------
@@ -122,7 +129,9 @@ Override preset defaults with CLI flags:
 Augmenting Existing Projects
 -----------------------------
 
-Add CI workflows, tests, and configuration to an existing project:
+Add CI workflows, tests, and configuration to an existing project. The augment
+command reads your ``pyproject.toml`` to detect your package manager, test
+framework, linter, and type checker, then generates appropriate configurations.
 
 .. code-block:: bash
 
@@ -147,8 +156,68 @@ Add CI workflows, tests, and configuration to an existing project:
    pypreset augment --docs mkdocs
    pypreset augment --tox
 
-The augment command reads your ``pyproject.toml`` to detect your package manager,
-test framework, linter, and type checker, then generates appropriate configurations.
+Available augment components:
+
+.. list-table::
+   :widths: 30 70
+   :header-rows: 1
+
+   * - Component
+     - Description
+   * - Test workflow
+     - GitHub Actions workflow that runs pytest across a Python version matrix
+   * - Lint workflow
+     - GitHub Actions workflow for ruff linting, type checking, and complexity analysis
+   * - Dependabot
+     - ``.github/dependabot.yml`` for automated dependency updates (pip and GitHub Actions)
+   * - Tests directory
+     - ``tests/`` directory with template test files and ``conftest.py``
+   * - Gitignore
+     - Python-specific ``.gitignore`` covering common build artifacts, caches, and IDE files
+   * - PyPI publish
+     - GitHub Actions workflow for OIDC-based publishing to PyPI on release events
+   * - Dockerfile
+     - Multi-stage ``Dockerfile`` and ``.dockerignore`` (Poetry or uv aware, src or flat layout)
+   * - Devcontainer
+     - ``.devcontainer/devcontainer.json`` with VS Code extensions for the detected tooling
+   * - Codecov
+     - ``codecov.yml`` configuration for coverage reporting
+   * - Documentation
+     - Sphinx (RTD theme) or MkDocs (Material theme) scaffolding with optional GitHub Pages deploy
+   * - tox
+     - ``tox.ini`` with tox-uv backend for testing across multiple Python versions
+
+Verifying Workflows
+-------------------
+
+Verify that generated GitHub Actions workflows are valid using
+`act <https://nektosact.com/>`_ (a local GitHub Actions runner):
+
+.. code-block:: bash
+
+   # Dry-run verification (no containers)
+   pypreset workflow verify
+
+   # Verify a specific workflow and job
+   pypreset workflow verify --workflow .github/workflows/ci.yaml --job lint
+
+   # Full execution in containers (requires Docker)
+   pypreset workflow verify --full-run
+
+   # Auto-install act if it's not on the system
+   pypreset workflow verify --auto-install
+
+   # Check if act is available
+   pypreset workflow check-act
+
+   # Install act
+   pypreset workflow install-act
+
+.. note::
+
+   Some workflows cannot be tested locally (e.g. those that depend on GitHub-specific
+   secrets or deployment contexts). The tool surfaces all ``act`` errors directly
+   for you to interpret.
 
 User Configuration
 ------------------
@@ -180,9 +249,27 @@ Bump, tag, and release:
 
 .. code-block:: bash
 
-   pypreset version release patch       # 0.1.0 → 0.1.1
-   pypreset version release minor       # 0.1.0 → 0.2.0
-   pypreset version release major       # 0.1.0 → 1.0.0
-   pypreset version release-version 2.0.0  # Explicit version
+   pypreset version release --bump patch       # 0.1.0 -> 0.1.1
+   pypreset version release --bump minor       # 0.1.0 -> 0.2.0
+   pypreset version release --bump major       # 0.1.0 -> 1.0.0
+   pypreset version release-version 2.0.0      # Explicit version
 
 Requires the ``gh`` CLI to be installed and authenticated.
+
+PyPI Metadata
+-------------
+
+Manage ``pyproject.toml`` metadata for publishing:
+
+.. code-block:: bash
+
+   # Show current metadata
+   pypreset metadata show
+
+   # Set fields
+   pypreset metadata set --description "My cool package"
+   pypreset metadata set --github-owner myuser    # auto-generates URLs
+   pypreset metadata set --license MIT --keyword python --keyword cli
+
+   # Check if ready for publishing
+   pypreset metadata check

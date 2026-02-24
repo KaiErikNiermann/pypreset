@@ -34,11 +34,13 @@ Available Templates
    * - Template
      - Output
    * - ``github_ci.yaml.j2``
-     - GitHub Actions CI for Poetry projects
+     - GitHub Actions CI for Poetry projects (test + lint jobs)
    * - ``github_ci_uv.yaml.j2``
      - GitHub Actions CI for uv projects (uses ``astral-sh/setup-uv``)
    * - ``dependabot.yml.j2``
-     - Dependabot configuration
+     - Dependabot configuration (pip + GitHub Actions ecosystems)
+   * - ``docs_workflow.yaml.j2``
+     - GitHub Pages deployment workflow for documentation
 
 **Preset-specific templates:**
 
@@ -66,13 +68,30 @@ Available Templates
    * - Template
      - Output
    * - ``Dockerfile.j2``
-     - Multi-stage Dockerfile for Poetry projects
+     - Multi-stage Dockerfile for Poetry projects (src and flat layout aware)
    * - ``Dockerfile_uv.j2``
      - Multi-stage Dockerfile for uv projects
    * - ``dockerignore.j2``
      - ``.dockerignore``
    * - ``devcontainer.json.j2``
-     - ``.devcontainer/devcontainer.json`` (VS Code Dev Container)
+     - ``.devcontainer/devcontainer.json`` (VS Code Dev Container with package-manager-aware extensions)
+
+**Documentation templates:**
+
+.. list-table::
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Template
+     - Output
+   * - ``sphinx_conf.py.j2``
+     - Sphinx ``docs/conf.py`` (RTD theme)
+   * - ``docs_index.rst.j2``
+     - Sphinx ``docs/index.rst``
+   * - ``mkdocs.yml.j2``
+     - MkDocs ``mkdocs.yml`` (Material theme)
+   * - ``docs_index.md.j2``
+     - MkDocs ``docs/index.md``
 
 **Configuration templates:**
 
@@ -84,11 +103,37 @@ Available Templates
      - Output
    * - ``pre-commit-config.yaml.j2``
      - ``.pre-commit-config.yaml``
+   * - ``codecov.yml.j2``
+     - ``codecov.yml`` with configurable thresholds and ignore patterns
+   * - ``tox.ini.j2``
+     - ``tox.ini`` with tox-uv backend
 
 **Augment templates** (in ``templates/augment/``):
 
-Used by ``pypreset augment`` to add components to existing projects. These include
-CI workflow templates for various package managers and a PyPI publish workflow.
+Used by ``pypreset augment`` to add components to existing projects. These are
+separate from the create templates because they need to adapt to the detected
+tooling of an existing project rather than using preset-defined settings.
+
+.. list-table::
+   :widths: 35 65
+   :header-rows: 1
+
+   * - Template
+     - Output
+   * - ``test_workflow.yaml.j2``
+     - GitHub Actions test workflow (adapts to detected package manager and test framework)
+   * - ``lint_workflow.yaml.j2``
+     - GitHub Actions lint workflow (adapts to detected linter and type checker)
+   * - ``dependabot_augment.yml.j2``
+     - Dependabot configuration
+   * - ``test_template.py.j2``
+     - Template test file for ``tests/``
+   * - ``conftest.py.j2``
+     - pytest ``conftest.py`` with shared fixtures
+   * - ``pypi_publish_workflow.yaml.j2``
+     - PyPI publish workflow using OIDC trusted publishing
+   * - ``gitignore.j2``
+     - Python-specific ``.gitignore``
 
 Template Context
 ----------------
@@ -130,6 +175,12 @@ serialized to a dict:
    {{ docker.devcontainer }}    {# true or false #}
    {% endif %}
 
+   {# Documentation #}
+   {% if documentation.enabled %}
+   {{ documentation.tool }}         {# "sphinx" or "mkdocs" #}
+   {{ documentation.deploy_gh_pages }}
+   {% endif %}
+
    {# Extras dict (preset-specific data) #}
    {{ project.extras.cli_framework }}  {# "typer" for cli-tool preset #}
 
@@ -138,8 +189,8 @@ Package Manager Selection
 
 The generator picks template variants based on ``project.package_manager``:
 
-- **Poetry** (default): ``pyproject.toml.j2`` + ``github_ci.yaml.j2``
-- **uv**: ``pyproject_uv.toml.j2`` + ``github_ci_uv.yaml.j2``
+- **Poetry** (default): ``pyproject.toml.j2`` + ``github_ci.yaml.j2`` + ``Dockerfile.j2``
+- **uv**: ``pyproject_uv.toml.j2`` + ``github_ci_uv.yaml.j2`` + ``Dockerfile_uv.j2``
 
 The uv variant uses PEP 621 ``[project]`` tables with ``hatchling`` as the build
 backend, and CI workflows use ``astral-sh/setup-uv`` instead of ``snok/install-poetry``.

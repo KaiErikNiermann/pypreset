@@ -4,9 +4,10 @@ Architecture
 Overview
 --------
 
-pypreset has two primary workflows: **create** (scaffold a new project) and
-**augment** (add components to an existing project). Both are driven by YAML
-preset configurations and Jinja2 templates.
+pypreset has three primary workflows: **create** (scaffold a new project),
+**augment** (add components to an existing project), and **verify** (test
+workflows locally with act). All are driven by YAML preset configurations,
+Jinja2 templates, and Pydantic models.
 
 Create Command Flow
 -------------------
@@ -52,19 +53,41 @@ Augment Command Flow
    AugmentConfig (dataclass)
        ↓
    augment_generator.AugmentOrchestrator
-       ├── TestWorkflowGenerator
-       ├── LintWorkflowGenerator
-       ├── DependabotGenerator
-       ├── TestsDirectoryGenerator
-       ├── GitignoreGenerator
-       ├── PypiPublishWorkflowGenerator
-       ├── DockerfileGenerator
-       ├── DevcontainerGenerator
-       ├── CodecovGenerator
-       ├── DocumentationGenerator
-       └── ToxGenerator
+       ├── TestWorkflowGenerator     → .github/workflows/ test CI
+       ├── LintWorkflowGenerator     → .github/workflows/ lint CI
+       ├── DependabotGenerator        → .github/dependabot.yml
+       ├── TestsDirectoryGenerator    → tests/ with template tests and conftest.py
+       ├── GitignoreGenerator         → .gitignore
+       ├── PypiPublishWorkflowGenerator → .github/workflows/ PyPI publish (OIDC)
+       ├── DockerfileGenerator        → Dockerfile + .dockerignore
+       ├── DevcontainerGenerator      → .devcontainer/devcontainer.json
+       ├── CodecovGenerator           → codecov.yml
+       ├── DocumentationGenerator     → docs/ scaffold (Sphinx or MkDocs)
+       └── ToxGenerator              → tox.ini
        ↓
    AugmentResult (files created / skipped / errors)
+
+Each component generator extends the abstract ``ComponentGenerator`` base class,
+which provides a common interface: ``should_generate()`` checks whether the component
+was requested, and ``generate()`` renders the appropriate Jinja2 templates.
+
+Workflow Verification Flow
+--------------------------
+
+.. code-block:: text
+
+   act_runner.verify_workflow()
+       ├── check_act() → is act installed? (meta-check on failure)
+       ├── install_act() → optional auto-install on supported systems
+       ├── run_act(list_jobs=True) → enumerate available jobs
+       └── run_act(dry_run=True/False) → verify or execute the workflow
+       ↓
+   WorkflowVerifyResult (act status, runs, errors, warnings)
+
+The ``act_runner`` module wraps the ``act`` CLI with detection, auto-install for
+common Linux distros (Arch, Ubuntu, Debian, Fedora) and Homebrew (macOS/Linux),
+and a set of sensible default flags. All output from act is surfaced directly
+to the caller.
 
 Configuration Priority
 ----------------------
@@ -102,6 +125,10 @@ Key Modules
      - Heuristic detection of tooling from ``pyproject.toml``
    * - ``docker_utils.py``
      - Helper to resolve Docker base images from ``python_version``
+   * - ``metadata_utils.py``
+     - Read, write, and validate PyPI metadata in ``pyproject.toml``
+   * - ``act_runner.py``
+     - Proxy for the ``act`` GitHub Actions local runner; detection, install, verification
    * - ``user_config.py``
      - User-level defaults from ``~/.config/pypreset/config.yaml``
    * - ``validator.py``
@@ -109,7 +136,7 @@ Key Modules
    * - ``versioning.py``
      - ``VersioningAssistant``; wraps ``poetry version``, git, and ``gh`` CLI
    * - ``mcp_server/``
-     - MCP server subpackage for AI assistant integration
+     - MCP server subpackage for AI assistant integration (9 tools, 3 resources, 2 prompts)
 
 Preset System
 -------------
@@ -132,6 +159,10 @@ Key templates come in pairs for different package managers:
 
 - ``pyproject.toml.j2`` (Poetry) / ``pyproject_uv.toml.j2`` (uv + hatchling)
 - ``github_ci.yaml.j2`` (Poetry) / ``github_ci_uv.yaml.j2`` (uv + astral-sh/setup-uv)
+- ``Dockerfile.j2`` (Poetry) / ``Dockerfile_uv.j2`` (uv)
+
+Augment templates live in ``src/pypreset/templates/augment/`` and are used by
+the component generators to add files to existing projects.
 
 Package Manager Abstraction
 ---------------------------
