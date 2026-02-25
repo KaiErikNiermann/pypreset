@@ -3,7 +3,7 @@
   "name": "io.github.KaiErikNiermann/pypreset",
   "title": "pypreset",
   "description": "Scaffold Python projects from YAML presets, augment existing projects with CI/tests.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "repository": {
     "url": "https://github.com/KaiErikNiermann/pypreset",
     "source": "github"
@@ -13,7 +13,7 @@
       "registryType": "pypi",
       "registryBaseUrl": "https://pypi.org",
       "identifier": "pypreset",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "runtimeHint": "uvx",
       "runtimeArguments": [
         {"type": "positional", "value": "--from"},
