@@ -663,3 +663,61 @@ def register_tools(mcp: FastMCP) -> None:
                 "return_code": result.return_code,
             }
         )
+
+    @mcp.tool(
+        name="project_tree",
+        description=(
+            "Print an intelligent project tree structure. "
+            "Automatically hides noise like __pycache__, .git, node_modules, "
+            ".venv, dist, build, and other non-essential directories."
+        ),
+        tags={"inspect", "tree", "structure"},
+    )
+    def project_tree_tool(
+        project_dir: Annotated[str, Field(description="Path to the project root directory")],
+        max_depth: Annotated[
+            int,
+            Field(description="Maximum directory depth (default: 3)"),
+        ] = 3,
+    ) -> str:
+        from pypreset.inspect import project_tree
+
+        path = Path(project_dir)
+        if not path.is_dir():
+            return json.dumps({"error": f"Not a directory: {project_dir}"})
+
+        tree = project_tree(path, max_depth=max_depth)
+        return json.dumps({"project": path.name, "tree": tree})
+
+    @mcp.tool(
+        name="extract_dependencies",
+        description=(
+            "Extract all dependencies from a Python project with clean "
+            "name and version fields. Supports pyproject.toml (Poetry, "
+            "PEP 621, uv/hatch, PDM, flit), requirements*.txt, and Pipfile."
+        ),
+        tags={"inspect", "dependencies"},
+    )
+    def extract_dependencies_tool(
+        project_dir: Annotated[str, Field(description="Path to the project root directory")],
+        group: Annotated[
+            str | None,
+            Field(description="Filter by group (main, dev, etc.). Returns all if omitted"),
+        ] = None,
+    ) -> str:
+        from pypreset.inspect import extract_dependencies
+
+        path = Path(project_dir)
+        if not path.is_dir():
+            return json.dumps({"error": f"Not a directory: {project_dir}"})
+
+        deps = extract_dependencies(path)
+        if group:
+            deps = [d for d in deps if d.group == group]
+
+        return json.dumps(
+            {
+                "count": len(deps),
+                "dependencies": [d.to_dict() for d in deps],
+            }
+        )

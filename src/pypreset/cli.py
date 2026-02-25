@@ -1505,6 +1505,125 @@ def migrate_cmd(
         rprint("[yellow]Migration completed with warnings (--ignore-errors was set).[/yellow]")
 
 
+@app.command("tree")
+def tree_cmd(
+    project_dir: Annotated[Path, typer.Argument(help="Path to the project root")] = Path("."),
+    depth: Annotated[
+        int,
+        typer.Option("--depth", "-d", help="Maximum directory depth"),
+    ] = 3,
+    output_format: Annotated[
+        str,
+        typer.Option(
+            "--format",
+            "-f",
+            help="Output format: text (default) or json",
+        ),
+    ] = "text",
+) -> None:
+    """Print an intelligent project tree structure.
+
+    Automatically hides noise like __pycache__, .git, node_modules,
+    .venv, dist, build, and other non-essential directories.
+
+    Examples:
+        pypreset tree                      # Current directory, depth 3
+        pypreset tree ./my-project -d 2    # Custom path and depth
+        pypreset tree --format json        # JSON output for scripting
+    """
+    import json
+
+    from pypreset.inspect import project_tree
+
+    project_path = project_dir.absolute()
+
+    if not project_path.exists():
+        rprint(f"[red]Error: Directory '{project_path}' does not exist[/red]")
+        raise typer.Exit(1)
+
+    if not project_path.is_dir():
+        rprint(f"[red]Error: '{project_path}' is not a directory[/red]")
+        raise typer.Exit(1)
+
+    tree = project_tree(project_path, max_depth=depth)
+
+    match output_format:
+        case "json":
+            rprint(json.dumps({"project": project_path.name, "tree": tree}))
+        case _:
+            rprint(tree)
+
+
+@app.command("deps")
+def deps_cmd(
+    project_dir: Annotated[Path, typer.Argument(help="Path to the project root")] = Path("."),
+    output_format: Annotated[
+        str,
+        typer.Option(
+            "--format",
+            "-f",
+            help="Output format: table (default), json, or csv",
+        ),
+    ] = "table",
+    group: Annotated[
+        str | None,
+        typer.Option("--group", "-g", help="Filter by group (main, dev, etc.)"),
+    ] = None,
+) -> None:
+    """Extract dependencies with names and versions.
+
+    Reads pyproject.toml (Poetry, PEP 621, uv/hatch, PDM, flit),
+    requirements*.txt, requirements*.in, and Pipfile. Outputs clean,
+    manipulatable name + version fields.
+
+    Examples:
+        pypreset deps                          # Table of all deps
+        pypreset deps --format json            # JSON for scripting / CI
+        pypreset deps --format csv             # CSV for spreadsheets
+        pypreset deps --group dev              # Only dev dependencies
+        pypreset deps ./other-project          # Inspect another project
+    """
+    import json
+
+    from pypreset.inspect import extract_dependencies
+
+    project_path = project_dir.absolute()
+
+    if not project_path.exists():
+        rprint(f"[red]Error: Directory '{project_path}' does not exist[/red]")
+        raise typer.Exit(1)
+
+    deps = extract_dependencies(project_path)
+
+    if group:
+        deps = [d for d in deps if d.group == group]
+
+    if not deps:
+        rprint("[yellow]No dependencies found.[/yellow]")
+        return
+
+    match output_format:
+        case "json":
+            rprint(json.dumps([d.to_dict() for d in deps], indent=2))
+        case "csv":
+            rprint("name,version,group,extras,source")
+            for d in deps:
+                extras_str = ";".join(d.extras) if d.extras else ""
+                rprint(f"{d.name},{d.version},{d.group},{extras_str},{d.source}")
+        case _:
+            table = Table(title="Dependencies")
+            table.add_column("Name", style="cyan")
+            table.add_column("Version", style="green")
+            table.add_column("Group", style="yellow")
+            table.add_column("Source", style="dim")
+            for d in deps:
+                name = d.name
+                if d.extras:
+                    name += f"[{','.join(d.extras)}]"
+                table.add_row(name, d.version, d.group, d.source)
+            Console().print(table)
+
+
 def main() -> None:
     """Main entry point."""
     app()
