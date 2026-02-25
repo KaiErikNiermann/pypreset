@@ -1,12 +1,55 @@
 # {{ project.name }}
 
+{% if project.description %}
 {{ project.description }}
 
+{% endif %}
+{% set gh_owner_repo = None %}
+{% if project.repository_url and "github.com/" in project.repository_url %}
+{% set gh_owner_repo = project.repository_url.rstrip("/").split("github.com/")[1] %}
+{% endif %}
+{% set has_badges = gh_owner_repo or project.license %}
+{% if has_badges %}
+{% if gh_owner_repo %}
+[![CI](https://github.com/{{ gh_owner_repo }}/actions/workflows/ci.yaml/badge.svg)](https://github.com/{{ gh_owner_repo }}/actions/workflows/ci.yaml)
+[![PyPI version](https://img.shields.io/pypi/v/{{ project.name }})](https://pypi.org/project/{{ project.name }}/)
+[![Python {{ project.python_version }}+](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2F{{ gh_owner_repo | replace("/", "%2F") }}%2Fmain%2Fpyproject.toml)](https://pypi.org/project/{{ project.name }}/)
+{% endif %}
+{% if project.license %}
+[![License: {{ project.license }}](https://img.shields.io/badge/license-{{ project.license | replace("-", "--") }}-blue.svg)](https://opensource.org/licenses/{{ project.license }})
+{% endif %}
+{% if testing.coverage_config.enabled and gh_owner_repo %}
+[![codecov](https://codecov.io/gh/{{ gh_owner_repo }}/graph/badge.svg)](https://codecov.io/gh/{{ gh_owner_repo }})
+{% endif %}
+
+{% endif %}
 ## Installation
 
+{% if package_manager == "uv" %}
 ```bash
+uv add {{ project.name }}
+```
+
+Or install from source:
+
+```bash
+git clone {{ project.repository_url | default("https://github.com/YOUR_USERNAME/" + project.name, true) }}
+cd {{ project.name }}
+uv sync
+```
+{% else %}
+```bash
+pip install {{ project.name }}
+```
+
+Or install from source:
+
+```bash
+git clone {{ project.repository_url | default("https://github.com/YOUR_USERNAME/" + project.name, true) }}
+cd {{ project.name }}
 poetry install
 ```
+{% endif %}
 
 ## Usage
 
@@ -22,46 +65,163 @@ import {{ project.package_name }}
 ```
 {% endif %}
 
+{% set features = [] %}
+{% if testing.enabled %}
+{% set _ = features.append("**" + testing.framework | capitalize + "** test suite" + (" with coverage" if testing.coverage_config.enabled else "")) %}
+{% endif %}
+{% if formatting.enabled %}
+{% set _ = features.append("**" + formatting.tool | capitalize + "** linting & formatting") %}
+{% endif %}
+{% if typing_level in ["basic", "strict"] %}
+{% set type_checker_name = formatting.type_checker | capitalize if formatting.type_checker != "none" else "Mypy" %}
+{% set _ = features.append("**" + type_checker_name + "** type checking (" + typing_level + " mode)") %}
+{% endif %}
+{% if docker.enabled %}
+{% set _ = features.append("**Docker** containerization" + (" with devcontainer" if docker.devcontainer else "")) %}
+{% endif %}
+{% if documentation.enabled %}
+{% set doc_tool = documentation.tool | capitalize %}
+{% set _ = features.append("**" + doc_tool + "** documentation" + (" with GitHub Pages" if documentation.deploy_gh_pages else "")) %}
+{% endif %}
+{% if tox.enabled %}
+{% set _ = features.append("**Tox** multi-environment testing") %}
+{% endif %}
+{% if dependabot.enabled %}
+{% set _ = features.append("**Dependabot** dependency updates") %}
+{% endif %}
+{% if formatting.pre_commit %}
+{% set _ = features.append("**Pre-commit** hooks") %}
+{% endif %}
+{% if features %}
+## Features
+
+{% for feature in features %}
+- {{ feature }}
+{% endfor %}
+
+{% endif %}
 ## Development
 
-{% if testing.enabled %}
-### Running Tests
-
+{% if package_manager == "uv" %}
 ```bash
-poetry run pytest
-{% if testing.coverage %}
-# With coverage report
-poetry run pytest --cov
+# Install dependencies
+uv sync
+
+{% if testing.enabled %}
+# Run tests
+uv run pytest
+{% if testing.coverage_config.enabled %}
+
+# Run tests with coverage
+uv run pytest --cov
 {% endif %}
-```
 {% endif %}
 
 {% if formatting.enabled %}
-### Code Formatting
-
 {% if formatting.tool == "ruff" %}
-```bash
-# Check linting
-poetry run ruff check .
+# Lint
+uv run ruff check .
 
-# Format code
-poetry run ruff format .
-```
+# Format
+uv run ruff format .
 {% elif formatting.tool == "black" %}
-```bash
-poetry run black .
-```
+# Format
+uv run black .
 {% endif %}
 {% endif %}
 
 {% if typing_level in ["basic", "strict"] %}
-### Type Checking
-
+{% if formatting.type_checker == "pyright" %}
+# Type check
+uv run pyright src/
+{% elif formatting.type_checker == "ty" %}
+# Type check
+uv run ty check src/
+{% else %}
+# Type check
+uv run mypy src/
+{% endif %}
+{% endif %}
+```
+{% else %}
 ```bash
+# Install dependencies
+poetry install
+
+{% if testing.enabled %}
+# Run tests
+poetry run pytest
+{% if testing.coverage_config.enabled %}
+
+# Run tests with coverage
+poetry run pytest --cov
+{% endif %}
+{% endif %}
+
+{% if formatting.enabled %}
+{% if formatting.tool == "ruff" %}
+# Lint
+poetry run ruff check .
+
+# Format
+poetry run ruff format .
+{% elif formatting.tool == "black" %}
+# Format
+poetry run black .
+{% endif %}
+{% endif %}
+
+{% if typing_level in ["basic", "strict"] %}
+{% if formatting.type_checker == "pyright" %}
+# Type check
+poetry run pyright src/
+{% elif formatting.type_checker == "ty" %}
+# Type check
+poetry run ty check src/
+{% else %}
+# Type check
 poetry run mypy src/
+{% endif %}
+{% endif %}
 ```
 {% endif %}
 
+{% if entry_points %}
+## Project Structure
+
+```
+{{ project.name }}/
+{% if layout == "src" %}
+├── src/
+│   └── {{ project.package_name }}/
+│       ├── __init__.py
+│       └── cli.py
+{% else %}
+├── {{ project.package_name }}/
+│   ├── __init__.py
+│   └── cli.py
+{% endif %}
+├── tests/
+│   └── ...
+├── pyproject.toml
+└── README.md
+```
+
+{% endif %}
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## License
 
-MIT
+{% if project.license %}
+This project is licensed under the {{ project.license }} License{% if project.repository_url %} — see the [LICENSE]({{ project.repository_url }}/blob/main/LICENSE) file for details{% endif %}.
+{% else %}
+See the [LICENSE](LICENSE) file for details.
+{% endif %}
