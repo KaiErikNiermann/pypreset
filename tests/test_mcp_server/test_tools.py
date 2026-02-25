@@ -579,3 +579,75 @@ class TestVerifyWorkflow:
         assert "errors" in data
         assert "warnings" in data
         assert "runs" in data
+
+
+@pytest.mark.asyncio
+class TestMigrateToUv:
+    """Tests for the migrate_to_uv tool."""
+
+    async def test_not_installed_returns_error(self, mcp_client: Client) -> None:
+        from unittest.mock import patch
+
+        with patch("pypreset.migration.shutil.which", return_value=None):
+            result = await mcp_client.call_tool(
+                "migrate_to_uv",
+                {"project_dir": "/tmp/fake-project"},
+            )
+
+        data = json.loads(result.data)
+        assert data["success"] is False
+        assert "not installed" in data["error"]
+
+    async def test_successful_dry_run(self, mcp_client: Client, tmp_path: Path) -> None:
+        from unittest.mock import patch
+
+        from pypreset.migration import MigrationResult
+
+        mock_migration_result = MigrationResult(
+            success=True,
+            command=["migrate-to-uv", "--dry-run", str(tmp_path)],
+            stdout="[project]\nname = 'test'",
+            stderr="",
+            return_code=0,
+            dry_run=True,
+        )
+
+        with (
+            patch("pypreset.migration.check_migrate_to_uv", return_value=(True, "0.11.0")),
+            patch("pypreset.migration.migrate_to_uv", return_value=mock_migration_result),
+        ):
+            result = await mcp_client.call_tool(
+                "migrate_to_uv",
+                {"project_dir": str(tmp_path), "dry_run": True},
+            )
+
+        data = json.loads(result.data)
+        assert data["success"] is True
+        assert data["dry_run"] is True
+        assert data["migrate_to_uv_version"] == "0.11.0"
+
+    async def test_command_failure_returns_error(self, mcp_client: Client, tmp_path: Path) -> None:
+        from unittest.mock import patch
+
+        from pypreset.migration import MigrationCommandFailure
+
+        with (
+            patch("pypreset.migration.check_migrate_to_uv", return_value=(True, "0.11.0")),
+            patch(
+                "pypreset.migration.migrate_to_uv",
+                side_effect=MigrationCommandFailure(
+                    command=["migrate-to-uv", str(tmp_path)],
+                    returncode=1,
+                    stdout="",
+                    stderr="Project is already using uv",
+                ),
+            ),
+        ):
+            result = await mcp_client.call_tool(
+                "migrate_to_uv",
+                {"project_dir": str(tmp_path)},
+            )
+
+        data = json.loads(result.data)
+        assert data["success"] is False
+        assert "already using uv" in data["stderr"]

@@ -62,6 +62,7 @@ poetry run pytest tests/test_models.py::test_name -v
 | `project_analyzer.py` | Heuristic detection of tooling from `pyproject.toml` |
 | `user_config.py` | User-level defaults from `~/.config/pypreset/config.yaml`; applied as lowest-priority base layer |
 | `versioning.py` | `VersioningAssistant`; wraps `poetry version`, git, and `gh` CLI |
+| `migration.py` | Proxy for upstream `migrate-to-uv` CLI; migrates projects from Poetry/Pipenv/pip-tools/pip to uv |
 | `mcp_server/` | MCP server subpackage — tools, resources, and prompts for AI assistant integration |
 
 ### Preset system
@@ -90,7 +91,7 @@ Key templates come in pairs for Poetry vs uv:
 
 An MCP (Model Context Protocol) server that exposes pypreset functionality to AI coding assistants via STDIO transport. Install with `pip install pypreset[mcp]` or `poetry install -E mcp`.
 
-**Tools** (`tools.py`): `create_project`, `augment_project`, `validate_project`, `list_presets`, `show_preset`, `get_user_config`, `set_user_config`
+**Tools** (`tools.py`): `create_project`, `augment_project`, `validate_project`, `list_presets`, `show_preset`, `get_user_config`, `set_user_config`, `migrate_to_uv`
 
 **Resources** (`resources.py`): `preset://list`, `config://user`, `template://list`
 

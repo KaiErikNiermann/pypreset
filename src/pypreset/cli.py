@@ -1351,6 +1351,160 @@ def workflow_install_act_cmd() -> None:
         raise typer.Exit(1)
 
 
+@app.command("migrate")
+def migrate_cmd(
+    project_dir: Annotated[Path, typer.Argument(help="Path to the project to migrate")] = Path("."),
+    dry_run: Annotated[
+        bool,
+        typer.Option("--dry-run/--no-dry-run", help="Preview changes without modifying files"),
+    ] = False,
+    skip_lock: Annotated[
+        bool,
+        typer.Option("--skip-lock/--no-skip-lock", help="Skip locking dependencies with uv"),
+    ] = False,
+    skip_uv_checks: Annotated[
+        bool,
+        typer.Option(
+            "--skip-uv-checks/--no-skip-uv-checks",
+            help="Skip checks for whether project already uses uv",
+        ),
+    ] = False,
+    ignore_locked_versions: Annotated[
+        bool,
+        typer.Option(
+            "--ignore-locked-versions/--no-ignore-locked-versions",
+            help="Ignore current locked dependency versions",
+        ),
+    ] = False,
+    replace_project_section: Annotated[
+        bool,
+        typer.Option(
+            "--replace-project-section/--no-replace-project-section",
+            help="Replace existing [project] section instead of keeping existing fields",
+        ),
+    ] = False,
+    keep_current_build_backend: Annotated[
+        bool,
+        typer.Option(
+            "--keep-current-build-backend/--no-keep-current-build-backend",
+            help="Keep the current build backend",
+        ),
+    ] = False,
+    keep_current_data: Annotated[
+        bool,
+        typer.Option(
+            "--keep-current-data/--no-keep-current-data",
+            help="Keep data from current package manager (don't delete old files)",
+        ),
+    ] = False,
+    ignore_errors: Annotated[
+        bool,
+        typer.Option(
+            "--ignore-errors/--no-ignore-errors",
+            help="Continue migration even if errors occur",
+        ),
+    ] = False,
+    package_manager: Annotated[
+        str | None,
+        typer.Option(
+            "--package-manager",
+            "-p",
+            help="Source package manager (poetry/pipenv/pip-tools/pip). Auto-detected if omitted",
+        ),
+    ] = None,
+    dependency_groups_strategy: Annotated[
+        str | None,
+        typer.Option(
+            "--dependency-groups-strategy",
+            help="Strategy for migrating dependency groups",
+        ),
+    ] = None,
+    build_backend: Annotated[
+        str | None,
+        typer.Option("--build-backend", help="Build backend to use (hatch, uv)"),
+    ] = None,
+    verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose output")] = False,
+) -> None:
+    """Migrate a project to uv using migrate-to-uv.
+
+    Wraps the upstream migrate-to-uv tool (https://github.com/mkniewallner/migrate-to-uv)
+    to migrate projects from Poetry, Pipenv, pip-tools, or pip to uv.
+
+    Examples:
+        pypreset migrate                            # Migrate current directory
+        pypreset migrate ./my-project               # Migrate specific project
+        pypreset migrate --dry-run                   # Preview changes
+        pypreset migrate --package-manager poetry    # Force Poetry detection
+        pypreset migrate --keep-current-data         # Don't delete old files
+    """
+    if verbose:
+        logging.getLogger().setLevel(logging.DEBUG)
+
+    from pypreset.migration import (
+        MigrationCommandFailure,
+        MigrationError,
+        MigrationOptions,
+        check_migrate_to_uv,
+        migrate_to_uv,
+    )
+
+    project_path = project_dir.absolute()
+
+    if not project_path.exists():
+        rprint(f"[red]Error: Directory '{project_path}' does not exist[/red]")
+        raise typer.Exit(1)
+
+    available, version = check_migrate_to_uv()
+    if not available:
+        rprint(
+            "[red]Error: migrate-to-uv is not installed.[/red]\n"
+            "Install it with: [cyan]pip install migrate-to-uv[/cyan]  "
+            "or: [cyan]uvx migrate-to-uv[/cyan]"
+        )
+        raise typer.Exit(1)
+
+    rprint(f"[blue]Using migrate-to-uv {version or '(unknown version)'}[/blue]")
+    action = "Previewing migration" if dry_run else "Migrating"
+    rprint(f"[blue]{action} project at {project_path}...[/blue]")
+
+    opts = MigrationOptions(
+        project_dir=project_path,
+        dry_run=dry_run,
+        skip_lock=skip_lock,
+        skip_uv_checks=skip_uv_checks,
+        ignore_locked_versions=ignore_locked_versions,
+        replace_project_section=replace_project_section,
+        keep_current_build_backend=keep_current_build_backend,
+        keep_current_data=keep_current_data,
+        ignore_errors=ignore_errors,
+        package_manager=package_manager,  # type: ignore[arg-type]
+        dependency_groups_strategy=dependency_groups_strategy,  # type: ignore[arg-type]
+        build_backend=build_backend,  # type: ignore[arg-type]
+    )
+
+    try:
+        result = migrate_to_uv(opts)
+    except MigrationCommandFailure as exc:
+        rprint(f"[red]Migration failed:[/red]\n{exc}")
+        raise typer.Exit(1) from exc
+    except MigrationError as exc:
+        rprint(f"[red]Error: {exc}[/red]")
+        raise typer.Exit(1) from exc
+
+    if result.stdout.strip():
+        rprint(result.stdout.strip())
+    if result.stderr.strip():
+        rprint(f"[yellow]{result.stderr.strip()}[/yellow]")
+
+    if result.success:
+        if dry_run:
+            rprint("[green]Dry-run complete — no files were modified.[/green]")
+        else:
+            rprint("[green]Migration to uv completed successfully![/green]")
+    else:
+        rprint("[yellow]Migration completed with warnings (--ignore-errors was set).[/yellow]")
+
+
 def main() -> None:
     """Main entry point."""
     app()

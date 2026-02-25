@@ -107,6 +107,12 @@ Tools are actions the AI assistant can invoke:
      - Set or update PyPI metadata (description, authors, license, URLs, keywords) in
        ``pyproject.toml``. Supports auto-generating URLs from a ``github_owner`` parameter.
        Returns publish-readiness warnings for empty or placeholder fields
+   * - ``migrate_to_uv``
+     - Migrate a Python project to uv from another package manager (Poetry, Pipenv,
+       pip-tools, or pip) using the upstream
+       `migrate-to-uv <https://github.com/mkniewallner/migrate-to-uv>`_ tool.
+       Requires ``migrate-to-uv`` to be installed. Supports dry-run, custom build
+       backends, dependency group strategies, and all upstream flags
 
 Tool Parameters
 ~~~~~~~~~~~~~~~
@@ -194,6 +200,54 @@ Tool Parameters
      - ``false``
      - Overwrite existing non-empty values (default: only fill blanks)
 
+**migrate_to_uv** accepts these parameters:
+
+.. list-table::
+   :widths: 20 15 65
+   :header-rows: 1
+
+   * - Parameter
+     - Default
+     - Description
+   * - ``project_dir``
+     - (required)
+     - Path to the project to migrate
+   * - ``dry_run``
+     - ``false``
+     - Preview changes without modifying files
+   * - ``skip_lock``
+     - ``false``
+     - Skip locking dependencies with uv after migration
+   * - ``skip_uv_checks``
+     - ``false``
+     - Skip checks for whether the project already uses uv
+   * - ``ignore_locked_versions``
+     - ``false``
+     - Ignore current locked dependency versions
+   * - ``replace_project_section``
+     - ``false``
+     - Replace existing ``[project]`` section instead of keeping existing fields
+   * - ``keep_current_build_backend``
+     - ``false``
+     - Keep the current build backend
+   * - ``keep_current_data``
+     - ``false``
+     - Keep data from current package manager (don't delete old files/sections)
+   * - ``ignore_errors``
+     - ``false``
+     - Continue migration even if errors occur
+   * - ``package_manager``
+     - ``null``
+     - Source package manager: ``poetry``, ``pipenv``, ``pip-tools``, or ``pip``.
+       Auto-detected if omitted
+   * - ``dependency_groups_strategy``
+     - ``null``
+     - Strategy for migrating dependency groups: ``set-default-groups-all``,
+       ``set-default-groups``, ``include-in-dev``, ``keep-existing``, ``merge-into-dev``
+   * - ``build_backend``
+     - ``null``
+     - Build backend to use: ``hatch`` or ``uv``
+
 Available Resources
 -------------------
 
@@ -239,7 +293,7 @@ no business logic and delegate to existing functions:
 
    FastMCP server
        ├── tools.py       → calls preset_loader, generator, validator,
-       │                     user_config, metadata_utils, act_runner
+       │                     user_config, metadata_utils, act_runner, migration
        ├── resources.py   → calls preset_loader, user_config, template_engine
        └── prompts.py     → builds guided conversation flows
 

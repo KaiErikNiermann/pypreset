@@ -521,3 +521,145 @@ def register_tools(mcp: FastMCP) -> None:
                 "metadata": read_pyproject_metadata(path),
             }
         )
+
+    @mcp.tool(
+        name="migrate_to_uv",
+        description=(
+            "Migrate a Python project to uv from another package manager "
+            "(Poetry, Pipenv, pip-tools, or pip) using the upstream migrate-to-uv tool. "
+            "Requires migrate-to-uv to be installed (pip install migrate-to-uv). "
+            "All upstream output and errors are surfaced directly."
+        ),
+        tags={"migration", "uv", "package-manager"},
+    )
+    def migrate_to_uv_tool(
+        project_dir: Annotated[str, Field(description="Path to the project to migrate")],
+        dry_run: Annotated[
+            bool, Field(description="Preview changes without modifying files (default: false)")
+        ] = False,
+        skip_lock: Annotated[
+            bool,
+            Field(description="Skip locking dependencies with uv after migration (default: false)"),
+        ] = False,
+        skip_uv_checks: Annotated[
+            bool,
+            Field(
+                description=("Skip checks for whether the project already uses uv (default: false)")
+            ),
+        ] = False,
+        ignore_locked_versions: Annotated[
+            bool,
+            Field(description="Ignore current locked dependency versions (default: false)"),
+        ] = False,
+        replace_project_section: Annotated[
+            bool,
+            Field(
+                description=(
+                    "Replace existing [project] section instead of keeping "
+                    "existing fields (default: false)"
+                )
+            ),
+        ] = False,
+        keep_current_build_backend: Annotated[
+            bool,
+            Field(description="Keep the current build backend (default: false)"),
+        ] = False,
+        keep_current_data: Annotated[
+            bool,
+            Field(
+                description=(
+                    "Keep data from current package manager — "
+                    "don't delete old files/sections (default: false)"
+                )
+            ),
+        ] = False,
+        ignore_errors: Annotated[
+            bool,
+            Field(description="Continue migration even if errors occur (default: false)"),
+        ] = False,
+        package_manager: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Source package manager: 'poetry', 'pipenv', 'pip-tools', or 'pip'. "
+                    "Auto-detected if omitted"
+                )
+            ),
+        ] = None,
+        dependency_groups_strategy: Annotated[
+            str | None,
+            Field(
+                description=(
+                    "Strategy for migrating dependency groups: "
+                    "'set-default-groups-all', 'set-default-groups', "
+                    "'include-in-dev', 'keep-existing', 'merge-into-dev'"
+                )
+            ),
+        ] = None,
+        build_backend: Annotated[
+            str | None,
+            Field(description="Build backend to use: 'hatch' or 'uv'"),
+        ] = None,
+    ) -> str:
+        from pypreset.migration import (
+            MigrationCommandFailure,
+            MigrationError,
+            MigrationOptions,
+            check_migrate_to_uv,
+            migrate_to_uv,
+        )
+
+        available, version = check_migrate_to_uv()
+        if not available:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": (
+                        "migrate-to-uv is not installed. "
+                        "Install it with: pip install migrate-to-uv"
+                    ),
+                }
+            )
+
+        opts = MigrationOptions(
+            project_dir=Path(project_dir),
+            dry_run=dry_run,
+            skip_lock=skip_lock,
+            skip_uv_checks=skip_uv_checks,
+            ignore_locked_versions=ignore_locked_versions,
+            replace_project_section=replace_project_section,
+            keep_current_build_backend=keep_current_build_backend,
+            keep_current_data=keep_current_data,
+            ignore_errors=ignore_errors,
+            package_manager=package_manager,  # type: ignore[arg-type]
+            dependency_groups_strategy=dependency_groups_strategy,  # type: ignore[arg-type]
+            build_backend=build_backend,  # type: ignore[arg-type]
+        )
+
+        try:
+            result = migrate_to_uv(opts)
+        except MigrationCommandFailure as exc:
+            return json.dumps(
+                {
+                    "success": False,
+                    "error": str(exc),
+                    "command": exc.command,
+                    "return_code": exc.returncode,
+                    "stdout": exc.stdout,
+                    "stderr": exc.stderr,
+                }
+            )
+        except MigrationError as exc:
+            return json.dumps({"success": False, "error": str(exc)})
+
+        return json.dumps(
+            {
+                "success": result.success,
+                "dry_run": result.dry_run,
+                "migrate_to_uv_version": version,
+                "command": result.command,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "return_code": result.return_code,
+            }
+        )
