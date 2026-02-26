@@ -616,6 +616,19 @@
           "description": "Readme file",
           "title": "Readme"
         },
+        "readme_template": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Custom Jinja2 template name for README generation",
+          "title": "Readme Template"
+        },
         "python_version": {
           "anyOf": [
             {
@@ -660,6 +673,58 @@
           "default": null,
           "description": "PyPI classifiers",
           "title": "Classifiers"
+        },
+        "repository_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Source repository URL",
+          "title": "Repository Url"
+        },
+        "homepage_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Project homepage URL",
+          "title": "Homepage Url"
+        },
+        "documentation_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Documentation site URL",
+          "title": "Documentation Url"
+        },
+        "bug_tracker_url": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Issue/bug tracker URL",
+          "title": "Bug Tracker Url"
         }
       },
       "title": "PartialMetadata",

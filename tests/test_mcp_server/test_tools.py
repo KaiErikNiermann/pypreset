@@ -651,3 +651,97 @@ class TestMigrateToUv:
         data = json.loads(result.data)
         assert data["success"] is False
         assert "already using uv" in data["stderr"]
+
+
+@pytest.mark.asyncio
+class TestGenerateBadges:
+    """Tests for the generate_badges tool."""
+
+    async def test_badges_from_poetry_project(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Test badge generation from a Poetry project with URLs and license."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "badge-project"
+version = "1.0.0"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.urls]
+Repository = "https://github.com/owner/badge-project"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+"""
+        )
+
+        result = await mcp_client.call_tool(
+            "generate_badges",
+            {"project_dir": str(tmp_path)},
+        )
+        data = json.loads(result.data)
+
+        assert data["project_name"] == "badge-project"
+        assert data["badge_count"] >= 3  # CI, PyPI, Python, License
+        labels = [b["label"] for b in data["badges"]]
+        assert "CI" in labels
+        assert "License" in labels
+
+    async def test_badges_no_repo_url(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Test badge generation with no repository URL returns only license badge."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "no-url-project"
+version = "1.0.0"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+"""
+        )
+
+        result = await mcp_client.call_tool(
+            "generate_badges",
+            {"project_dir": str(tmp_path)},
+        )
+        data = json.loads(result.data)
+
+        assert data["badge_count"] == 1
+        assert data["badges"][0]["label"] == "License"
+
+    async def test_badges_empty_project(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Test badge generation with minimal project returns empty list."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "minimal-project"
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+"""
+        )
+
+        result = await mcp_client.call_tool(
+            "generate_badges",
+            {"project_dir": str(tmp_path)},
+        )
+        data = json.loads(result.data)
+
+        assert data["badge_count"] == 0
+        assert data["badges"] == []

@@ -216,6 +216,10 @@ class Metadata(BaseModel):
     authors: list[str] = Field(default_factory=list, description="Project authors")
     license: str | None = Field(None, description="Project license")
     readme: str = Field("README.md", description="Readme file")
+    readme_template: str | None = Field(
+        None,
+        description="Custom Jinja2 template name for README generation (default: README.md.j2)",
+    )
     python_version: str = Field("3.11", description="Minimum Python version")
     keywords: list[str] = Field(default_factory=list, description="Project keywords")
     classifiers: list[str] = Field(default_factory=list, description="PyPI classifiers")
@@ -242,6 +246,9 @@ class PartialMetadata(BaseModel):
     authors: list[str] | None = Field(None, description="Project authors")
     license: str | None = Field(None, description="Project license")
     readme: str | None = Field(None, description="Readme file")
+    readme_template: str | None = Field(
+        None, description="Custom Jinja2 template name for README generation"
+    )
     python_version: str | None = Field(None, description="Minimum Python version")
     keywords: list[str] | None = Field(None, description="Project keywords")
     classifiers: list[str] | None = Field(None, description="PyPI classifiers")

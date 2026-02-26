@@ -48,6 +48,12 @@ class AugmentConfig:
     source_dirs: list[str]
     has_src_layout: bool
 
+    # README-relevant fields
+    repository_url: str | None = None
+    license_id: str | None = None
+    typing_level: str = "none"
+    entry_points: list[dict[str, str]] | None = None
+
     # What to generate
     generate_test_workflow: bool = True
     generate_lint_workflow: bool = True
@@ -59,6 +65,7 @@ class AugmentConfig:
     generate_devcontainer: bool = False
     generate_codecov: bool = False
     generate_documentation: bool = False
+    generate_readme: bool = False
     generate_tox: bool = False
 
     # Documentation settings
@@ -390,6 +397,20 @@ class InteractivePrompter:
         else:
             package_manager = package_manager_value
 
+        # Extract repository URL and license from analysis
+        repo_url: str | None = None
+        if self.analysis.repository_url is not None:
+            repo_url = self.analysis.repository_url.value
+        license_id: str | None = None
+        if self.analysis.license_id is not None:
+            license_id = self.analysis.license_id.value
+
+        # Derive typing level from type checker
+        typing_level = "none"
+        tc_value = type_checker if isinstance(type_checker, DetectedTypeChecker) else None
+        if tc_value is not None and tc_value != DetectedTypeChecker.NONE:
+            typing_level = "strict"
+
         return AugmentConfig(
             project_name=get_value("project_name", "my-project"),
             package_name=get_value("package_name", "my_project"),
@@ -404,6 +425,9 @@ class InteractivePrompter:
             line_length=get_value("line_length", 100),
             source_dirs=self.analysis.source_dirs or ["src"],
             has_src_layout=self.analysis.has_src_layout,
+            repository_url=repo_url,
+            license_id=license_id,
+            typing_level=typing_level,
             generate_test_workflow=components.get("generate_test_workflow", True),
             generate_lint_workflow=components.get("generate_lint_workflow", True),
             generate_dependabot=components.get("generate_dependabot", True),

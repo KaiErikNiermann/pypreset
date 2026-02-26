@@ -195,6 +195,40 @@ The generator picks template variants based on ``project.package_manager``:
 The uv variant uses PEP 621 ``[project]`` tables with ``hatchling`` as the build
 backend, and CI workflows use ``astral-sh/setup-uv`` instead of ``snok/install-poetry``.
 
+README Template
+---------------
+
+The ``README.md.j2`` template generates a full README with badges, installation
+instructions, usage examples, a features list, and development commands. It is
+used by both the ``create`` and ``augment`` pipelines.
+
+**Key context variables used by the template:**
+
+- ``project.name``, ``project.description``, ``project.repository_url``, ``project.license``
+- ``testing.enabled``, ``testing.coverage_config.enabled``
+- ``formatting.tool``, ``formatting.type_checker``
+- ``typing_level`` (``"none"``, ``"basic"``, or ``"strict"``)
+- ``entry_points`` (list of ``{name, module}`` dicts)
+- ``docker.enabled``, ``docker.devcontainer``
+- ``documentation.enabled``, ``documentation.tool``
+- ``package_manager`` (``"poetry"`` or ``"uv"``)
+
+**Badge generation** relies on ``project.repository_url`` containing a GitHub URL.
+When present, CI, PyPI version, Python version, and (optionally) Codecov badges
+are rendered. A license badge is added when ``project.license`` is set.
+
+**Preset override:** set ``metadata.readme_template`` in a preset YAML to use a
+custom template instead of the default ``README.md.j2``:
+
+.. code-block:: yaml
+
+   metadata:
+     readme_template: my_readme.j2
+
+The ``pypreset badges`` CLI command and the ``generate_badges`` MCP tool provide
+standalone badge generation from ``pyproject.toml`` without rendering the full
+README template.
+
 Writing Custom Templates
 -------------------------
 

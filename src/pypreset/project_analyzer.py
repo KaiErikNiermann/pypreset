@@ -116,6 +116,13 @@ class ProjectAnalysis:
     existing_workflows: list[Path] = field(default_factory=list)
     has_dependabot: bool = False
 
+    # README
+    has_readme: bool = False
+
+    # Repository & license
+    repository_url: DetectedValue[str] | None = None
+    license_id: DetectedValue[str] | None = None
+
     # Gitignore
     has_gitignore: bool = False
 
@@ -229,6 +236,15 @@ class ProjectAnalyzer:
                     workflows_dir.glob("*.yaml")
                 )
             analysis.has_dependabot = (github_dir / "dependabot.yml").exists()
+
+        # Check README
+        analysis.has_readme = any(
+            (self.project_dir / name).exists() for name in ("README.md", "README.rst", "README")
+        )
+
+        # Extract repository URL and license
+        analysis.repository_url = self._extract_repository_url()
+        analysis.license_id = self._extract_license()
 
         # Check gitignore
         analysis.has_gitignore = (self.project_dir / ".gitignore").exists()
@@ -576,6 +592,42 @@ class ProjectAnalyzer:
             )
 
         return DetectedValue(100, "low", "default value")
+
+    def _extract_repository_url(self) -> DetectedValue[str] | None:
+        """Extract repository URL from pyproject.toml."""
+        # Poetry: [tool.poetry.urls] or [tool.poetry] repository key
+        poetry = self.pyproject_data.get("tool", {}).get("poetry", {})
+        poetry_urls = poetry.get("urls", {})
+        for key in ("Repository", "repository", "Source", "source"):
+            if key in poetry_urls:
+                return DetectedValue(poetry_urls[key], "high", f"[tool.poetry.urls.{key}]")
+        if "repository" in poetry:
+            return DetectedValue(poetry["repository"], "high", "[tool.poetry.repository]")
+
+        # PEP 621: [project.urls]
+        project_urls = self.pyproject_data.get("project", {}).get("urls", {})
+        for key in ("Repository", "repository", "Source", "source", "Homepage", "homepage"):
+            if key in project_urls:
+                return DetectedValue(project_urls[key], "high", f"[project.urls.{key}]")
+
+        return None
+
+    def _extract_license(self) -> DetectedValue[str] | None:
+        """Extract license identifier from pyproject.toml."""
+        # Poetry
+        poetry = self.pyproject_data.get("tool", {}).get("poetry", {})
+        if "license" in poetry:
+            return DetectedValue(poetry["license"], "high", "[tool.poetry.license]")
+
+        # PEP 621
+        project = self.pyproject_data.get("project", {})
+        lic = project.get("license")
+        if isinstance(lic, str):
+            return DetectedValue(lic, "high", "[project.license]")
+        if isinstance(lic, dict) and "text" in lic:
+            return DetectedValue(lic["text"], "high", "[project.license.text]")
+
+        return None
 
     def _detect_source_dirs(self) -> list[str]:
         """Detect source directories."""

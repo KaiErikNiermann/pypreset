@@ -122,6 +122,7 @@ pypreset augment [path] [OPTIONS]
 | `--codecov` / `--no-codecov` | Codecov | `codecov.yml` configuration |
 | `--docs` | Documentation | Sphinx or MkDocs scaffolding (`--docs sphinx` or `--docs mkdocs`) |
 | `--tox` / `--no-tox` | tox | `tox.ini` with tox-uv backend for multi-environment testing |
+| `--readme` / `--no-readme` | README | `README.md` generated from the shared template (badges, install, features) |
 
 ```bash
 # Interactive mode (prompts for missing values)
@@ -141,6 +142,9 @@ pypreset augment --pypi-publish
 
 # Add documentation scaffolding
 pypreset augment --docs mkdocs
+
+# Generate a README from your project metadata
+pypreset augment --readme
 
 # Overwrite existing files
 pypreset augment --force
@@ -201,6 +205,15 @@ pypreset metadata set --license MIT --keyword python     # Set license and keywo
 pypreset metadata check                                  # Check publish-readiness
 ```
 
+### `badges` -- Generate badge markdown
+
+Reads `pyproject.toml` to detect your project name, repository URL, and license, then prints badge markdown you can paste into your README.
+
+```bash
+pypreset badges                  # Badges for current directory
+pypreset badges ./my-project     # Badges for a specific project
+```
+
 ### Other commands
 
 ```bash
@@ -217,7 +230,7 @@ pypreset config set <key> <value>  # Set a config value
 
 Built-in presets: `empty-package`, `cli-tool`, `data-science`, `discord-bot`.
 
-Presets are YAML files that define metadata, dependencies, directory structure, testing, formatting, and more. They support single inheritance via the `base:` field.
+Presets are YAML files that define metadata, dependencies, directory structure, testing, formatting, and more. They support single inheritance via the `base:` field. Presets can override the README template by setting `metadata.readme_template` to a custom `.j2` filename.
 
 ### Custom presets
 
@@ -294,6 +307,7 @@ pip install pypreset[mcp]
 | `get_user_config` | Read current user-level defaults |
 | `set_user_config` | Update user-level defaults |
 | `set_project_metadata` | Set or update PyPI metadata in `pyproject.toml` |
+| `generate_badges` | Generate badge markdown links from project metadata |
 
 **Resources**: `preset://list`, `config://user`, `template://list`
 

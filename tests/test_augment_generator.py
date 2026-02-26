@@ -8,6 +8,7 @@ from pypreset.augment_generator import (
     DependabotGenerator,
     GitignoreGenerator,
     LintWorkflowGenerator,
+    ReadmeGenerator,
     TestsDirectoryGenerator,
     TestWorkflowGenerator,
     augment_project,
@@ -437,3 +438,71 @@ class TestDevcontainerGenerator:
 
         assert len(files) == 0
         assert (dc_dir / "devcontainer.json").read_text() == '{"name": "existing"}'
+
+
+class TestReadmeGenerator:
+    """Tests for ReadmeGenerator."""
+
+    def _config_with_readme(self, **kwargs: object) -> AugmentConfig:
+        """Create an AugmentConfig with generate_readme=True and optional overrides."""
+        base = create_test_config()
+        base.generate_readme = True
+        base.repository_url = "https://github.com/owner/test-project"
+        base.license_id = "MIT"
+        for k, v in kwargs.items():
+            setattr(base, k, v)
+        return base
+
+    def test_generates_readme(self, tmp_path: Path) -> None:
+        """Test that README.md is generated."""
+        config = self._config_with_readme()
+        generator = ReadmeGenerator(tmp_path, config)
+
+        files = generator.generate()
+
+        assert len(files) == 1
+        assert files[0].path == Path("README.md")
+        assert (tmp_path / "README.md").exists()
+
+        content = (tmp_path / "README.md").read_text()
+        assert "test-project" in content
+
+    def test_readme_contains_badges(self, tmp_path: Path) -> None:
+        """Test that README includes badges from repository URL."""
+        config = self._config_with_readme()
+        generator = ReadmeGenerator(tmp_path, config)
+        generator.generate()
+
+        content = (tmp_path / "README.md").read_text()
+        assert "CI" in content
+        assert "owner/test-project" in content
+
+    def test_readme_skipped_when_disabled(self, tmp_path: Path) -> None:
+        """Test that README is skipped when generate_readme is False."""
+        config = create_test_config()
+        config.generate_readme = False
+        generator = ReadmeGenerator(tmp_path, config)
+
+        assert generator.should_generate() is False
+
+    def test_readme_no_overwrite_without_force(self, tmp_path: Path) -> None:
+        """Test that existing README.md is not overwritten without force."""
+        (tmp_path / "README.md").write_text("# Existing README")
+        config = self._config_with_readme()
+        generator = ReadmeGenerator(tmp_path, config)
+
+        files = generator.generate(force=False)
+
+        assert len(files) == 0
+        assert (tmp_path / "README.md").read_text() == "# Existing README"
+
+    def test_readme_force_overwrites(self, tmp_path: Path) -> None:
+        """Test that force=True overwrites existing README.md."""
+        (tmp_path / "README.md").write_text("# Existing README")
+        config = self._config_with_readme()
+        generator = ReadmeGenerator(tmp_path, config)
+
+        files = generator.generate(force=True)
+
+        assert len(files) == 1
+        assert (tmp_path / "README.md").read_text() != "# Existing README"

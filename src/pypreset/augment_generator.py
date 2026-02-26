@@ -36,6 +36,7 @@ class AugmentComponent(StrEnum):
     CODECOV = "codecov"
     DOCUMENTATION = "documentation"
     TOX = "tox"
+    README = "readme"
 
 
 @dataclass
@@ -80,38 +81,56 @@ def create_augment_jinja_env() -> Environment:
 
 
 def get_augment_context(config: AugmentConfig) -> dict[str, Any]:
-    """Build template context from augment config."""
+    """Build template context from augment config.
+
+    The context is designed to be compatible with README.md.j2 and other
+    templates from the create pipeline.
+    """
+    from pypreset.models import CoverageConfig
+
+    coverage_config = CoverageConfig(enabled=config.has_coverage)
+
     return {
         "project": {
             "name": config.project_name,
             "package_name": config.package_name,
             "python_version": config.python_version,
             "description": config.description,
+            "repository_url": getattr(config, "repository_url", None),
+            "license": getattr(config, "license_id", None),
         },
         "testing": {
             "enabled": config.test_framework != DetectedTestFramework.NONE,
             "framework": config.test_framework.value,
             "coverage": config.has_coverage,
+            "coverage_config": coverage_config,
         },
         "formatting": {
             "enabled": config.linter != DetectedLinter.NONE,
             "tool": config.linter.value,
             "line_length": config.line_length,
+            "type_checker": config.type_checker.value,
+            "pre_commit": False,
+            "version_bumping": False,
         },
         "typing": {
             "enabled": config.type_checker != DetectedTypeChecker.NONE,
             "checker": config.type_checker.value,
         },
+        "typing_level": getattr(config, "typing_level", "none"),
         "dependabot": {
             "enabled": config.generate_dependabot,
             "schedule": config.dependabot_schedule,
             "open_pull_requests_limit": config.dependabot_pr_limit,
         },
+        "entry_points": getattr(config, "entry_points", None) or [],
         "source_dirs": config.source_dirs,
         "has_src_layout": config.has_src_layout,
         "layout": "src" if config.has_src_layout else "flat",
         "package_manager": config.package_manager.value,
         "docker": {
+            "enabled": getattr(config, "generate_dockerfile", False),
+            "devcontainer": getattr(config, "generate_devcontainer", False),
             "base_image": _resolve_base_image(config.python_version),
             "container_runtime": getattr(config, "container_runtime", "docker"),
         },
@@ -123,6 +142,7 @@ def get_augment_context(config: AugmentConfig) -> dict[str, Any]:
         "tox": {
             "enabled": getattr(config, "generate_tox", False),
         },
+        "extras": {},
     }
 
 
@@ -479,6 +499,25 @@ class ToxGenerator(ComponentGenerator):
         return files
 
 
+class ReadmeGenerator(ComponentGenerator):
+    """Generates README.md from the shared README template."""
+
+    @property
+    def component_name(self) -> str:
+        return "readme"
+
+    def should_generate(self) -> bool:
+        return getattr(self.config, "generate_readme", False)
+
+    def generate(self, force: bool = False) -> list[GeneratedFile]:
+        files: list[GeneratedFile] = []
+        content = self._render_template("README.md.j2")
+        result = self._write_file(Path("README.md"), content, force)
+        if result:
+            files.append(result)
+        return files
+
+
 class AugmentOrchestrator:
     """Orchestrates the augment operation across components."""
 
@@ -499,6 +538,7 @@ class AugmentOrchestrator:
             CodecovGenerator(self.project_dir, config),
             DocumentationGenerator(self.project_dir, config),
             ToxGenerator(self.project_dir, config),
+            ReadmeGenerator(self.project_dir, config),
         ]
 
     def run(

@@ -606,6 +606,7 @@ def _apply_component_overrides(
     pypi_publish: bool | None,
     dockerfile_flag: bool | None = None,
     devcontainer_flag: bool | None = None,
+    readme_flag: bool | None = None,
 ) -> None:
     """Apply CLI component overrides to an AugmentConfig in place."""
     overrides: list[tuple[str, bool | None]] = [
@@ -617,6 +618,7 @@ def _apply_component_overrides(
         ("generate_pypi_publish", pypi_publish),
         ("generate_dockerfile", dockerfile_flag),
         ("generate_devcontainer", devcontainer_flag),
+        ("generate_readme", readme_flag),
     ]
     for attr, value in overrides:
         if value is not None:
@@ -715,6 +717,10 @@ def augment_cmd(
         bool | None,
         typer.Option("--tox/--no-tox", help="Generate tox.ini"),
     ] = None,
+    readme: Annotated[
+        bool | None,
+        typer.Option("--readme/--no-readme", help="Generate README.md from template"),
+    ] = None,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose output")] = False,
 ) -> None:
     """Augment an existing project with workflows, tests, and configuration.
@@ -781,6 +787,7 @@ def augment_cmd(
             pypi_publish=pypi_publish,
             dockerfile_flag=dockerfile,
             devcontainer_flag=devcontainer_flag,
+            readme_flag=readme,
         )
 
         # Apply new augment overrides
@@ -805,6 +812,7 @@ def augment_cmd(
                 config.generate_codecov,
                 config.generate_documentation,
                 config.generate_tox,
+                config.generate_readme,
             ]
         ):
             rprint("[yellow]No components selected for generation.[/yellow]")
@@ -824,6 +832,52 @@ def augment_cmd(
 
             traceback.print_exc()
         raise typer.Exit(1) from None
+
+
+@app.command("badges")
+def badges_cmd(
+    project_dir: Annotated[Path, typer.Argument(help="Path to the project")] = Path("."),
+) -> None:
+    """Generate badge markdown links for an existing project.
+
+    Reads pyproject.toml to detect the project name, repository URL, license,
+    and coverage configuration, then prints badge markdown you can paste into
+    your README.
+
+    Examples:
+        pypreset badges                  # Badges for current directory
+        pypreset badges ./my-project     # Badges for specific project
+    """
+    from pypreset.badge_generator import generate_badges
+    from pypreset.metadata_utils import read_pyproject_metadata
+
+    project_path = project_dir.absolute()
+    pyproject_path = project_path / "pyproject.toml"
+
+    if not pyproject_path.exists():
+        rprint(f"[red]Error: No pyproject.toml found in '{project_path}'[/red]")
+        raise typer.Exit(1)
+
+    meta = read_pyproject_metadata(project_path)
+    badges = generate_badges(
+        meta["name"],
+        repository_url=meta.get("repository_url"),
+        license_id=meta.get("license"),
+        has_coverage=False,
+        python_version=None,
+    )
+
+    if not badges:
+        rprint(
+            "[yellow]No badges could be generated. Set a repository URL or license first.[/yellow]"
+        )
+        rprint("[dim]Hint: pypreset metadata set --github-owner YOUR_USER[/dim]")
+        raise typer.Exit(0)
+
+    rprint("\n[bold cyan]Paste these badges into your README.md:[/bold cyan]\n")
+    for badge in badges:
+        rprint(badge.markdown)
+    rprint()
 
 
 @version_app.command("release")

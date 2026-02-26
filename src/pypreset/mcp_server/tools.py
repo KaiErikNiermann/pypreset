@@ -295,6 +295,9 @@ def register_tools(mcp: FastMCP) -> None:
             str, Field(description="Documentation tool: 'sphinx' or 'mkdocs'")
         ] = "sphinx",
         generate_tox: Annotated[bool, Field(description="Generate tox.ini")] = False,
+        generate_readme: Annotated[
+            bool, Field(description="Generate README.md from template")
+        ] = False,
     ) -> str:
         from pypreset.augment_generator import augment_project as _augment
         from pypreset.interactive_prompts import InteractivePrompter
@@ -319,6 +322,7 @@ def register_tools(mcp: FastMCP) -> None:
         config.generate_documentation = generate_documentation
         config.documentation_tool = documentation_tool
         config.generate_tox = generate_tox
+        config.generate_readme = generate_readme
 
         result = _augment(project_dir=path, config=config, force=force)
 
@@ -719,5 +723,44 @@ def register_tools(mcp: FastMCP) -> None:
             {
                 "count": len(deps),
                 "dependencies": [d.to_dict() for d in deps],
+            }
+        )
+
+    # ------------------------------------------------------------------
+    # generate_badges
+    # ------------------------------------------------------------------
+    @mcp.tool(
+        name="generate_badges",
+        description=(
+            "Generate badge markdown links for a Python project. "
+            "Reads pyproject.toml to detect project name, repository URL, "
+            "and license, then returns markdown badge strings."
+        ),
+        tags={"badges", "readme"},
+    )
+    def generate_badges_tool(
+        project_dir: Annotated[str, Field(description="Path to the project root directory")],
+    ) -> str:
+        from pypreset.badge_generator import generate_badges
+        from pypreset.metadata_utils import read_pyproject_metadata
+
+        path = Path(project_dir)
+        if not path.is_dir():
+            return json.dumps({"error": f"Not a directory: {project_dir}"})
+
+        meta = read_pyproject_metadata(path)
+        badges = generate_badges(
+            meta["name"],
+            repository_url=meta.get("repository_url"),
+            license_id=meta.get("license"),
+            has_coverage=False,
+            python_version=None,
+        )
+
+        return json.dumps(
+            {
+                "project_name": meta["name"],
+                "badge_count": len(badges),
+                "badges": [{"label": b.label, "markdown": b.markdown} for b in badges],
             }
         )

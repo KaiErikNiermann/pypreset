@@ -296,3 +296,186 @@ class TestDetectedValue:
 
         value = DetectedValue("test", "low", "source")
         assert value.is_reliable is False
+
+
+class TestRepositoryUrlDetection:
+    """Tests for repository URL extraction."""
+
+    def test_poetry_urls_repository(self, tmp_path: Path) -> None:
+        """Test extracting repository URL from [tool.poetry.urls]."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "my-project"
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+
+[tool.poetry.urls]
+Repository = "https://github.com/owner/my-project"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.repository_url is not None
+        assert analysis.repository_url.value == "https://github.com/owner/my-project"
+        assert analysis.repository_url.confidence == "high"
+
+    def test_pep621_urls_repository(self, tmp_path: Path) -> None:
+        """Test extracting repository URL from [project.urls]."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[project]
+name = "pep621-project"
+version = "1.0.0"
+requires-python = ">=3.11"
+
+[project.urls]
+Repository = "https://github.com/owner/pep621-project"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.repository_url is not None
+        assert analysis.repository_url.value == "https://github.com/owner/pep621-project"
+
+    def test_no_repository_url(self, tmp_path: Path) -> None:
+        """Test that no repository URL is detected when absent."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "no-url-project"
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.repository_url is None
+
+
+class TestLicenseDetection:
+    """Tests for license detection."""
+
+    def test_poetry_license(self, tmp_path: Path) -> None:
+        """Test extracting license from [tool.poetry]."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "licensed-project"
+version = "1.0.0"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.license_id is not None
+        assert analysis.license_id.value == "MIT"
+        assert analysis.license_id.confidence == "high"
+
+    def test_pep621_license_string(self, tmp_path: Path) -> None:
+        """Test extracting license from PEP 621 string format."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[project]
+name = "licensed-project"
+version = "1.0.0"
+license = "Apache-2.0"
+requires-python = ">=3.11"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.license_id is not None
+        assert analysis.license_id.value == "Apache-2.0"
+
+    def test_no_license(self, tmp_path: Path) -> None:
+        """Test that no license is detected when absent."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "unlicensed-project"
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.license_id is None
+
+
+class TestHasReadme:
+    """Tests for has_readme detection."""
+
+    def test_has_readme_md(self, tmp_path: Path) -> None:
+        """Test detection of README.md."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "readme-project"
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+"""
+        )
+        (tmp_path / "README.md").write_text("# My Project")
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.has_readme is True
+
+    def test_no_readme(self, tmp_path: Path) -> None:
+        """Test that has_readme is False when no README exists."""
+        pyproject = tmp_path / "pyproject.toml"
+        pyproject.write_text(
+            """
+[tool.poetry]
+name = "no-readme-project"
+version = "1.0.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.has_readme is False

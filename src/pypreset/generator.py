@@ -173,7 +173,8 @@ class ProjectGenerator:
 
     def _create_readme(self) -> None:
         """Create the README.md file."""
-        content = render_template(self.env, "README.md.j2", self.context)
+        template = self.config.metadata.readme_template or "README.md.j2"
+        content = render_template(self.env, template, self.context)
         readme_path = self.project_dir / "README.md"
         readme_path.write_text(content)
         logger.debug(f"Created README.md: {readme_path}")
