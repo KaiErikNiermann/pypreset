@@ -619,8 +619,7 @@ def register_tools(mcp: FastMCP) -> None:
                 {
                     "success": False,
                     "error": (
-                        "migrate-to-uv is not installed. "
-                        "Install it with: pip install migrate-to-uv"
+                        "migrate-to-uv is not installed. Install it with: pip install migrate-to-uv"
                     ),
                 }
             )
