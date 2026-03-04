@@ -376,10 +376,13 @@ class DockerfileGenerator(ComponentGenerator):
         files: list[GeneratedFile] = []
 
         # Select template based on package manager
-        if self.config.package_manager.value == "uv":
-            template_name = "Dockerfile_uv.j2"
-        else:
-            template_name = "Dockerfile.j2"
+        match self.config.package_manager.value:
+            case "uv":
+                template_name = "Dockerfile_uv.j2"
+            case "setuptools":
+                template_name = "Dockerfile_setuptools.j2"
+            case _:
+                template_name = "Dockerfile.j2"
 
         is_podman = getattr(self.config, "container_runtime", "docker") == "podman"
         dockerfile_name = "Containerfile" if is_podman else "Dockerfile"

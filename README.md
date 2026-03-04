@@ -4,7 +4,7 @@
 
 <p align="center">
   A meta-tool for scaffolding Python projects with configurable YAML presets.<br>
-  Supports Poetry and uv, generates CI workflows, testing scaffolds, type checking configs, and more.
+  Supports Poetry, uv, and setuptools, generates CI workflows, testing scaffolds, type checking configs, and more.
 </p>
 
 mcp-name: io.github.KaiErikNiermann/pypreset
@@ -13,7 +13,7 @@ mcp-name: io.github.KaiErikNiermann/pypreset
 
 - **Preset-based project creation** from YAML configs with single inheritance
 - **Augment existing projects** with CI workflows, tests, Docker, documentation, and more
-- **Two package managers**: Poetry and uv (PEP 621 + hatchling)
+- **Three package managers**: Poetry, uv (PEP 621 + hatchling), and setuptools (PEP 621 + setuptools.build_meta)
 - **Two layout styles**: `src/` layout and flat layout
 - **Type checking**: mypy, pyright, ty, or none
 - **Code quality**: ruff linting/formatting, radon complexity checks, pre-commit hooks
@@ -117,7 +117,7 @@ pypreset augment [path] [OPTIONS]
 | `--tests` / `--no-tests` | Tests directory | `tests/` with template test files and `conftest.py` |
 | `--gitignore` / `--no-gitignore` | Gitignore | Python-specific `.gitignore` |
 | `--pypi-publish` / `--no-pypi-publish` | PyPI publish | GitHub Actions workflow for OIDC-based publishing to PyPI on release |
-| `--dockerfile` / `--no-dockerfile` | Docker | Multi-stage `Dockerfile` and `.dockerignore` (Poetry or uv aware) |
+| `--dockerfile` / `--no-dockerfile` | Docker | Multi-stage `Dockerfile` and `.dockerignore` (Poetry, uv, or setuptools aware) |
 | `--devcontainer` / `--no-devcontainer` | Devcontainer | `.devcontainer/devcontainer.json` with VS Code extensions |
 | `--codecov` / `--no-codecov` | Codecov | `codecov.yml` configuration |
 | `--docs` | Documentation | Sphinx or MkDocs scaffolding (`--docs sphinx` or `--docs mkdocs`) |

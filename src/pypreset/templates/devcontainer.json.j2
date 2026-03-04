@@ -9,7 +9,7 @@
 {% if docker.container_runtime == "podman" %}
   "runArgs": ["--userns=keep-id"],
 {% endif %}
-  "postCreateCommand": "{% if package_manager == 'uv' %}uv sync{% else %}pip install poetry && poetry install{% endif %}",
+  "postCreateCommand": "{% if package_manager == 'uv' %}uv sync{% elif package_manager == 'setuptools' %}pip install -e '.[dev]'{% else %}pip install poetry && poetry install{% endif %}",
   "customizations": {
     "vscode": {
       "extensions": [
@@ -26,7 +26,7 @@
         "ms-python.debugpy"
       ],
       "settings": {
-        "python.defaultInterpreterPath": "{% if package_manager == 'uv' %}.venv/bin/python{% else %}python{% endif %}"
+        "python.defaultInterpreterPath": "{% if package_manager == 'uv' %}.venv/bin/python{% elif package_manager == 'setuptools' %}python{% else %}python{% endif %}"
       }
     }
   },

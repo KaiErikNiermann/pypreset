@@ -155,11 +155,11 @@ Jinja2 templates in ``src/pypreset/templates/`` receive a context dict built by
 ``template_engine.get_template_context()``. Template names referenced in preset
 YAML ``files[].template`` fields must match filenames in this directory.
 
-Key templates come in pairs for different package managers:
+Key templates come in variants for different package managers:
 
-- ``pyproject.toml.j2`` (Poetry) / ``pyproject_uv.toml.j2`` (uv + hatchling)
-- ``github_ci.yaml.j2`` (Poetry) / ``github_ci_uv.yaml.j2`` (uv + astral-sh/setup-uv)
-- ``Dockerfile.j2`` (Poetry) / ``Dockerfile_uv.j2`` (uv)
+- ``pyproject.toml.j2`` (Poetry) / ``pyproject_uv.toml.j2`` (uv + hatchling) / ``pyproject_setuptools.toml.j2`` (setuptools)
+- ``github_ci.yaml.j2`` (Poetry) / ``github_ci_uv.yaml.j2`` (uv + astral-sh/setup-uv) / ``github_ci_setuptools.yaml.j2`` (setuptools + pip)
+- ``Dockerfile.j2`` (Poetry) / ``Dockerfile_uv.j2`` (uv) / ``Dockerfile_setuptools.j2`` (setuptools + pip)
 
 Augment templates live in ``src/pypreset/templates/augment/`` and are used by
 the component generators to add files to existing projects.

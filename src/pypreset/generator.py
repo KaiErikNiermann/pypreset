@@ -33,6 +33,7 @@ class ProjectGenerator:
         self.context = get_template_context(config)
         self._is_src = config.layout == LayoutStyle.SRC
         self._is_uv = config.package_manager == CreationPackageManager.UV
+        self._is_setuptools = config.package_manager == CreationPackageManager.SETUPTOOLS
         self._is_podman = config.docker.container_runtime.value == "podman"
 
     @property
@@ -165,7 +166,12 @@ class ProjectGenerator:
 
     def _create_pyproject_toml(self) -> None:
         """Create the pyproject.toml file."""
-        template = "pyproject_uv.toml.j2" if self._is_uv else "pyproject.toml.j2"
+        if self._is_uv:
+            template = "pyproject_uv.toml.j2"
+        elif self._is_setuptools:
+            template = "pyproject_setuptools.toml.j2"
+        else:
+            template = "pyproject.toml.j2"
         content = render_template(self.env, template, self.context)
         pyproject_path = self.project_dir / "pyproject.toml"
         pyproject_path.write_text(content)
@@ -196,7 +202,12 @@ class ProjectGenerator:
         workflows_dir = self.project_dir / ".github" / "workflows"
         workflows_dir.mkdir(parents=True, exist_ok=True)
 
-        ci_template = "github_ci_uv.yaml.j2" if self._is_uv else "github_ci.yaml.j2"
+        if self._is_uv:
+            ci_template = "github_ci_uv.yaml.j2"
+        elif self._is_setuptools:
+            ci_template = "github_ci_setuptools.yaml.j2"
+        else:
+            ci_template = "github_ci.yaml.j2"
         content = render_template(self.env, ci_template, self.context)
         ci_path = workflows_dir / "ci.yaml"
         ci_path.write_text(content)
@@ -225,7 +236,12 @@ class ProjectGenerator:
 
     def _create_docker_files(self) -> None:
         """Create Dockerfile/Containerfile and ignore file."""
-        template = "Dockerfile_uv.j2" if self._is_uv else "Dockerfile.j2"
+        if self._is_uv:
+            template = "Dockerfile_uv.j2"
+        elif self._is_setuptools:
+            template = "Dockerfile_setuptools.j2"
+        else:
+            template = "Dockerfile.j2"
         content = render_template(self.env, template, self.context)
 
         if self._is_podman:
@@ -346,8 +362,7 @@ def generate_project(
         _init_git(project_dir)
 
     if install_dependencies:
-        is_uv = config.package_manager == CreationPackageManager.UV
-        _install_dependencies(project_dir, use_uv=is_uv)
+        _install_dependencies(project_dir, package_manager=config.package_manager)
 
     return project_dir
 
@@ -368,10 +383,20 @@ def _init_git(project_dir: Path) -> None:
         logger.warning("git not found, skipping repository initialization")
 
 
-def _install_dependencies(project_dir: Path, *, use_uv: bool = False) -> None:
+def _install_dependencies(
+    project_dir: Path, package_manager: CreationPackageManager = CreationPackageManager.POETRY
+) -> None:
     """Run dependency installation in the project directory."""
-    cmd = ["uv", "sync"] if use_uv else ["poetry", "install"]
-    tool_name = "uv" if use_uv else "poetry"
+    match package_manager:
+        case CreationPackageManager.UV:
+            cmd = ["uv", "sync"]
+            tool_name = "uv"
+        case CreationPackageManager.SETUPTOOLS:
+            cmd = ["pip", "install", "-e", ".[dev]"]
+            tool_name = "pip"
+        case _:
+            cmd = ["poetry", "install"]
+            tool_name = "poetry"
     try:
         subprocess.run(
             cmd,

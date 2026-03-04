@@ -57,7 +57,7 @@ poetry run pytest tests/test_models.py::test_name -v
 | `models.py` | All Pydantic models: `ProjectConfig`, `PresetConfig`, `OverrideOptions`, enums (`LayoutStyle`, `TypeChecker`, `CreationPackageManager`, etc.), and `Partial*` variants for preset merging |
 | `preset_loader.py` | YAML loading, preset inheritance (`deep_merge`), placeholder substitution |
 | `template_engine.py` | Jinja2 environment setup; `get_template_context()` builds the dict available in all `.j2` templates |
-| `generator.py` | `ProjectGenerator` class; selects templates based on `package_manager` (Poetry vs uv) |
+| `generator.py` | `ProjectGenerator` class; selects templates based on `package_manager` (Poetry, uv, or setuptools) |
 | `augment_generator.py` | Generates individual components into existing projects |
 | `project_analyzer.py` | Heuristic detection of tooling from `pyproject.toml` |
 | `user_config.py` | User-level defaults from `~/.config/pypreset/config.yaml`; applied as lowest-priority base layer |
@@ -78,9 +78,10 @@ poetry run pytest tests/test_models.py::test_name -v
 
 Jinja2 templates in `src/pypreset/templates/` receive a `project` context dict (built in `template_engine.py::get_template_context()`). Template names referenced in preset YAML `files[].template` fields must match filenames in this directory.
 
-Key templates come in pairs for Poetry vs uv:
-- `pyproject.toml.j2` (Poetry) / `pyproject_uv.toml.j2` (uv with PEP 621 `[project]` + hatchling)
-- `github_ci.yaml.j2` (Poetry) / `github_ci_uv.yaml.j2` (uv with `astral-sh/setup-uv`)
+Key templates come in variants for Poetry, uv, and setuptools:
+- `pyproject.toml.j2` (Poetry) / `pyproject_uv.toml.j2` (uv + hatchling) / `pyproject_setuptools.toml.j2` (setuptools)
+- `github_ci.yaml.j2` (Poetry) / `github_ci_uv.yaml.j2` (uv + `astral-sh/setup-uv`) / `github_ci_setuptools.yaml.j2` (setuptools + pip)
+- `Dockerfile.j2` (Poetry) / `Dockerfile_uv.j2` (uv) / `Dockerfile_setuptools.j2` (setuptools + pip)
 
 ### Config priority (lowest to highest)
 

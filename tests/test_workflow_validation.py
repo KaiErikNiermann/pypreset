@@ -349,3 +349,64 @@ class TestDocsWorkflowPathFiltering:
         workflow = _render_workflow("docs_workflow.yaml.j2", ctx)
         trigger = _get_trigger(workflow)
         assert "workflow_dispatch" in trigger or trigger.get("workflow_dispatch") is None
+
+
+class TestSetuptoolsWorkflowStructure:
+    """Validate structure of setuptools CI workflow."""
+
+    def test_valid_yaml(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_setuptools.yaml.j2", ctx)
+        assert isinstance(workflow, dict)
+        assert "jobs" in workflow
+
+    def test_uses_pip_install(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_setuptools.yaml.j2", ctx)
+        test_steps = workflow["jobs"]["test"]["steps"]
+        run_cmds = [s.get("run", "") for s in test_steps]
+        assert any('pip install -e ".[dev]"' in r for r in run_cmds)
+
+    def test_uses_bare_pytest(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_setuptools.yaml.j2", ctx)
+        test_steps = workflow["jobs"]["test"]["steps"]
+        run_cmds = [s.get("run", "") for s in test_steps]
+        assert any(r.startswith("pytest") for r in run_cmds)
+
+    def test_no_poetry_references(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_setuptools.yaml.j2", ctx)
+        test_steps = workflow["jobs"]["test"]["steps"]
+        for step in test_steps:
+            step_str = str(step)
+            assert "poetry" not in step_str.lower()
+
+    def test_no_uv_references(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_setuptools.yaml.j2", ctx)
+        test_steps = workflow["jobs"]["test"]["steps"]
+        for step in test_steps:
+            run_cmd = step.get("run", "")
+            assert "uv " not in run_cmd
+
+    def test_uses_setup_python_with_pip_cache(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_setuptools.yaml.j2", ctx)
+        test_steps = workflow["jobs"]["test"]["steps"]
+        setup_steps = [s for s in test_steps if "setup-python" in s.get("uses", "")]
+        assert len(setup_steps) > 0
+        assert setup_steps[0].get("with", {}).get("cache") == "pip"
+
+    def test_lint_job_uses_bare_ruff(self) -> None:
+        ctx = _make_context(formatting_tool="ruff")
+        workflow = _render_workflow("github_ci_setuptools.yaml.j2", ctx)
+        lint_steps = workflow["jobs"]["lint"]["steps"]
+        run_cmds = [s.get("run", "") for s in lint_steps]
+        assert any("ruff check" in r and "poetry" not in r and "uv" not in r for r in run_cmds)
+
+    def test_setuptools_ci_has_paths_ignore_on_push(self) -> None:
+        ctx = _make_context()
+        workflow = _render_workflow("github_ci_setuptools.yaml.j2", ctx)
+        trigger = _get_trigger(workflow)
+        assert "paths-ignore" in trigger["push"]

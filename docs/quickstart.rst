@@ -177,7 +177,7 @@ Available augment components:
    * - PyPI publish
      - GitHub Actions workflow for OIDC-based publishing to PyPI on release events
    * - Dockerfile
-     - Multi-stage ``Dockerfile`` and ``.dockerignore`` (Poetry or uv aware, src or flat layout)
+     - Multi-stage ``Dockerfile`` and ``.dockerignore`` (Poetry, uv, or setuptools aware, src or flat layout)
    * - Devcontainer
      - ``.devcontainer/devcontainer.json`` with VS Code extensions for the detected tooling
    * - Codecov

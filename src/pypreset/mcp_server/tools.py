@@ -55,7 +55,8 @@ def register_tools(mcp: FastMCP) -> None:
             Field(description="Type checker override: 'mypy', 'pyright', 'ty', or 'none'"),
         ] = None,
         package_manager: Annotated[
-            str | None, Field(description="Package manager override: 'poetry' or 'uv'")
+            str | None,
+            Field(description="Package manager override: 'poetry', 'uv', or 'setuptools'"),
         ] = None,
         typing_level: Annotated[
             str | None,

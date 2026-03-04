@@ -745,3 +745,30 @@ build-backend = "poetry.core.masonry.api"
 
         assert data["badge_count"] == 0
         assert data["badges"] == []
+
+
+@pytest.mark.asyncio
+class TestCreateProjectSetuptools:
+    """Tests for creating a project with setuptools package manager."""
+
+    async def test_create_setuptools_project(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Test creating a project with setuptools package manager."""
+        result = await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "st-mcp-test",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+                "package_manager": "setuptools",
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["package_manager"] == "setuptools"
+        project_dir = Path(data["project_dir"])
+        assert (project_dir / "pyproject.toml").exists()
+
+        content = (project_dir / "pyproject.toml").read_text()
+        assert "setuptools" in content
+        assert "setuptools.build_meta" in content

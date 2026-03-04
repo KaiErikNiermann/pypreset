@@ -479,3 +479,135 @@ python = "^3.11"
         analysis = analyzer.analyze()
 
         assert analysis.has_readme is False
+
+
+class TestSetuptoolsDetection:
+    """Tests for setuptools package manager detection."""
+
+    def test_detect_setuptools_via_tool_section(self, tmp_path: Path) -> None:
+        """Test detection via [tool.setuptools] section."""
+        (tmp_path / "pyproject.toml").write_text(
+            """
+[project]
+name = "st-project"
+version = "1.0.0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.package_manager is not None
+        assert analysis.package_manager.value == PackageManager.SETUPTOOLS
+        assert analysis.package_manager.confidence == "medium"
+
+    def test_detect_setuptools_tool_section_high_with_setup_cfg(self, tmp_path: Path) -> None:
+        """Test high confidence when [tool.setuptools] + setup.cfg exists."""
+        (tmp_path / "pyproject.toml").write_text(
+            """
+[project]
+name = "st-project"
+version = "1.0.0"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+"""
+        )
+        (tmp_path / "setup.cfg").write_text("[metadata]\n")
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.package_manager is not None
+        assert analysis.package_manager.value == PackageManager.SETUPTOOLS
+        assert analysis.package_manager.confidence == "high"
+
+    def test_detect_setuptools_via_build_backend(self, tmp_path: Path) -> None:
+        """Test detection via build-backend without [tool.setuptools]."""
+        (tmp_path / "pyproject.toml").write_text(
+            """
+[project]
+name = "st-project"
+version = "1.0.0"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+"""
+        )
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.package_manager is not None
+        assert analysis.package_manager.value == PackageManager.SETUPTOOLS
+        assert analysis.package_manager.confidence == "medium"
+
+    def test_detect_setuptools_build_backend_high_with_setup_py(self, tmp_path: Path) -> None:
+        """Test high confidence when build-backend + setup.py exists."""
+        (tmp_path / "pyproject.toml").write_text(
+            """
+[project]
+name = "st-project"
+version = "1.0.0"
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+"""
+        )
+        (tmp_path / "setup.py").write_text("from setuptools import setup\nsetup()\n")
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.package_manager is not None
+        assert analysis.package_manager.value == PackageManager.SETUPTOOLS
+        assert analysis.package_manager.confidence == "high"
+
+    def test_detect_setuptools_via_setup_py_only(self, tmp_path: Path) -> None:
+        """Test fallback detection via setup.py without build-backend."""
+        (tmp_path / "pyproject.toml").write_text(
+            """
+[project]
+name = "st-project"
+version = "1.0.0"
+"""
+        )
+        (tmp_path / "setup.py").write_text("from setuptools import setup\nsetup()\n")
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.package_manager is not None
+        assert analysis.package_manager.value == PackageManager.SETUPTOOLS
+        assert analysis.package_manager.confidence == "medium"
+
+    def test_detect_setuptools_via_setup_cfg_only(self, tmp_path: Path) -> None:
+        """Test fallback detection via setup.cfg without build-backend."""
+        (tmp_path / "pyproject.toml").write_text(
+            """
+[project]
+name = "st-project"
+version = "1.0.0"
+"""
+        )
+        (tmp_path / "setup.cfg").write_text("[metadata]\nname = st-project\n")
+
+        analyzer = ProjectAnalyzer(tmp_path)
+        analysis = analyzer.analyze()
+
+        assert analysis.package_manager is not None
+        assert analysis.package_manager.value == PackageManager.SETUPTOOLS
+        assert analysis.package_manager.confidence == "low"

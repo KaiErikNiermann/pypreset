@@ -22,7 +22,8 @@
       "description": "Package manager for project creation.",
       "enum": [
         "poetry",
-        "uv"
+        "uv",
+        "setuptools"
       ],
       "title": "CreationPackageManager",
       "type": "string"

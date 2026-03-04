@@ -54,6 +54,7 @@ class CreationPackageManager(StrEnum):
 
     POETRY = "poetry"
     UV = "uv"
+    SETUPTOOLS = "setuptools"
 
 
 class ContainerRuntime(StrEnum):

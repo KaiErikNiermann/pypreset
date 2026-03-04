@@ -25,7 +25,7 @@ Available Templates
    * - ``gitignore.j2``
      - ``.gitignore``
 
-**CI workflows (Poetry vs uv pairs):**
+**CI workflows (Poetry / uv / setuptools variants):**
 
 .. list-table::
    :widths: 35 65
@@ -37,6 +37,8 @@ Available Templates
      - GitHub Actions CI for Poetry projects (test + lint jobs)
    * - ``github_ci_uv.yaml.j2``
      - GitHub Actions CI for uv projects (uses ``astral-sh/setup-uv``)
+   * - ``github_ci_setuptools.yaml.j2``
+     - GitHub Actions CI for setuptools projects (uses ``pip install -e ".[dev]"``)
    * - ``dependabot.yml.j2``
      - Dependabot configuration (pip + GitHub Actions ecosystems)
    * - ``docs_workflow.yaml.j2``
@@ -71,6 +73,8 @@ Available Templates
      - Multi-stage Dockerfile for Poetry projects (src and flat layout aware)
    * - ``Dockerfile_uv.j2``
      - Multi-stage Dockerfile for uv projects
+   * - ``Dockerfile_setuptools.j2``
+     - Multi-stage Dockerfile for setuptools projects (pip install)
    * - ``dockerignore.j2``
      - ``.dockerignore``
    * - ``devcontainer.json.j2``
@@ -191,9 +195,13 @@ The generator picks template variants based on ``project.package_manager``:
 
 - **Poetry** (default): ``pyproject.toml.j2`` + ``github_ci.yaml.j2`` + ``Dockerfile.j2``
 - **uv**: ``pyproject_uv.toml.j2`` + ``github_ci_uv.yaml.j2`` + ``Dockerfile_uv.j2``
+- **setuptools**: ``pyproject_setuptools.toml.j2`` + ``github_ci_setuptools.yaml.j2`` + ``Dockerfile_setuptools.j2``
 
 The uv variant uses PEP 621 ``[project]`` tables with ``hatchling`` as the build
 backend, and CI workflows use ``astral-sh/setup-uv`` instead of ``snok/install-poetry``.
+The setuptools variant uses PEP 621 ``[project]`` tables with ``setuptools.build_meta``
+as the build backend, dev dependencies in ``[project.optional-dependencies]``, and
+CI workflows use plain ``pip install -e ".[dev]"``.
 
 README Template
 ---------------

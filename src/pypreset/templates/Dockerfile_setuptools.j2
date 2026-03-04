@@ -1,0 +1,35 @@
+# --- Builder stage ---
+FROM {{ docker.base_image }} AS builder
+
+WORKDIR /app
+
+COPY pyproject.toml ./
+{% if layout == "src" %}
+COPY src/ src/
+{% else %}
+COPY {{ project.package_name }}/ {{ project.package_name }}/
+{% endif %}
+
+RUN pip install --no-cache-dir .
+
+# --- Runtime stage ---
+FROM {{ docker.base_image }}
+
+COPY --from=builder /usr/local/lib/python*/site-packages /usr/local/lib/python3/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
+{% if layout == "src" %}
+COPY --from=builder /app/src/ /app/src/
+{% else %}
+COPY --from=builder /app/{{ project.package_name }}/ /app/{{ project.package_name }}/
+{% endif %}
+
+WORKDIR /app
+
+RUN useradd --create-home appuser
+USER appuser
+
+{% if entry_points %}
+ENTRYPOINT ["{{ entry_points[0].name }}"]
+{% else %}
+CMD ["python", "-m", "{{ project.package_name }}"]
+{% endif %}

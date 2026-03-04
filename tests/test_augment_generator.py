@@ -506,3 +506,28 @@ class TestReadmeGenerator:
 
         assert len(files) == 1
         assert (tmp_path / "README.md").read_text() != "# Existing README"
+
+
+class TestSetuptoolsDockerfileGenerator:
+    """Tests for setuptools Dockerfile generation in augment."""
+
+    def test_generates_dockerfile_setuptools(self, tmp_path: Path) -> None:
+        """Test that setuptools Dockerfile is generated."""
+        from pypreset.augment_generator import DockerfileGenerator
+
+        config = create_test_config(
+            generate_dockerfile=True, package_manager=PackageManager.SETUPTOOLS
+        )
+        generator = DockerfileGenerator(tmp_path, config)
+
+        files = generator.generate()
+
+        assert len(files) == 2
+        paths = [f.path for f in files]
+        assert Path("Dockerfile") in paths
+        assert Path(".dockerignore") in paths
+
+        content = (tmp_path / "Dockerfile").read_text()
+        assert "pip install" in content
+        assert "poetry" not in content
+        assert "uv sync" not in content

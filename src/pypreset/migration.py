@@ -5,6 +5,10 @@ Python projects to uv from other package managers (Poetry, Pipenv, pip-tools,
 pip).  This module wraps the upstream CLI and surfaces its output/errors
 through pypreset's own interface.
 
+Note: setuptools-based projects are not yet supported by the upstream
+``migrate-to-uv`` tool.  Only Poetry, Pipenv, pip-tools, and pip sources
+are accepted.
+
 MIT License — Copyright (c) 2025 Mathieu Kniewallner.
 See THIRD_PARTY_NOTICES.md for the full license text.
 """

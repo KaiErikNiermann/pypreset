@@ -294,6 +294,21 @@ class ProjectAnalyzer:
         if "tool" in self.pyproject_data and "flit" in self.pyproject_data["tool"]:
             return DetectedValue(PackageManager.FLIT, "medium", "pyproject.toml [tool.flit]")
 
+        # Check for setuptools tool section
+        if "tool" in self.pyproject_data and "setuptools" in self.pyproject_data["tool"]:
+            has_legacy = (self.project_dir / "setup.cfg").exists() or (
+                self.project_dir / "setup.py"
+            ).exists()
+            if has_legacy:
+                return DetectedValue(
+                    PackageManager.SETUPTOOLS,
+                    "high",
+                    "pyproject.toml [tool.setuptools] + setup.cfg/setup.py",
+                )
+            return DetectedValue(
+                PackageManager.SETUPTOOLS, "medium", "pyproject.toml [tool.setuptools]"
+            )
+
         # Check build-backend
         build_system = self.pyproject_data.get("build-system", {})
         build_backend = build_system.get("build-backend", "")
@@ -307,7 +322,26 @@ class ProjectAnalyzer:
         if "flit" in build_backend:
             return DetectedValue(PackageManager.FLIT, "medium", "build-backend")
         if "setuptools" in build_backend:
+            has_legacy = (self.project_dir / "setup.cfg").exists() or (
+                self.project_dir / "setup.py"
+            ).exists()
+            if has_legacy:
+                return DetectedValue(
+                    PackageManager.SETUPTOOLS,
+                    "high",
+                    "build-backend + setup.cfg/setup.py",
+                )
             return DetectedValue(PackageManager.SETUPTOOLS, "medium", "build-backend")
+
+        # Fallback: detect legacy setuptools via setup.py/setup.cfg without build-backend
+        if (self.project_dir / "setup.py").exists():
+            return DetectedValue(
+                PackageManager.SETUPTOOLS, "medium", "setup.py exists (legacy setuptools)"
+            )
+        if (self.project_dir / "setup.cfg").exists():
+            return DetectedValue(
+                PackageManager.SETUPTOOLS, "low", "setup.cfg exists (legacy setuptools)"
+            )
 
         return DetectedValue(PackageManager.UNKNOWN, "low", "no specific markers found")
 

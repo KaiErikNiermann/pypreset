@@ -747,3 +747,127 @@ class TestToxGeneration:
         project_dir = generator.generate()
 
         assert not (project_dir / "tox.ini").exists()
+
+
+class TestSetuptoolsGeneration:
+    """Tests for setuptools package manager support."""
+
+    def test_setuptools_pyproject_toml(self, temp_output_dir: Path) -> None:
+        """Test setuptools pyproject.toml has correct build system."""
+        import tomllib
+
+        from pypreset.models import CreationPackageManager
+
+        config = ProjectConfig(
+            metadata=Metadata(name="st-project"),
+            package_manager=CreationPackageManager.SETUPTOOLS,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        pyproject_path = project_dir / "pyproject.toml"
+        assert pyproject_path.exists()
+
+        with open(pyproject_path, "rb") as f:
+            data = tomllib.load(f)
+
+        assert data["build-system"]["build-backend"] == "setuptools.build_meta"
+        assert "setuptools>=61.0" in data["build-system"]["requires"]
+        assert data["project"]["name"] == "st-project"
+
+    def test_setuptools_src_layout_package_find(self, temp_output_dir: Path) -> None:
+        """Test setuptools src layout has package discovery config."""
+        from pypreset.models import CreationPackageManager, LayoutStyle
+
+        config = ProjectConfig(
+            metadata=Metadata(name="st-src"),
+            package_manager=CreationPackageManager.SETUPTOOLS,
+            layout=LayoutStyle.SRC,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "pyproject.toml").read_text()
+        assert "[tool.setuptools.packages.find]" in content
+        assert 'where = ["src"]' in content
+
+    def test_setuptools_flat_layout_no_package_find(self, temp_output_dir: Path) -> None:
+        """Test setuptools flat layout has no package discovery config."""
+        from pypreset.models import CreationPackageManager, LayoutStyle
+
+        config = ProjectConfig(
+            metadata=Metadata(name="st-flat"),
+            package_manager=CreationPackageManager.SETUPTOOLS,
+            layout=LayoutStyle.FLAT,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "pyproject.toml").read_text()
+        assert "[tool.setuptools.packages.find]" not in content
+
+    def test_setuptools_optional_dependencies(self, temp_output_dir: Path) -> None:
+        """Test setuptools uses optional-dependencies instead of dependency-groups."""
+        from pypreset.models import CreationPackageManager
+
+        config = ProjectConfig(
+            metadata=Metadata(name="st-deps"),
+            package_manager=CreationPackageManager.SETUPTOOLS,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "pyproject.toml").read_text()
+        assert "[project.optional-dependencies]" in content
+        assert "[dependency-groups]" not in content
+
+    def test_setuptools_ci_workflow(self, temp_output_dir: Path) -> None:
+        """Test setuptools CI workflow uses pip install."""
+        from pypreset.models import CreationPackageManager
+
+        config = ProjectConfig(
+            metadata=Metadata(name="st-ci"),
+            package_manager=CreationPackageManager.SETUPTOOLS,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        ci_path = project_dir / ".github" / "workflows" / "ci.yaml"
+        assert ci_path.exists()
+        content = ci_path.read_text()
+        assert 'pip install -e ".[dev]"' in content
+        assert "poetry" not in content
+        assert "uv" not in content
+
+    def test_setuptools_dockerfile(self, temp_output_dir: Path) -> None:
+        """Test setuptools Dockerfile uses pip install."""
+        from pypreset.models import CreationPackageManager, DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="st-docker"),
+            package_manager=CreationPackageManager.SETUPTOOLS,
+            docker=DockerConfig(enabled=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "Dockerfile").read_text()
+        assert "pip install" in content
+        assert "poetry" not in content
+        assert "uv sync" not in content
+
+    def test_setuptools_devcontainer(self, temp_output_dir: Path) -> None:
+        """Test setuptools devcontainer uses pip install."""
+        from pypreset.models import CreationPackageManager, DockerConfig
+
+        config = ProjectConfig(
+            metadata=Metadata(name="st-devc"),
+            package_manager=CreationPackageManager.SETUPTOOLS,
+            docker=DockerConfig(devcontainer=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / ".devcontainer" / "devcontainer.json").read_text()
+        assert "pip install" in content
+        assert "poetry" not in content
