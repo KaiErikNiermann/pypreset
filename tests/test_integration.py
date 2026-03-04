@@ -166,9 +166,9 @@ class TestPostGenerationExecution:
             project_dir,
         )
 
-        assert result.returncode == 0, (
-            f"pytest failed for {preset_name}:\nstdout: {result.stdout}\nstderr: {result.stderr}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"pytest failed for {preset_name}:\nstdout: {result.stdout}\nstderr: {result.stderr}"
 
     @requires_poetry
     def test_cli_tool_runs(self, temp_output_dir: Path) -> None:
@@ -198,9 +198,9 @@ class TestPostGenerationExecution:
             project_dir,
         )
 
-        assert result.returncode == 0, (
-            f"CLI --help failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"CLI --help failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
         assert "Usage" in result.stdout or "usage" in result.stdout.lower()
 
     @requires_poetry
@@ -231,9 +231,9 @@ class TestPostGenerationExecution:
             project_dir,
         )
 
-        assert result.returncode == 0, (
-            f"ruff check failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"ruff check failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
 
 
 class TestGitHubActionsValidation:
@@ -269,9 +269,9 @@ class TestGitHubActionsValidation:
         )
 
         # Verify both jobs are listed
-        assert "test" in result.stdout.lower() or "lint" in result.stdout.lower(), (
-            f"Expected jobs not found in workflow:\n{result.stdout}"
-        )
+        assert (
+            "test" in result.stdout.lower() or "lint" in result.stdout.lower()
+        ), f"Expected jobs not found in workflow:\n{result.stdout}"
 
     @requires_act
     @requires_docker
@@ -297,9 +297,9 @@ class TestGitHubActionsValidation:
         )
 
         # act --dryrun should succeed if workflow is valid
-        assert result.returncode == 0, (
-            f"act --dryrun failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"act --dryrun failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
 
     @requires_act
     @requires_docker
@@ -336,9 +336,9 @@ class TestGitHubActionsValidation:
             timeout=600,  # 10 minutes for Docker pulls
         )
 
-        assert result.returncode == 0, (
-            f"act lint job failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"act lint job failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
 
     @requires_act
     @requires_docker
@@ -375,9 +375,9 @@ class TestGitHubActionsValidation:
             timeout=600,
         )
 
-        assert result.returncode == 0, (
-            f"act test job failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
-        )
+        assert (
+            result.returncode == 0
+        ), f"act test job failed:\nstdout: {result.stdout}\nstderr: {result.stderr}"
 
 
 class TestAllPresetsIntegration:
@@ -417,27 +417,27 @@ class TestAllPresetsIntegration:
             project_dir,
             timeout=300,
         )
-        assert install_result.returncode == 0, (
-            f"[{preset_name}] poetry install failed: {install_result.stderr}"
-        )
+        assert (
+            install_result.returncode == 0
+        ), f"[{preset_name}] poetry install failed: {install_result.stderr}"
 
         # Step 2: Ruff check (formatting enabled by default)
         lint_result = _run_command(
             ["poetry", "run", "ruff", "check", "src", "tests"],
             project_dir,
         )
-        assert lint_result.returncode == 0, (
-            f"[{preset_name}] ruff check failed: {lint_result.stdout}\n{lint_result.stderr}"
-        )
+        assert (
+            lint_result.returncode == 0
+        ), f"[{preset_name}] ruff check failed: {lint_result.stdout}\n{lint_result.stderr}"
 
         # Step 3: Pytest (testing enabled by default)
         test_result = _run_command(
             ["poetry", "run", "pytest", "-v"],
             project_dir,
         )
-        assert test_result.returncode == 0, (
-            f"[{preset_name}] pytest failed: {test_result.stdout}\n{test_result.stderr}"
-        )
+        assert (
+            test_result.returncode == 0
+        ), f"[{preset_name}] pytest failed: {test_result.stdout}\n{test_result.stderr}"
 
         # Step 4: Verify GitHub workflow exists
         workflow_file = project_dir / ".github" / "workflows" / "ci.yaml"
