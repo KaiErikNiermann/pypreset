@@ -44,6 +44,10 @@ typecheck:
 radon:
     poetry run radon cc src/ -a -nd
 
+# Check dev tool versions match pyproject.toml
+check-versions:
+    poetry run python scripts/check_tool_versions.py
+
 # Run all checks
 check: lint typecheck radon test
 

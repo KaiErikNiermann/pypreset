@@ -163,6 +163,13 @@ def create_project(
             help="Include bump-my-version for version management",
         ),
     ] = None,
+    version_sync_guard: Annotated[
+        bool | None,
+        typer.Option(
+            "--version-sync-guard/--no-version-sync-guard",
+            help="Generate version sync guard script for pre-push checks",
+        ),
+    ] = None,
     type_checker: Annotated[
         TypeChecker | None,
         typer.Option("--type-checker", help="Type checker (mypy, pyright, or ty)"),
@@ -257,6 +264,7 @@ def create_project(
         docs_tool=docs,
         docs_deploy_gh_pages=docs_gh_pages,
         tox_enabled=tox,
+        version_sync_guard_enabled=version_sync_guard,
         extra_packages=extra_package or [],
         extra_dev_packages=extra_dev_package or [],
     )
@@ -381,6 +389,7 @@ def _display_dry_run(
         ("Devcontainer", config.docker.devcontainer),
         ("Documentation", config.documentation.enabled),
         ("tox", config.tox.enabled),
+        ("Version sync guard", config.formatting.version_sync_guard),
     ]
     active = [name for name, enabled in flags if enabled]
     if active:
@@ -424,6 +433,9 @@ def _display_dry_run(
 
     if config.formatting.pre_commit:
         tree_lines.append("  .pre-commit-config.yaml")
+
+    if config.formatting.version_sync_guard:
+        tree_lines.append("  scripts/check_tool_versions.py")
 
     if config.docker.enabled:
         tree_lines.append("  Dockerfile")

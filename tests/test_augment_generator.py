@@ -531,3 +531,66 @@ class TestSetuptoolsDockerfileGenerator:
         assert "pip install" in content
         assert "poetry" not in content
         assert "uv sync" not in content
+
+
+class TestVersionSyncGuardGenerator:
+    """Tests for VersionSyncGuardGenerator."""
+
+    def test_generates_guard_script(self, tmp_path: Path) -> None:
+        """Test that guard script is generated."""
+        from pypreset.augment_generator import VersionSyncGuardGenerator
+
+        config = create_test_config()
+        config.generate_version_sync_guard = True
+        generator = VersionSyncGuardGenerator(tmp_path, config)
+
+        files = generator.generate()
+
+        assert len(files) == 1
+        assert files[0].path == Path("scripts/check_tool_versions.py")
+        assert (tmp_path / "scripts/check_tool_versions.py").exists()
+
+        content = (tmp_path / "scripts/check_tool_versions.py").read_text()
+        assert "TOOLS_TO_CHECK" in content
+        assert "check_versions" in content
+
+    def test_guard_script_is_executable(self, tmp_path: Path) -> None:
+        """Test that generated script has executable permission."""
+        import stat
+
+        from pypreset.augment_generator import VersionSyncGuardGenerator
+
+        config = create_test_config()
+        config.generate_version_sync_guard = True
+        generator = VersionSyncGuardGenerator(tmp_path, config)
+        generator.generate()
+
+        script_path = tmp_path / "scripts" / "check_tool_versions.py"
+        mode = script_path.stat().st_mode
+        assert mode & stat.S_IXUSR
+
+    def test_guard_not_generated_when_disabled(self, tmp_path: Path) -> None:
+        """Test that guard is not generated when disabled."""
+        from pypreset.augment_generator import VersionSyncGuardGenerator
+
+        config = create_test_config()
+        config.generate_version_sync_guard = False
+        generator = VersionSyncGuardGenerator(tmp_path, config)
+
+        assert not generator.should_generate()
+
+    def test_guard_in_orchestrator(self, tmp_path: Path) -> None:
+        """Test that guard is included in orchestrator."""
+        config = create_test_config(
+            generate_test_workflow=False,
+            generate_lint_workflow=False,
+            generate_dependabot=False,
+            generate_tests_dir=False,
+            generate_gitignore=False,
+        )
+        config.generate_version_sync_guard = True
+
+        result = augment_project(tmp_path, config, components=[AugmentComponent.VERSION_SYNC_GUARD])
+
+        assert result.success
+        assert any(f.path == Path("scripts/check_tool_versions.py") for f in result.files_created)

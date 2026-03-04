@@ -168,6 +168,7 @@ def apply_overrides(config: dict[str, Any], overrides: OverrideOptions) -> dict[
         (overrides.docs_enabled, "documentation", "enabled"),
         (overrides.docs_deploy_gh_pages, "documentation", "deploy_gh_pages"),
         (overrides.tox_enabled, "tox", "enabled"),
+        (overrides.version_sync_guard_enabled, "formatting", "version_sync_guard"),
     ]
     for value, section, key in _nested_overrides:
         if value is not None:

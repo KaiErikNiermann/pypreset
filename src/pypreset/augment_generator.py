@@ -36,6 +36,7 @@ class AugmentComponent(StrEnum):
     CODECOV = "codecov"
     DOCUMENTATION = "documentation"
     TOX = "tox"
+    VERSION_SYNC_GUARD = "version_sync_guard"
     README = "readme"
 
 
@@ -112,6 +113,7 @@ def get_augment_context(config: AugmentConfig) -> dict[str, Any]:
             "type_checker": config.type_checker.value,
             "pre_commit": False,
             "version_bumping": False,
+            "version_sync_guard": getattr(config, "generate_version_sync_guard", False),
         },
         "typing": {
             "enabled": config.type_checker != DetectedTypeChecker.NONE,
@@ -502,6 +504,34 @@ class ToxGenerator(ComponentGenerator):
         return files
 
 
+class VersionSyncGuardGenerator(ComponentGenerator):
+    """Generates scripts/check_tool_versions.py for version sync checking."""
+
+    @property
+    def component_name(self) -> str:
+        return "version_sync_guard"
+
+    def should_generate(self) -> bool:
+        return getattr(self.config, "generate_version_sync_guard", False)
+
+    def generate(self, force: bool = False) -> list[GeneratedFile]:
+        files: list[GeneratedFile] = []
+
+        # Add version_sync_guard to context for template rendering
+        self.context.setdefault("formatting", {})["version_sync_guard"] = True
+
+        content = self._render_template("check_tool_versions.py.j2")
+        result = self._write_file(Path("scripts/check_tool_versions.py"), content, force)
+        if result:
+            # Make executable (0o111 = owner+group+other execute)
+            full_path = self.project_dir / "scripts" / "check_tool_versions.py"
+            current_mode = full_path.stat().st_mode
+            full_path.chmod(current_mode | 0o111)
+            files.append(result)
+
+        return files
+
+
 class ReadmeGenerator(ComponentGenerator):
     """Generates README.md from the shared README template."""
 
@@ -541,6 +571,7 @@ class AugmentOrchestrator:
             CodecovGenerator(self.project_dir, config),
             DocumentationGenerator(self.project_dir, config),
             ToxGenerator(self.project_dir, config),
+            VersionSyncGuardGenerator(self.project_dir, config),
             ReadmeGenerator(self.project_dir, config),
         ]
 

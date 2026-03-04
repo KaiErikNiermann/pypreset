@@ -1,0 +1,186 @@
+#!/usr/bin/env python3
+"""Check that installed dev tool versions match pyproject.toml specs.
+
+Catches silent version drift where the package manager updates metadata
+without replacing the actual venv binary.
+
+Usage:
+{% if package_manager == "uv" %}
+    uv run python scripts/check_tool_versions.py
+{% elif package_manager == "setuptools" %}
+    python scripts/check_tool_versions.py
+{% else %}
+    poetry run python scripts/check_tool_versions.py
+{% endif %}
+"""
+
+from __future__ import annotations
+
+import sys
+import tomllib
+from importlib.metadata import PackageNotFoundError, version as installed_version
+from pathlib import Path
+
+try:
+    from packaging.specifiers import SpecifierSet
+    from packaging.version import Version
+
+    HAS_PACKAGING = True
+except ImportError:
+    HAS_PACKAGING = False
+
+# Tools to check — derived from project configuration
+TOOLS_TO_CHECK = [
+{% if formatting.tool == "ruff" %}
+    "ruff",
+{% elif formatting.tool == "black" %}
+    "black",
+{% endif %}
+{% if testing.enabled %}
+    "{{ testing.framework }}",
+{% endif %}
+{% if formatting.type_checker != "none" %}
+    "{{ formatting.type_checker }}",
+{% endif %}
+{% if formatting.radon %}
+    "radon",
+{% endif %}
+]
+
+
+{% if package_manager == "poetry" %}
+def _poetry_spec_to_pep440(spec: str) -> str:
+    """Convert a Poetry version spec to a PEP 440 specifier string.
+
+    Handles caret (^) and tilde (~) operators.
+    """
+    spec = spec.strip()
+
+    if spec.startswith("^"):
+        v = Version(spec[1:])
+        parts = list(v.release)
+        while len(parts) < 3:
+            parts.append(0)
+
+        if parts[0] != 0:
+            upper = f"{parts[0] + 1}.0.0"
+        elif parts[1] != 0:
+            upper = f"0.{parts[1] + 1}.0"
+        else:
+            upper = f"0.0.{parts[2] + 1}"
+
+        return f">={v},<{upper}"
+
+    if spec.startswith("~"):
+        v = Version(spec[1:])
+        parts = list(v.release)
+        while len(parts) < 3:
+            parts.append(0)
+        upper = f"{parts[0]}.{parts[1] + 1}.0"
+        return f">={v},<{upper}"
+
+    return spec
+
+
+def _load_specs(pyproject_path: Path) -> dict[str, str]:
+    """Load version specs from Poetry-style pyproject.toml."""
+    with open(pyproject_path, "rb") as f:
+        pyproject = tomllib.load(f)
+
+    deps: dict[str, object] = {}
+    poetry = pyproject.get("tool", {}).get("poetry", {})
+    deps.update(poetry.get("dependencies", {}))
+    for group in poetry.get("group", {}).values():
+        deps.update(group.get("dependencies", {}))
+
+    specs: dict[str, str] = {}
+    for tool in TOOLS_TO_CHECK:
+        if tool not in deps:
+            continue
+        dep_value = deps[tool]
+        raw = dep_value if isinstance(dep_value, str) else dep_value.get("version") if isinstance(dep_value, dict) else None
+        if raw:
+            specs[tool] = raw
+    return specs
+
+
+def _spec_to_pep440(raw: str) -> str:
+    return _poetry_spec_to_pep440(raw)
+{% else %}
+def _load_specs(pyproject_path: Path) -> dict[str, str]:
+    """Load version specs from PEP 621 pyproject.toml."""
+    with open(pyproject_path, "rb") as f:
+        pyproject = tomllib.load(f)
+
+    project = pyproject.get("project", {})
+    all_deps: list[str] = list(project.get("dependencies", []))
+    for group_deps in project.get("optional-dependencies", {}).values():
+        all_deps.extend(group_deps)
+
+    specs: dict[str, str] = {}
+    for dep_str in all_deps:
+        for tool in TOOLS_TO_CHECK:
+            if dep_str.lower().startswith(tool):
+                spec_part = dep_str[len(tool):].strip()
+                if spec_part:
+                    specs[tool] = spec_part
+    return specs
+
+
+def _spec_to_pep440(raw: str) -> str:
+    return raw
+{% endif %}
+
+
+def check_versions(pyproject_path: Path | None = None) -> list[str]:
+    """Check installed versions against pyproject.toml specs.
+
+    Returns a list of mismatch descriptions (empty = all OK).
+    """
+    if not HAS_PACKAGING:
+        print("Warning: 'packaging' not installed, skipping version sync check")
+        return []
+
+    if pyproject_path is None:
+        pyproject_path = Path(__file__).resolve().parent.parent / "pyproject.toml"
+
+    specs = _load_specs(pyproject_path)
+    mismatches: list[str] = []
+
+    for tool, raw_spec in specs.items():
+        pep440_spec = _spec_to_pep440(raw_spec)
+        specifier = SpecifierSet(pep440_spec)
+
+        try:
+            installed = installed_version(tool)
+        except PackageNotFoundError:
+            mismatches.append(f"  {tool}: not installed (expected {raw_spec})")
+            continue
+
+        if Version(installed) not in specifier:
+            mismatches.append(
+                f"  {tool}: installed {installed} does not match spec {raw_spec} ({pep440_spec})"
+            )
+
+    return mismatches
+
+
+def main() -> None:
+    mismatches = check_versions()
+    if mismatches:
+        print("Version sync check FAILED — installed tools do not match pyproject.toml:\n")
+        print("\n".join(mismatches))
+{% if package_manager == "uv" %}
+        print("\nRun `uv sync` to fix.")
+{% elif package_manager == "setuptools" %}
+        print("\nRun `pip install -e '.[dev]'` to fix.")
+{% else %}
+        print("\nRun `poetry install --sync` to fix.")
+{% endif %}
+        sys.exit(1)
+    else:
+        print(f"Version sync OK — {len(TOOLS_TO_CHECK)} tools match pyproject.toml specs.")
+
+
+if __name__ == "__main__":
+    main()

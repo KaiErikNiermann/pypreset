@@ -96,6 +96,10 @@ class ProjectGenerator:
         if self.config.tox.enabled:
             self._create_tox_config()
 
+        # Create version sync guard if enabled
+        if self.config.formatting.version_sync_guard:
+            self._create_version_sync_guard()
+
         logger.info(f"Project '{self.config.metadata.name}' generated successfully")
         return self.project_dir
 
@@ -315,6 +319,20 @@ class ProjectGenerator:
         tox_path = self.project_dir / "tox.ini"
         tox_path.write_text(content)
         logger.debug(f"Created tox.ini: {tox_path}")
+
+    def _create_version_sync_guard(self) -> None:
+        """Create scripts/check_tool_versions.py for version sync checking."""
+        scripts_dir = self.project_dir / "scripts"
+        scripts_dir.mkdir(parents=True, exist_ok=True)
+
+        content = render_template(self.env, "check_tool_versions.py.j2", self.context)
+        script_path = scripts_dir / "check_tool_versions.py"
+        script_path.write_text(content)
+
+        # Make executable
+        current_mode = script_path.stat().st_mode
+        script_path.chmod(current_mode | stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH)
+        logger.debug(f"Created version sync guard: {script_path}")
 
     def _render_test_file(self) -> str:
         """Render a basic test file."""

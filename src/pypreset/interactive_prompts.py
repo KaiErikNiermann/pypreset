@@ -67,6 +67,7 @@ class AugmentConfig:
     generate_documentation: bool = False
     generate_readme: bool = False
     generate_tox: bool = False
+    generate_version_sync_guard: bool = False
 
     # Documentation settings
     documentation_tool: str = "none"

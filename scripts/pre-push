@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "==> Pre-push: checking tool version sync..."
+if ! poetry run python scripts/check_tool_versions.py; then
+    exit 1
+fi
+
 echo "==> Pre-push: running ruff autofix + lint..."
 
 # Autofix what we can, then stage any changes

@@ -120,6 +120,7 @@ def register_tools(mcp: FastMCP) -> None:
             docs_tool=DocumentationTool(docs) if docs else None,
             docs_deploy_gh_pages=docs_gh_pages if docs_gh_pages else None,
             tox_enabled=tox if tox else None,
+            version_sync_guard_enabled=None,
         )
 
         config = build_project_config(

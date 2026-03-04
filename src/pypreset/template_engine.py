@@ -75,6 +75,7 @@ def get_template_context(config: ProjectConfig) -> dict[str, Any]:
             "pre_commit": config.formatting.pre_commit,
             "version_bumping": config.formatting.version_bumping,
             "type_checker": config.formatting.type_checker.value,
+            "version_sync_guard": config.formatting.version_sync_guard,
         },
         "dependabot": {
             "enabled": config.dependabot.enabled,

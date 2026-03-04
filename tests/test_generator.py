@@ -871,3 +871,106 @@ class TestSetuptoolsGeneration:
         content = (project_dir / ".devcontainer" / "devcontainer.json").read_text()
         assert "pip install" in content
         assert "poetry" not in content
+
+
+class TestVersionSyncGuardGeneration:
+    """Tests for version sync guard generation."""
+
+    def test_guard_disabled_no_files(self, temp_output_dir: Path) -> None:
+        """Test that no guard files are created when disabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="no-guard"),
+            formatting=FormattingConfig(version_sync_guard=False),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert not (project_dir / "scripts" / "check_tool_versions.py").exists()
+
+    def test_guard_enabled_creates_script(self, temp_output_dir: Path) -> None:
+        """Test that guard script is created when enabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="guard-test"),
+            formatting=FormattingConfig(version_sync_guard=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        script_path = project_dir / "scripts" / "check_tool_versions.py"
+        assert script_path.exists()
+        content = script_path.read_text()
+        assert "check_versions" in content
+        assert "TOOLS_TO_CHECK" in content
+
+    def test_guard_script_is_executable(self, temp_output_dir: Path) -> None:
+        """Test that the guard script has executable permissions."""
+        import stat
+
+        config = ProjectConfig(
+            metadata=Metadata(name="guard-exec"),
+            formatting=FormattingConfig(version_sync_guard=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        script_path = project_dir / "scripts" / "check_tool_versions.py"
+        mode = script_path.stat().st_mode
+        assert mode & stat.S_IXUSR
+
+    def test_guard_with_pre_commit_adds_hook(self, temp_output_dir: Path) -> None:
+        """Test that pre-commit config includes version sync guard hook."""
+        config = ProjectConfig(
+            metadata=Metadata(name="guard-hook"),
+            formatting=FormattingConfig(pre_commit=True, version_sync_guard=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        pre_commit_path = project_dir / ".pre-commit-config.yaml"
+        assert pre_commit_path.exists()
+        content = pre_commit_path.read_text()
+        assert "check-tool-versions" in content
+        assert "pre-push" in content
+        assert "poetry run python scripts/check_tool_versions.py" in content
+
+    def test_guard_pre_commit_without_guard_no_hook(self, temp_output_dir: Path) -> None:
+        """Test that pre-commit config does not include guard hook when disabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="no-guard-hook"),
+            formatting=FormattingConfig(pre_commit=True, version_sync_guard=False),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        pre_commit_path = project_dir / ".pre-commit-config.yaml"
+        content = pre_commit_path.read_text()
+        assert "check-tool-versions" not in content
+
+    def test_guard_poetry_template(self, temp_output_dir: Path) -> None:
+        """Test Poetry-specific content in generated guard."""
+        config = ProjectConfig(
+            metadata=Metadata(name="guard-poetry"),
+            formatting=FormattingConfig(version_sync_guard=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "scripts" / "check_tool_versions.py").read_text()
+        assert "poetry install --sync" in content
+        assert "_poetry_spec_to_pep440" in content
+
+    def test_guard_uv_template(self, temp_output_dir: Path) -> None:
+        """Test uv-specific content in generated guard."""
+        from pypreset.models import CreationPackageManager
+
+        config = ProjectConfig(
+            metadata=Metadata(name="guard-uv"),
+            package_manager=CreationPackageManager.UV,
+            formatting=FormattingConfig(version_sync_guard=True),
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        content = (project_dir / "scripts" / "check_tool_versions.py").read_text()
+        assert "uv sync" in content
+        assert "_poetry_spec_to_pep440" not in content

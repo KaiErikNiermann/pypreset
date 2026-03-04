@@ -41,3 +41,20 @@ repos:
       - id: ty
 {% endif %}
 {% endif %}
+{% if formatting.version_sync_guard %}
+  - repo: local
+    hooks:
+      - id: check-tool-versions
+        name: Check dev tool version sync
+{% if package_manager == "uv" %}
+        entry: uv run python scripts/check_tool_versions.py
+{% elif package_manager == "setuptools" %}
+        entry: python scripts/check_tool_versions.py
+{% else %}
+        entry: poetry run python scripts/check_tool_versions.py
+{% endif %}
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        always_run: true
+{% endif %}

@@ -167,6 +167,9 @@ class FormattingConfig(BaseModel):
         False, description="Include bump-my-version for version management"
     )
     type_checker: TypeChecker = Field(TypeChecker.MYPY, description="Type checking tool to use")
+    version_sync_guard: bool = Field(
+        False, description="Generate version sync guard script for pre-push checks"
+    )
 
 
 class DependabotConfig(BaseModel):
@@ -305,6 +308,9 @@ class PartialFormattingConfig(BaseModel):
         None, description="Include bump-my-version for version management"
     )
     type_checker: TypeChecker | None = Field(None, description="Type checking tool to use")
+    version_sync_guard: bool | None = Field(
+        None, description="Generate version sync guard script for pre-push checks"
+    )
 
 
 class PartialDependabotConfig(BaseModel):
@@ -424,3 +430,6 @@ class OverrideOptions(BaseModel):
     docs_tool: DocumentationTool | None = Field(None, description="Override documentation tool")
     docs_deploy_gh_pages: bool | None = Field(None, description="Override GH Pages deploy")
     tox_enabled: bool | None = Field(None, description="Override tox generation")
+    version_sync_guard_enabled: bool | None = Field(
+        None, description="Override version sync guard generation"
+    )
