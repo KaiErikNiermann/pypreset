@@ -81,6 +81,10 @@ def register_tools(mcp: FastMCP) -> None:
             bool, Field(description="Generate GitHub Pages deploy workflow for docs")
         ] = False,
         tox: Annotated[bool, Field(description="Generate tox.ini with tox-uv")] = False,
+        pyenv: Annotated[
+            bool,
+            Field(description="Generate .python-version file and use python-version-file in CI"),
+        ] = False,
         coverage_tool: Annotated[
             str | None,
             Field(description="Coverage service: 'codecov' or 'none'"),
@@ -121,6 +125,7 @@ def register_tools(mcp: FastMCP) -> None:
             docs_deploy_gh_pages=docs_gh_pages if docs_gh_pages else None,
             tox_enabled=tox if tox else None,
             version_sync_guard_enabled=None,
+            pyenv_enabled=pyenv if pyenv else None,
         )
 
         config = build_project_config(
@@ -151,6 +156,7 @@ def register_tools(mcp: FastMCP) -> None:
                 "tox_enabled": config.tox.enabled,
                 "coverage_enabled": config.testing.coverage_config.enabled,
                 "coverage_tool": config.testing.coverage_config.tool.value,
+                "pyenv": config.pyenv,
             }
         )
 
@@ -606,6 +612,16 @@ def register_tools(mcp: FastMCP) -> None:
             str | None,
             Field(description="Build backend to use: 'hatch' or 'uv'"),
         ] = None,
+        generate_python_version: Annotated[
+            bool,
+            Field(
+                description=(
+                    "Generate .python-version file after migration. "
+                    "uv natively reads this file for Python version pinning, "
+                    "replacing pyenv for version management."
+                )
+            ),
+        ] = False,
     ) -> str:
         from pypreset.migration import (
             MigrationCommandFailure,
@@ -657,17 +673,39 @@ def register_tools(mcp: FastMCP) -> None:
         except MigrationError as exc:
             return json.dumps({"success": False, "error": str(exc)})
 
-        return json.dumps(
-            {
-                "success": result.success,
-                "dry_run": result.dry_run,
-                "migrate_to_uv_version": version,
-                "command": result.command,
-                "stdout": result.stdout,
-                "stderr": result.stderr,
-                "return_code": result.return_code,
-            }
-        )
+        response: dict[str, object] = {
+            "success": result.success,
+            "dry_run": result.dry_run,
+            "migrate_to_uv_version": version,
+            "command": result.command,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "return_code": result.return_code,
+        }
+
+        # Generate .python-version after successful migration
+        if generate_python_version and result.success and not result.dry_run:
+            import tomllib
+
+            pyproject_path = Path(project_dir) / "pyproject.toml"
+            python_version = "3.11"  # fallback
+            if pyproject_path.exists():
+                with open(pyproject_path, "rb") as f:
+                    pyproject = tomllib.load(f)
+                requires = pyproject.get("project", {}).get("requires-python", "")
+                # Extract version from >=3.12 style specs
+                for part in requires.replace(",", " ").split():
+                    cleaned = part.lstrip(">=<!")
+                    if cleaned and cleaned[0].isdigit():
+                        python_version = cleaned
+                        break
+
+            version_file = Path(project_dir) / ".python-version"
+            version_file.write_text(f"{python_version}\n")
+            response["python_version_file"] = str(version_file)
+            response["python_version_pinned"] = python_version
+
+        return json.dumps(response)
 
     @mcp.tool(
         name="project_tree",

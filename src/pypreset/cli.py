@@ -212,6 +212,13 @@ def create_project(
         bool | None,
         typer.Option("--tox/--no-tox", help="Generate tox.ini with tox-uv"),
     ] = None,
+    pyenv: Annotated[
+        bool | None,
+        typer.Option(
+            "--pyenv/--no-pyenv",
+            help="Generate .python-version file and use python-version-file in CI",
+        ),
+    ] = None,
     extra_package: Annotated[
         list[str] | None,
         typer.Option("--extra-package", "-e", help="Additional packages to install"),
@@ -235,6 +242,13 @@ def create_project(
     """Create a new Python project from a preset."""
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
+
+    # Resolve "." or ".." to actual directory name and scaffold in-place.
+    # e.g. "pypreset create ." in ~/Projects/my-app → name="my-app", output_dir=~/Projects
+    if name in (".", ".."):
+        resolved = (output_dir / name).resolve()
+        name = resolved.name
+        output_dir = resolved.parent
 
     # Build override options
     # Determine coverage_enabled from coverage_tool
@@ -265,6 +279,7 @@ def create_project(
         docs_deploy_gh_pages=docs_gh_pages,
         tox_enabled=tox,
         version_sync_guard_enabled=version_sync_guard,
+        pyenv_enabled=pyenv,
         extra_packages=extra_package or [],
         extra_dev_packages=extra_dev_package or [],
     )
@@ -390,6 +405,7 @@ def _display_dry_run(
         ("Documentation", config.documentation.enabled),
         ("tox", config.tox.enabled),
         ("Version sync guard", config.formatting.version_sync_guard),
+        ("pyenv (.python-version)", config.pyenv),
     ]
     active = [name for name, enabled in flags if enabled]
     if active:
@@ -436,6 +452,9 @@ def _display_dry_run(
 
     if config.formatting.version_sync_guard:
         tree_lines.append("  scripts/check_tool_versions.py")
+
+    if config.pyenv:
+        tree_lines.append("  .python-version")
 
     if config.docker.enabled:
         tree_lines.append("  Dockerfile")
@@ -1417,6 +1436,39 @@ def workflow_install_act_cmd() -> None:
         raise typer.Exit(1)
 
 
+def _generate_python_version_after_migrate(project_path: Path) -> None:
+    """Generate .python-version after a successful uv migration.
+
+    Reads requires-python from the migrated pyproject.toml to determine
+    the version. Falls back to 3.12 if not found.
+    """
+    import tomllib
+
+    pyproject_path = project_path / "pyproject.toml"
+    python_version = "3.12"
+
+    if pyproject_path.exists():
+        try:
+            with open(pyproject_path, "rb") as f:
+                data = tomllib.load(f)
+            requires_python = data.get("project", {}).get("requires-python", "")
+            # Extract version like "3.12" from specs like ">=3.12"
+            cleaned = requires_python.lstrip("><=~!^ ")
+            if cleaned:
+                # Take major.minor only
+                parts = cleaned.split(".")
+                if len(parts) >= 2:
+                    python_version = f"{parts[0]}.{parts[1]}"
+        except Exception:
+            logger.debug("Could not parse requires-python, using default")
+
+    version_file = project_path / ".python-version"
+    version_file.write_text(f"{python_version}\n")
+    rprint(
+        f"[green]Generated .python-version ({python_version}) — uv will read this natively.[/green]"
+    )
+
+
 @app.command("migrate")
 def migrate_cmd(
     project_dir: Annotated[Path, typer.Argument(help="Path to the project to migrate")] = Path("."),
@@ -1489,6 +1541,13 @@ def migrate_cmd(
         str | None,
         typer.Option("--build-backend", help="Build backend to use (hatch, uv)"),
     ] = None,
+    pyenv: Annotated[
+        bool,
+        typer.Option(
+            "--pyenv/--no-pyenv",
+            help="Generate .python-version file after migration (uv reads it natively)",
+        ),
+    ] = False,
     verbose: Annotated[bool, typer.Option("--verbose", "-v", help="Enable verbose output")] = False,
 ) -> None:
     """Migrate a project to uv using migrate-to-uv.
@@ -1502,6 +1561,7 @@ def migrate_cmd(
         pypreset migrate --dry-run                   # Preview changes
         pypreset migrate --package-manager poetry    # Force Poetry detection
         pypreset migrate --keep-current-data         # Don't delete old files
+        pypreset migrate --pyenv                     # Generate .python-version for uv
     """
     if verbose:
         logging.getLogger().setLevel(logging.DEBUG)
@@ -1567,6 +1627,8 @@ def migrate_cmd(
             rprint("[green]Dry-run complete — no files were modified.[/green]")
         else:
             rprint("[green]Migration to uv completed successfully![/green]")
+            if pyenv:
+                _generate_python_version_after_migrate(project_path)
     else:
         rprint("[yellow]Migration completed with warnings (--ignore-errors was set).[/yellow]")
 

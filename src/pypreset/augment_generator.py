@@ -37,6 +37,7 @@ class AugmentComponent(StrEnum):
     DOCUMENTATION = "documentation"
     TOX = "tox"
     VERSION_SYNC_GUARD = "version_sync_guard"
+    PYENV = "pyenv"
     README = "readme"
 
 
@@ -144,6 +145,7 @@ def get_augment_context(config: AugmentConfig) -> dict[str, Any]:
         "tox": {
             "enabled": getattr(config, "generate_tox", False),
         },
+        "pyenv": getattr(config, "generate_pyenv", False),
         "extras": {},
     }
 
@@ -504,6 +506,26 @@ class ToxGenerator(ComponentGenerator):
         return files
 
 
+class PyenvGenerator(ComponentGenerator):
+    """Generates .python-version file for pyenv/uv version pinning."""
+
+    @property
+    def component_name(self) -> str:
+        return "pyenv"
+
+    def should_generate(self) -> bool:
+        return getattr(self.config, "generate_pyenv", False)
+
+    def generate(self, force: bool = False) -> list[GeneratedFile]:
+        files: list[GeneratedFile] = []
+        python_version = self.context.get("project", {}).get("python_version", "3.11")
+        content = f"{python_version}\n"
+        result = self._write_file(Path(".python-version"), content, force)
+        if result:
+            files.append(result)
+        return files
+
+
 class VersionSyncGuardGenerator(ComponentGenerator):
     """Generates scripts/check_tool_versions.py for version sync checking."""
 
@@ -572,6 +594,7 @@ class AugmentOrchestrator:
             DocumentationGenerator(self.project_dir, config),
             ToxGenerator(self.project_dir, config),
             VersionSyncGuardGenerator(self.project_dir, config),
+            PyenvGenerator(self.project_dir, config),
             ReadmeGenerator(self.project_dir, config),
         ]
 

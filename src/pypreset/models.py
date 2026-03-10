@@ -369,6 +369,10 @@ class ProjectConfig(BaseModel):
     package_manager: CreationPackageManager = Field(
         CreationPackageManager.POETRY, description="Package manager"
     )
+    pyenv: bool = Field(
+        False,
+        description="Generate .python-version file and use python-version-file in CI",
+    )
     entry_points: list[EntryPoint] = Field(default_factory=list, description="Script entry points")  # type: ignore[arg-type]
     extras: dict[str, Any] = Field(default_factory=dict, description="Additional configuration")
 
@@ -393,6 +397,7 @@ class PresetConfig(BaseModel):
     typing_level: TypingLevel | None = None
     layout: LayoutStyle | None = None
     package_manager: CreationPackageManager | None = None
+    pyenv: bool | None = None
     entry_points: list[EntryPoint] = Field(default_factory=list, description="Script entry points")  # type: ignore[arg-type]
     extras: dict[str, Any] = Field(default_factory=dict, description="Additional configuration")
 
@@ -433,3 +438,4 @@ class OverrideOptions(BaseModel):
     version_sync_guard_enabled: bool | None = Field(
         None, description="Override version sync guard generation"
     )
+    pyenv_enabled: bool | None = Field(None, description="Override .python-version file generation")

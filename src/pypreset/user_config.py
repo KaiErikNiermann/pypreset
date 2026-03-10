@@ -141,6 +141,10 @@ def apply_user_defaults(config: dict[str, Any]) -> dict[str, Any]:
         documentation = result.setdefault("documentation", {})
         documentation.setdefault("tool", user_cfg["documentation_tool"])
 
+    # pyenv
+    if "pyenv" in user_cfg:
+        result.setdefault("pyenv", user_cfg["pyenv"])
+
     return result
 
 

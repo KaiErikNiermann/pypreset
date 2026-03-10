@@ -37,6 +37,7 @@ def create_test_config(
     generate_gitignore: bool = True,
     generate_dockerfile: bool = False,
     generate_devcontainer: bool = False,
+    generate_pyenv: bool = False,
 ) -> AugmentConfig:
     """Create an AugmentConfig for testing."""
     return AugmentConfig(
@@ -59,6 +60,7 @@ def create_test_config(
         generate_gitignore=generate_gitignore,
         generate_dockerfile=generate_dockerfile,
         generate_devcontainer=generate_devcontainer,
+        generate_pyenv=generate_pyenv,
     )
 
 
@@ -594,3 +596,72 @@ class TestVersionSyncGuardGenerator:
 
         assert result.success
         assert any(f.path == Path("scripts/check_tool_versions.py") for f in result.files_created)
+
+
+class TestPyenvGenerator:
+    """Tests for PyenvGenerator."""
+
+    def test_generates_python_version_file(self, tmp_path: Path) -> None:
+        """Test that .python-version is generated."""
+        from pypreset.augment_generator import PyenvGenerator
+
+        config = create_test_config(generate_pyenv=True)
+        generator = PyenvGenerator(tmp_path, config)
+
+        files = generator.generate()
+
+        assert len(files) == 1
+        assert files[0].path == Path(".python-version")
+        content = (tmp_path / ".python-version").read_text()
+        assert content.strip() == "3.11"
+
+    def test_uses_configured_python_version(self, tmp_path: Path) -> None:
+        """Test that .python-version uses the configured Python version."""
+        from pypreset.augment_generator import PyenvGenerator
+
+        config = create_test_config(python_version="3.13", generate_pyenv=True)
+        generator = PyenvGenerator(tmp_path, config)
+
+        files = generator.generate()
+
+        assert len(files) == 1
+        assert (tmp_path / ".python-version").read_text().strip() == "3.13"
+
+    def test_not_generated_when_disabled(self, tmp_path: Path) -> None:
+        """Test that .python-version is not generated when disabled."""
+        from pypreset.augment_generator import PyenvGenerator
+
+        config = create_test_config(generate_pyenv=False)
+        generator = PyenvGenerator(tmp_path, config)
+
+        assert not generator.should_generate()
+
+    def test_no_overwrite_without_force(self, tmp_path: Path) -> None:
+        """Test that existing .python-version is not overwritten without force."""
+        from pypreset.augment_generator import PyenvGenerator
+
+        (tmp_path / ".python-version").write_text("3.10\n")
+
+        config = create_test_config(generate_pyenv=True)
+        generator = PyenvGenerator(tmp_path, config)
+
+        files = generator.generate(force=False)
+
+        assert len(files) == 0
+        assert (tmp_path / ".python-version").read_text() == "3.10\n"
+
+    def test_pyenv_in_orchestrator(self, tmp_path: Path) -> None:
+        """Test that pyenv is included in orchestrator."""
+        config = create_test_config(
+            generate_test_workflow=False,
+            generate_lint_workflow=False,
+            generate_dependabot=False,
+            generate_tests_dir=False,
+            generate_gitignore=False,
+            generate_pyenv=True,
+        )
+
+        result = augment_project(tmp_path, config, components=[AugmentComponent.PYENV])
+
+        assert result.success
+        assert any(f.path == Path(".python-version") for f in result.files_created)

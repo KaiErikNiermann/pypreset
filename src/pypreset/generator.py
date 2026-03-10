@@ -100,6 +100,10 @@ class ProjectGenerator:
         if self.config.formatting.version_sync_guard:
             self._create_version_sync_guard()
 
+        # Create .python-version if pyenv enabled
+        if self.config.pyenv:
+            self._create_python_version_file()
+
         logger.info(f"Project '{self.config.metadata.name}' generated successfully")
         return self.project_dir
 
@@ -319,6 +323,13 @@ class ProjectGenerator:
         tox_path = self.project_dir / "tox.ini"
         tox_path.write_text(content)
         logger.debug(f"Created tox.ini: {tox_path}")
+
+    def _create_python_version_file(self) -> None:
+        """Create .python-version file for pyenv/uv version pinning."""
+        python_version = self.context["project"]["python_version"]
+        version_path = self.project_dir / ".python-version"
+        version_path.write_text(f"{python_version}\n")
+        logger.debug(f"Created .python-version: {version_path}")
 
     def _create_version_sync_guard(self) -> None:
         """Create scripts/check_tool_versions.py for version sync checking."""

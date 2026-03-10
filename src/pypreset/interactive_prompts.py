@@ -68,6 +68,7 @@ class AugmentConfig:
     generate_readme: bool = False
     generate_tox: bool = False
     generate_version_sync_guard: bool = False
+    generate_pyenv: bool = False
 
     # Documentation settings
     documentation_tool: str = "none"

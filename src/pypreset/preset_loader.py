@@ -211,6 +211,8 @@ def apply_overrides(config: dict[str, Any], overrides: OverrideOptions) -> dict[
         result["layout"] = overrides.layout.value
     if overrides.package_manager is not None:
         result["package_manager"] = overrides.package_manager.value
+    if overrides.pyenv_enabled is not None:
+        result["pyenv"] = overrides.pyenv_enabled
 
     # Dependency list extensions
     if overrides.extra_packages:
@@ -351,6 +353,9 @@ def _dict_to_project_config(data: dict[str, Any]) -> ProjectConfig:
     pm_str = data.get("package_manager", "poetry")
     package_manager = CreationPackageManager(pm_str) if pm_str else CreationPackageManager.POETRY
 
+    # Build pyenv flag
+    pyenv = data.get("pyenv", False)
+
     return ProjectConfig(
         metadata=metadata,
         structure=structure,
@@ -364,6 +369,7 @@ def _dict_to_project_config(data: dict[str, Any]) -> ProjectConfig:
         typing_level=typing_level,
         layout=layout,
         package_manager=package_manager,
+        pyenv=pyenv,
         entry_points=entry_points,
         extras=data.get("extras", {}),
     )

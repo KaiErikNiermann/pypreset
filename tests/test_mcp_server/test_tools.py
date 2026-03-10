@@ -772,3 +772,66 @@ class TestCreateProjectSetuptools:
         content = (project_dir / "pyproject.toml").read_text()
         assert "setuptools" in content
         assert "setuptools.build_meta" in content
+
+
+@pytest.mark.asyncio
+class TestCreateProjectPyenv:
+    """Tests for creating a project with pyenv support."""
+
+    async def test_create_project_with_pyenv(self, mcp_client: Client, tmp_path: Path) -> None:
+        """Test creating a project with pyenv enabled."""
+        result = await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "pyenv-proj",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+                "pyenv": True,
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["pyenv"] is True
+        project_dir = Path(data["project_dir"])
+        assert (project_dir / ".python-version").exists()
+        assert (project_dir / ".python-version").read_text().strip() == "3.11"
+
+    async def test_create_project_default_no_pyenv(
+        self, mcp_client: Client, tmp_path: Path
+    ) -> None:
+        """Test that default project has no .python-version."""
+        result = await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "no-pyenv",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+            },
+        )
+        data = json.loads(result.data)
+
+        assert data["pyenv"] is False
+        project_dir = Path(data["project_dir"])
+        assert not (project_dir / ".python-version").exists()
+
+    async def test_pyenv_gitignore_excludes_python_version(
+        self, mcp_client: Client, tmp_path: Path
+    ) -> None:
+        """Test that .gitignore does not list .python-version when pyenv is enabled."""
+        result = await mcp_client.call_tool(
+            "create_project",
+            {
+                "project_name": "pyenv-gi",
+                "preset": "empty-package",
+                "output_dir": str(tmp_path),
+                "initialize_git": False,
+                "pyenv": True,
+            },
+        )
+        data = json.loads(result.data)
+        project_dir = Path(data["project_dir"])
+
+        gitignore = (project_dir / ".gitignore").read_text()
+        assert ".python-version" not in gitignore

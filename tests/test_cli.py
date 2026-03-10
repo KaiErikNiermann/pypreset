@@ -562,3 +562,72 @@ class TestValidateCommand:
         )
 
         assert result.exit_code != 0
+
+
+class TestPyenvFlag:
+    """Tests for --pyenv/--no-pyenv CLI flag."""
+
+    def test_create_with_pyenv(self, tmp_path: Path) -> None:
+        """Test that --pyenv creates .python-version file."""
+        result = runner.invoke(
+            app,
+            [
+                "create",
+                "pyenv-test",
+                "--output",
+                str(tmp_path),
+                "--pyenv",
+                "--no-git",
+                "--no-install",
+            ],
+        )
+
+        assert result.exit_code == 0
+        project_dir = tmp_path / "pyenv-test"
+        assert (project_dir / ".python-version").exists()
+
+    def test_create_without_pyenv(self, tmp_path: Path) -> None:
+        """Test that --no-pyenv does not create .python-version file."""
+        result = runner.invoke(
+            app,
+            [
+                "create",
+                "no-pyenv-test",
+                "--output",
+                str(tmp_path),
+                "--no-pyenv",
+                "--no-git",
+                "--no-install",
+            ],
+        )
+
+        assert result.exit_code == 0
+        project_dir = tmp_path / "no-pyenv-test"
+        assert not (project_dir / ".python-version").exists()
+
+    def test_generate_python_version_after_migrate(self, tmp_path: Path) -> None:
+        """Test the helper function that generates .python-version after migration."""
+        from pypreset.cli import _generate_python_version_after_migrate
+
+        # Set up a minimal pyproject.toml with requires-python
+        (tmp_path / "pyproject.toml").write_text(
+            '[project]\nname = "test"\nversion = "0.1.0"\nrequires-python = ">=3.12"\n'
+        )
+
+        _generate_python_version_after_migrate(tmp_path)
+
+        version_file = tmp_path / ".python-version"
+        assert version_file.exists()
+        assert version_file.read_text().strip() == "3.12"
+
+    def test_generate_python_version_fallback(self, tmp_path: Path) -> None:
+        """Test fallback when pyproject.toml has no requires-python."""
+        from pypreset.cli import _generate_python_version_after_migrate
+
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "test"\nversion = "0.1.0"\n')
+
+        _generate_python_version_after_migrate(tmp_path)
+
+        version_file = tmp_path / ".python-version"
+        assert version_file.exists()
+        assert version_file.read_text().strip() == "3.12"

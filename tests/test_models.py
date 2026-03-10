@@ -236,6 +236,16 @@ class TestDockerConfig:
         config = DockerConfig(container_runtime=ContainerRuntime.PODMAN)
         assert config.container_runtime == ContainerRuntime.PODMAN
 
+    def test_pyenv_default_false(self) -> None:
+        """Test that pyenv defaults to False."""
+        config = ProjectConfig(metadata=Metadata(name="test"))
+        assert config.pyenv is False
+
+    def test_pyenv_enabled(self) -> None:
+        """Test pyenv can be set to True."""
+        config = ProjectConfig(metadata=Metadata(name="test"), pyenv=True)
+        assert config.pyenv is True
+
 
 class TestContainerRuntime:
     """Tests for ContainerRuntime enum."""

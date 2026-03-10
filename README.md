@@ -21,6 +21,7 @@ mcp-name: io.github.KaiErikNiermann/pypreset
 - **Coverage integration**: Codecov support with configurable thresholds and ignore patterns
 - **Documentation scaffolding**: MkDocs (Material theme) or Sphinx (RTD theme) with optional GitHub Pages deployment
 - **Multi-environment testing**: tox configuration with tox-uv backend
+- **pyenv / .python-version**: generate `.python-version` for pyenv and uv, with `python-version-file` in CI workflows
 - **Version management**: bump-my-version integration, GitHub release automation via `gh` CLI
 - **Workflow verification**: local GitHub Actions testing with `act` (auto-detect, auto-install, dry-run and full-run modes)
 - **PyPI metadata management**: read, set, and check publish-readiness of `pyproject.toml` metadata
@@ -53,6 +54,9 @@ pypreset create my-bot --preset discord-bot
 
 # Create a project with Docker support
 pypreset create my-service --preset cli-tool --docker --devcontainer
+
+# Create with .python-version for pyenv/uv
+pypreset create my-lib --pyenv --python-version 3.13
 
 # Create with Podman, Codecov, docs, and tox
 pypreset create my-project --preset empty-package \
@@ -95,6 +99,7 @@ pypreset create <name> [OPTIONS]
 | `--docs` | `sphinx`, `mkdocs`, or `none` |
 | `--docs-gh-pages` / `--no-docs-gh-pages` | Generate GitHub Pages deploy workflow |
 | `--tox` / `--no-tox` | Generate `tox.ini` with tox-uv backend |
+| `--pyenv` / `--no-pyenv` | Generate `.python-version` and use `python-version-file` in CI |
 | `--git` / `--no-git` | Initialize git repository |
 | `--install` / `--no-install` | Run dependency install after creation |
 | `--dry-run` | Preview what would be created without generating anything |
@@ -123,6 +128,7 @@ pypreset augment [path] [OPTIONS]
 | `--docs` | Documentation | Sphinx or MkDocs scaffolding (`--docs sphinx` or `--docs mkdocs`) |
 | `--tox` / `--no-tox` | tox | `tox.ini` with tox-uv backend for multi-environment testing |
 | `--readme` / `--no-readme` | README | `README.md` generated from the shared template (badges, install, features) |
+| `--pyenv` / `--no-pyenv` | pyenv | `.python-version` file for pyenv and uv version pinning |
 
 ```bash
 # Interactive mode (prompts for missing values)

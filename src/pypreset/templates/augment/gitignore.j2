@@ -61,7 +61,9 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+{% if not pyenv %}
 .python-version
+{% endif %}
 
 # IDE / Editor
 .idea/

@@ -101,6 +101,7 @@ def get_template_context(config: ProjectConfig) -> dict[str, Any]:
         "typing_level": config.typing_level.value,
         "layout": config.layout.value,
         "package_manager": config.package_manager.value,
+        "pyenv": config.pyenv,
         "entry_points": [{"name": ep.name, "module": ep.module} for ep in config.entry_points],
         "extras": config.extras,
     }

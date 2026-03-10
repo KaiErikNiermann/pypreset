@@ -26,7 +26,11 @@ jobs:
       - name: Set up Python {{ project.python_version }}
         uses: actions/setup-python@v5
         with:
+{% if pyenv %}
+          python-version-file: .python-version
+{% else %}
           python-version: "{{ project.python_version }}"
+{% endif %}
 
 {% if package_manager == "poetry" %}
       - name: Install Poetry
@@ -75,7 +79,11 @@ jobs:
       - name: Install PDM
         uses: pdm-project/setup-pdm@v4
         with:
+{% if pyenv %}
+          python-version-file: .python-version
+{% else %}
           python-version: "{{ project.python_version }}"
+{% endif %}
 
       - name: Install dependencies
         run: pdm install

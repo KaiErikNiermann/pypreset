@@ -933,6 +933,101 @@ class TestVersionSyncGuardGeneration:
         assert "pre-push" in content
         assert "poetry run python scripts/check_tool_versions.py" in content
 
+
+class TestPyenvGeneration:
+    """Tests for .python-version file generation."""
+
+    def test_pyenv_disabled_no_file(self, temp_output_dir: Path) -> None:
+        """Test that no .python-version is created when pyenv is disabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="no-pyenv"),
+            pyenv=False,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert not (project_dir / ".python-version").exists()
+
+    def test_pyenv_enabled_creates_file(self, temp_output_dir: Path) -> None:
+        """Test that .python-version is created when pyenv is enabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="pyenv-test"),
+            pyenv=True,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        version_file = project_dir / ".python-version"
+        assert version_file.exists()
+        assert version_file.read_text().strip() == "3.11"
+
+    def test_pyenv_uses_configured_python_version(self, temp_output_dir: Path) -> None:
+        """Test that .python-version uses the configured Python version."""
+        config = ProjectConfig(
+            metadata=Metadata(name="pyenv-ver", python_version="3.13"),
+            pyenv=True,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        assert (project_dir / ".python-version").read_text().strip() == "3.13"
+
+    def test_pyenv_gitignore_excludes_python_version(self, temp_output_dir: Path) -> None:
+        """Test that .gitignore does NOT list .python-version when pyenv is enabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="pyenv-gi"),
+            pyenv=True,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        gitignore = (project_dir / ".gitignore").read_text()
+        assert ".python-version" not in gitignore
+
+    def test_no_pyenv_gitignore_includes_python_version(self, temp_output_dir: Path) -> None:
+        """Test that .gitignore lists .python-version when pyenv is disabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="no-pyenv-gi"),
+            pyenv=False,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        gitignore = (project_dir / ".gitignore").read_text()
+        assert ".python-version" in gitignore
+
+    def test_pyenv_ci_uses_version_file_poetry(self, temp_output_dir: Path) -> None:
+        """Test that Poetry CI uses python-version-file when pyenv is enabled."""
+        config = ProjectConfig(
+            metadata=Metadata(name="pyenv-ci"),
+            pyenv=True,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        ci_path = project_dir / ".github" / "workflows" / "ci.yaml"
+        if ci_path.exists():
+            content = ci_path.read_text()
+            assert "python-version-file: .python-version" in content
+
+    def test_pyenv_ci_uses_version_file_uv(self, temp_output_dir: Path) -> None:
+        """Test that uv CI uses 'uv python install' (no version arg) when pyenv is enabled."""
+        from pypreset.models import CreationPackageManager
+
+        config = ProjectConfig(
+            metadata=Metadata(name="pyenv-uv"),
+            package_manager=CreationPackageManager.UV,
+            pyenv=True,
+        )
+        generator = ProjectGenerator(config, temp_output_dir)
+        project_dir = generator.generate()
+
+        ci_path = project_dir / ".github" / "workflows" / "ci.yaml"
+        if ci_path.exists():
+            content = ci_path.read_text()
+            # Should have "uv python install" without a version arg for lint job
+            assert "uv python install\n" in content or "uv python install\r" in content
+
     def test_guard_pre_commit_without_guard_no_hook(self, temp_output_dir: Path) -> None:
         """Test that pre-commit config does not include guard hook when disabled."""
         config = ProjectConfig(

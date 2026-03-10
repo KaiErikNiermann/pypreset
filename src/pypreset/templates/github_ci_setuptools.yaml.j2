@@ -72,7 +72,11 @@ jobs:
       - name: Set up Python {{ project.python_version }}
         uses: actions/setup-python@v5
         with:
+{% if pyenv %}
+          python-version-file: .python-version
+{% else %}
           python-version: "{{ project.python_version }}"
+{% endif %}
           cache: pip
 
       - name: Install dependencies
