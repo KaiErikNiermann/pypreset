@@ -638,15 +638,15 @@ test = ["pytest (>=6)"]
 
 [[package]]
 name = "fastmcp"
-version = "3.1.0"
+version = "3.1.1"
 description = "The fast, Pythonic way to build MCP servers and clients."
 optional = false
 python-versions = ">=3.10"
 groups = ["main", "dev"]
 markers = "python_version < \"4.0\""
 files = [
-    {file = "fastmcp-3.1.0-py3-none-any.whl", hash = "sha256:b1f73b56fd3b0cb2bd9e2a144fc650d5cc31587ed129d996db7710e464ae8010"},
-    {file = "fastmcp-3.1.0.tar.gz", hash = "sha256:e25264794c734b9977502a51466961eeecff92a0c2f3b49c40c070993628d6d0"},
+    {file = "fastmcp-3.1.1-py3-none-any.whl", hash = "sha256:8132ba069d89f14566b3266919d6d72e2ec23dd45d8944622dca407e9beda7eb"},
+    {file = "fastmcp-3.1.1.tar.gz", hash = "sha256:db184b5391a31199323766a3abf3a8bfbb8010479f77eca84c0e554f18655c48"},
 ]
 
 [package.dependencies]
@@ -676,7 +676,7 @@ websockets = ">=15.0.1"
 anthropic = ["anthropic (>=0.40.0)"]
 apps = ["prefab-ui (>=0.6.0)"]
 azure = ["azure-identity (>=1.16.0)"]
-code-mode = ["pydantic-monty (>=0.0.7)"]
+code-mode = ["pydantic-monty (>=0.0.7,<0.0.8)"]
 gemini = ["google-genai (>=1.18.0)"]
 openai = ["openai (>=1.102.0)"]
 tasks = ["pydocket (>=0.18.0)"]
@@ -2416,14 +2416,14 @@ sphinxcontrib-serializinghtml = ">=1.1.9"
 
 [[package]]
 name = "sphinx-autodoc-typehints"
-version = "3.9.7"
+version = "3.9.8"
 description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 optional = false
 python-versions = ">=3.12"
 groups = ["dev"]
 files = [
-    {file = "sphinx_autodoc_typehints-3.9.7-py3-none-any.whl", hash = "sha256:dd73f6a32adef0d8208f6f7d99254e1880259c77db7b4a91648345d45202d48e"},
-    {file = "sphinx_autodoc_typehints-3.9.7.tar.gz", hash = "sha256:70f3dd4e4dd815ae30e5d3848a26dca71fb5e7fcf8f37cf8b840dc8afdf07e82"},
+    {file = "sphinx_autodoc_typehints-3.9.8-py3-none-any.whl", hash = "sha256:df123ec82479934fed27e31d4ccdcf382901c5d9481450fc224054496e574466"},
+    {file = "sphinx_autodoc_typehints-3.9.8.tar.gz", hash = "sha256:1e36b31ee593b7e838988045918b7fa965f5062abbd6800af96d5e2c3f17130e"},
 ]
 
 [package.dependencies]
