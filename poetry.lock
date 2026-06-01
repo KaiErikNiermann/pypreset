@@ -473,7 +473,7 @@ files = [
     {file = "click-8.3.1-py3-none-any.whl", hash = "sha256:981153a64e25f12d547d3426c367a4857371575ee7ad18df2a6183ab0545b2a6"},
     {file = "click-8.3.1.tar.gz", hash = "sha256:12ff4785d337a1bb490bb7e9c2b1ee5da3112e94a8622f26a6c77f5d2fc6842a"},
 ]
-markers = {dev = "python_version < \"4.0\""}
+markers = {main = "extra == \"mcp\" and python_version < \"4.0\"", dev = "python_version < \"4.0\""}
 
 [package.dependencies]
 colorama = {version = "*", markers = "platform_system == \"Windows\""}
@@ -2534,14 +2534,14 @@ sphinxcontrib-serializinghtml = ">=1.1.9"
 
 [[package]]
 name = "sphinx-autodoc-typehints"
-version = "3.10.2"
+version = "3.10.4"
 description = "Type hints (PEP 484) support for the Sphinx autodoc extension"
 optional = false
 python-versions = ">=3.12"
 groups = ["dev"]
 files = [
-    {file = "sphinx_autodoc_typehints-3.10.2-py3-none-any.whl", hash = "sha256:2d1bcac8f62b8d0d210f6ca44b8e016e314d07cc8c30d0512cf6986a0b042b26"},
-    {file = "sphinx_autodoc_typehints-3.10.2.tar.gz", hash = "sha256:34db651eb14343ba16bd9c03e0f5093971f9bbd3cc6b0a1470adecd578940b9c"},
+    {file = "sphinx_autodoc_typehints-3.10.4-py3-none-any.whl", hash = "sha256:53f5273956497c96d44a149025a8f8eed2f3a0e8c36adec7fb09d8c02da2e11a"},
+    {file = "sphinx_autodoc_typehints-3.10.4.tar.gz", hash = "sha256:8fa06b4c92f4bd883928d9d38a7c676d94a05a170b7ee20084a1ad360d6b25ea"},
 ]
 
 [package.dependencies]
@@ -2738,19 +2738,19 @@ files = [
 
 [[package]]
 name = "typer"
-version = "0.25.1"
+version = "0.26.4"
 description = "Typer, build great CLIs. Easy to code. Based on Python type hints."
 optional = false
 python-versions = ">=3.10"
 groups = ["main"]
 files = [
-    {file = "typer-0.25.1-py3-none-any.whl", hash = "sha256:75caa44ed46a03fb2dab8808753ffacdbfea88495e74c85a28c5eefcf5f39c89"},
-    {file = "typer-0.25.1.tar.gz", hash = "sha256:9616eb8853a09ffeabab1698952f33c6f29ffdbceb4eaeecf571880e8d7664cc"},
+    {file = "typer-0.26.4-py3-none-any.whl", hash = "sha256:11bfd7b43557137e373c2b10f6967a555f9678a61ed72c808968b011d95534d6"},
+    {file = "typer-0.26.4.tar.gz", hash = "sha256:25b128964de66c5ea36d5ac82adc579e5e113509b17469edf9f5a4a1864ff2a9"},
 ]
 
 [package.dependencies]
 annotated-doc = ">=0.0.2"
-click = ">=8.2.1"
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
 rich = ">=13.8.0"
 shellingham = ">=1.3.0"
 
@@ -3067,4 +3067,4 @@ mcp = ["fastmcp"]
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.14"
-content-hash = "9ae8fbbda7ffd3f4d02f188a4eee2fd61cb18970838563d390a6c2e7a20d1847"
+content-hash = "f0574a66e8c7ac09f7173f00728271f881d715f9f86994ba7025bd472404f210"
